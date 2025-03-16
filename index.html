@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento GPS</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        h2 {
+            margin-top: 15px;
+            font-size: 22px;
+        }
+
+        #map {
+            width: 75%;
+            height: 450px;
+            margin: 15px auto;
+            border-radius: 15px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .info-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 5px;
+        }
+
+        .info-box {
+            background: white;
+            padding: 8px 15px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: left;
+            font-size: 13px;
+        }
+
+        .info-box p {
+            margin: 4px 0;
+        }
+
+        .info-box strong {
+            color: #007bff;
+        }
+
+        .footer {
+            margin-top: 10px;
+            font-size: 13px;
+            color: gray;
+        }
+
+        .button-container {
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h2>Seguimiento GPS en Tiempo Real</h2>
+    
+    <div id="map"></div>
+    
+    <div class="info-container">
+        <div class="info-box">
+            <p><strong>Latitud:</strong> <span id="lat">Cargando...</span></p>
+            <p><strong>Longitud:</strong> <span id="lon">Cargando...</span></p>
+            <p><strong>Fecha:</strong> <span id="fecha">Cargando...</span></p>
+            <p><strong>Hora:</strong> <span id="hora">Cargando...</span></p>
+        </div>
+    </div>
+    
+    <div class="button-container">
+        <button class="btn" onclick="centrarMapa()">Centrar en Última Posición</button>
+    </div>
+
+    <div class="footer">Autor: Daniel Delgado</div>
+
+    <script>
+        let map = L.map("map").setView([11.021, -74.8678], 15);
+        let marker = null;
+        let route = []; // Almacenará el recorrido
+        let polyline = L.polyline(route, { color: 'blue', weight: 4 }).addTo(map);
+        let lastPosition = null;
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "&copy; OpenStreetMap contributors"
+        }).addTo(map);
+
+        function actualizarDatos() {
+            fetch("datos.php")
+            .then(response => response.json())
+            .then(data => {
+                let nuevaLatLng = [data.lat, data.lon];
+
+                document.getElementById("lat").innerText = data.lat;
+                document.getElementById("lon").innerText = data.lon;
+                document.getElementById("fecha").innerText = data.fecha;
+                document.getElementById("hora").innerText = data.hora;
+
+                if (!marker) {
+                    marker = L.marker(nuevaLatLng).addTo(map);
+                } else {
+                    marker.setLatLng(nuevaLatLng);
+                }
+
+                // Agregar la nueva posición al recorrido
+                route.push(nuevaLatLng);
+                polyline.setLatLngs(route);
+
+                // Guardar la última posición
+                lastPosition = nuevaLatLng;
+            })
+            .catch(error => console.error("Error al obtener los datos:", error));
+        }
+
+        function centrarMapa() {
+            if (lastPosition) {
+                map.setView(lastPosition, 15);
+            }
+        }
+
+        setInterval(actualizarDatos, 2000);
+        window.onload = actualizarDatos;
+    </script>
+</body>
+</html>
