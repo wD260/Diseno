@@ -10,12 +10,13 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout code
+      - name: Checkout código desde GitHub
         uses: actions/checkout@v3
 
-      - name: Update code on EC2
+      - name: Actualizar código en EC2
         run: |
           cd ~/repo_backup
+          git reset --hard
           git pull origin main
-          sudo cp -r ~/repo_backup/* /var/www/html/
+          rsync -av --delete ~/repo_backup/ /var/www/html/
           sudo systemctl restart apache2
