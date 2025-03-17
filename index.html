@@ -74,7 +74,7 @@
     </style>
 </head>
 <body>
-    <h2>Seguimiento GPS en tiempo real</h2>
+    <h2>Seguimiento GPS en Tiempo Real</h2>
     
     <div id="map"></div>
     
@@ -94,6 +94,7 @@
     <script>
         let lastPosition = JSON.parse(localStorage.getItem("lastPosition")) || [11.021, -74.8678];
         let savedRoute = JSON.parse(localStorage.getItem("route")) || [];
+        let lastReset = localStorage.getItem("lastReset") || Date.now();
         let map = L.map("map").setView(lastPosition, 13);
         let marker = null;
 
@@ -136,7 +137,21 @@
             }
         }
 
+        function limpiarRuta() {
+            let ahora = Date.now();
+            let diferencia = (ahora - lastReset) / 1000 / 60; // Diferencia en minutos
+
+            if (diferencia >= 30) {
+                savedRoute = [];
+                polyline.setLatLngs(savedRoute);
+                localStorage.setItem("route", JSON.stringify(savedRoute));
+                localStorage.setItem("lastReset", ahora);
+                console.log("Ruta eliminada automáticamente después de 30 minutos.");
+            }
+        }
+
         setInterval(actualizarDatos, 2000);
+        setInterval(limpiarRuta, 60000); // Verifica cada minuto si debe limpiar la ruta
         window.onload = actualizarDatos;
     </script>
 </body>
