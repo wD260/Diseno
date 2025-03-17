@@ -1,0 +1,21 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Update code on EC2
+        run: |
+          cd ~/repo_backup
+          git pull origin main
+          sudo cp -r ~/repo_backup/* /var/www/html/
+          sudo systemctl restart apache2
