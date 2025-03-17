@@ -35,7 +35,7 @@ jobs:
           sudo systemctl restart apache2          
   
   deploy_dylan:
-    runs-on: dylan
+    runs-on: dc
 
     steps:
       - name: Checkout code
