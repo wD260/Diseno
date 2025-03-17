@@ -93,14 +93,15 @@
 
     <script>
         let lastPosition = JSON.parse(localStorage.getItem("lastPosition")) || [11.021, -74.8678];
+        let savedRoute = JSON.parse(localStorage.getItem("route")) || [];
         let map = L.map("map").setView(lastPosition, 13);
         let marker = null;
-        let route = [];
-        let polyline = L.polyline(route, { color: 'blue', weight: 4 }).addTo(map);
 
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             attribution: "&copy; OpenStreetMap contributors"
         }).addTo(map);
+
+        let polyline = L.polyline(savedRoute, { color: 'blue', weight: 4 }).addTo(map);
 
         function actualizarDatos() {
             fetch("datos.php")
@@ -119,11 +120,12 @@
                     marker.setLatLng(nuevaLatLng);
                 }
 
-                route.push(nuevaLatLng);
-                polyline.setLatLngs(route);
+                savedRoute.push(nuevaLatLng);
+                polyline.setLatLngs(savedRoute);
 
                 lastPosition = nuevaLatLng;
                 localStorage.setItem("lastPosition", JSON.stringify(lastPosition));
+                localStorage.setItem("route", JSON.stringify(savedRoute));
             })
             .catch(error => console.error("Error al obtener los datos:", error));
         }
