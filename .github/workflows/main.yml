@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  deploy:
+  deploy_wd:
     runs-on: wd
 
     steps:
@@ -19,3 +19,31 @@ jobs:
           git pull origin main
           sudo cp -r ~/repo_backup/* /var/www/html/
           sudo systemctl restart apache2
+          
+  deploy_delgado:
+    runs-on: delgado
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Update code on EC2
+        run: |
+          cd ~/repo_backup
+          git pull origin main
+          sudo cp -r ~/repo_backup/* /var/www/html/
+          sudo systemctl restart apache2          
+  
+  deploy_dylan:
+    runs-on: dylan
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Update code on EC2
+        run: |
+          cd ~/repo_backup
+          git pull origin main
+          sudo cp -r ~/repo_backup/* /var/www/html/
+          sudo systemctl restart apache2          
