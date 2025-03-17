@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seguimiento GPS </title>
+    <title>Seguimiento GPS</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <style>
@@ -52,10 +52,14 @@
             color: #007bff;
         }
 
+        .footer {
+            margin-top: 10px;
+            font-size: 13px;
+            color: gray;
+        }
+
         .button-container {
-            display: flex;
-            justify-content: center;
-            margin-top: 15px;
+            margin-top: 10px;
         }
 
         .btn {
@@ -74,7 +78,7 @@
     </style>
 </head>
 <body>
-    <h2>Seguimiento GPS en tiempo real</h2>
+    <h2>Seguimiento GPS en Tiempo Real</h2>
     
     <div id="map"></div>
     
@@ -92,17 +96,16 @@
     </div>
 
     <script>
-        let lastPosition = JSON.parse(localStorage.getItem("lastPosition")) || [11.021, -74.8678];
-        let savedRoute = JSON.parse(localStorage.getItem("route")) || [];
-        let lastReset = localStorage.getItem("lastReset") || Date.now();
-        let map = L.map("map").setView(lastPosition, 13);
+        let route = [];
+        let lastPosition = [11.021, -74.8678];
+
+        let map = L.map("map").setView(lastPosition, 15);
         let marker = null;
+        let polyline = L.polyline(route, { color: 'blue', weight: 4 }).addTo(map);
 
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             attribution: "&copy; OpenStreetMap contributors"
         }).addTo(map);
-
-        let polyline = L.polyline(savedRoute, { color: 'blue', weight: 4 }).addTo(map);
 
         function actualizarDatos() {
             fetch("datos.php")
@@ -121,12 +124,10 @@
                     marker.setLatLng(nuevaLatLng);
                 }
 
-                savedRoute.push(nuevaLatLng);
-                polyline.setLatLngs(savedRoute);
+                route.push(nuevaLatLng);
+                polyline.setLatLngs(route);
 
                 lastPosition = nuevaLatLng;
-                localStorage.setItem("lastPosition", JSON.stringify(lastPosition));
-                localStorage.setItem("route", JSON.stringify(savedRoute));
             })
             .catch(error => console.error("Error al obtener los datos:", error));
         }
@@ -137,21 +138,14 @@
             }
         }
 
-        function limpiarRuta() {
-            let ahora = Date.now();
-            let diferencia = (ahora - lastReset) / 1000 / 60; // Diferencia en minutos
-
-            if (diferencia >= 30) {
-                savedRoute = [];
-                polyline.setLatLngs(savedRoute);
-                localStorage.setItem("route", JSON.stringify(savedRoute));
-                localStorage.setItem("lastReset", ahora);
-                console.log("Ruta eliminada automáticamente después de 30 minutos.");
-            }
-        }
-
         setInterval(actualizarDatos, 2000);
-        setInterval(limpiarRuta, 60000); // Verifica cada minuto si debe limpiar la ruta
+
+        // Borrar la línea cada 30 minutos
+        setInterval(() => {
+            route = []; // Vaciar el historial de la ruta
+            polyline.setLatLngs(route); // Actualizar la línea en el mapa
+        }, 30 * 60 * 1000); // 30 minutos
+
         window.onload = actualizarDatos;
     </script>
 </body>
