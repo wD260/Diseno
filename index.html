@@ -96,10 +96,11 @@
     </div>
 
     <script>
-        let route = [];
-        let lastPosition = [11.021, -74.8678];
+        let route = JSON.parse(localStorage.getItem("gps_route")) || [];
+        let lastPosition = route.length > 0 ? route[route.length - 1] : null;
 
-        let map = L.map("map").setView(lastPosition, 15);
+        let map = L.map("map").setView([0, 0], 2); // Se inicia con una vista global
+
         let marker = null;
         let polyline = L.polyline(route, { color: 'blue', weight: 4 }).addTo(map);
 
@@ -120,13 +121,18 @@
 
                 if (!marker) {
                     marker = L.marker(nuevaLatLng).addTo(map);
+                    map.setView(nuevaLatLng, 15); // Centrar en la primera coordenada obtenida
                 } else {
                     marker.setLatLng(nuevaLatLng);
                 }
 
+                // Actualizar la ruta y almacenar en localStorage
                 route.push(nuevaLatLng);
+                localStorage.setItem("gps_route", JSON.stringify(route));
+
                 polyline.setLatLngs(route);
 
+                // Actualizar la última posición
                 lastPosition = nuevaLatLng;
             })
             .catch(error => console.error("Error al obtener los datos:", error));
@@ -138,15 +144,15 @@
             }
         }
 
-        setInterval(actualizarDatos, 2000);
+        // Al cargar la página, actualizar y centrar en la última posición si existe
+        window.onload = function() {
+            actualizarDatos();
+            if (lastPosition) {
+                map.setView(lastPosition, 15);
+            }
+        };
 
-        // Borrar la línea cada 30 minutos
-        setInterval(() => {
-            route = []; // Vaciar el historial de la ruta
-            polyline.setLatLngs(route); // Actualizar la línea en el mapa
-        }, 30 * 60 * 1000); // 30 minutos
-
-        window.onload = actualizarDatos;
+        setInterval(actualizarDatos, 2000); // Se actualiza cada 2 segundos
     </script>
 </body>
 </html>
