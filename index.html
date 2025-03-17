@@ -78,7 +78,7 @@
     </style>
 </head>
 <body>
-    <h2>Seguimiento GPS en Tiempo Real cesar cachon</h2>
+    <h2>Seguimiento GPS en Tiempo Real</h2>
     
     <div id="map"></div>
     
@@ -95,14 +95,13 @@
         <button class="btn" onclick="centrarMapa()">Centrar en Última Posición</button>
     </div>
 
-    
-
     <script>
-        let map = L.map("map").setView([11.021, -74.8678], 15);
+        let route = JSON.parse(localStorage.getItem("gps_route")) || []; // Recuperar el historial
+        let lastPosition = route.length > 0 ? route[route.length - 1] : [11.021, -74.8678];
+
+        let map = L.map("map").setView(lastPosition, 15);
         let marker = null;
-        let route = []; // Almacenará el recorrido
         let polyline = L.polyline(route, { color: 'blue', weight: 4 }).addTo(map);
-        let lastPosition = null;
 
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             attribution: "&copy; OpenStreetMap contributors"
@@ -125,8 +124,10 @@
                     marker.setLatLng(nuevaLatLng);
                 }
 
-                // Agregar la nueva posición al recorrido
+                // Agregar la nueva posición al historial y guardar en localStorage
                 route.push(nuevaLatLng);
+                localStorage.setItem("gps_route", JSON.stringify(route));
+                
                 polyline.setLatLngs(route);
 
                 // Guardar la última posición
