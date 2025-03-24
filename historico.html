@@ -67,9 +67,7 @@
     </style>
 </head>
 <body>
-
     <h2>Consulta Histórica del GPS</h2>
-
     <div id="formulario">
         <label for="inicio">Fecha y Hora de Inicio:</label>
         <input type="date" id="fechaInicio">
@@ -84,9 +82,7 @@
         <button class="btn" onclick="consultarHistorico()">Consultar</button>
         <button class="btn btn-secondary" onclick="abrirTiempoReal()">Regresar a consulta en tiempo real</button>
     </div>
-
     <div id="map"></div>
-
     <script>
         let map = L.map("map").setView([0, 0], 2);
         let polyline = L.polyline([], { color: 'red', weight: 3 }).addTo(map);
@@ -139,7 +135,7 @@
                     alert("No hay datos en ese rango de tiempo.");
                     return;
                 }
-
+                
                 polyline.setLatLngs([]);
                 markers.forEach(m => map.removeLayer(m));
                 markers = [];
@@ -148,16 +144,13 @@
                 polyline.setLatLngs(coordenadas);
                 map.fitBounds(polyline.getBounds());
 
-                data.forEach((p, index) => {
-                    let color = index === 0 ? "green" : index === data.length - 1 ? "red" : "blue";
-                    let marker = L.circleMarker([parseFloat(p.lat), parseFloat(p.lon)], {
-                        color: color,
-                        radius: 6
-                    }).addTo(map);
+                let inicioMarker = L.marker(coordenadas[0], { icon: L.icon({ iconUrl: 'start.png', iconSize: [20, 20] }) }).addTo(map);
+                let finMarker = L.marker(coordenadas[coordenadas.length - 1], { icon: L.icon({ iconUrl: 'end.png', iconSize: [20, 20] }) }).addTo(map);
+                markers.push(inicioMarker, finMarker);
 
-                    let fechaHora = p.fecha && p.hora ? `${p.fecha} ${p.hora}` : "Fecha/Hora no disponible";
-                    marker.bindPopup(`<b>Fecha y Hora:</b> ${fechaHora} <br> <b>Lat:</b> ${p.lat} <br> <b>Lon:</b> ${p.lon}`);
-                    markers.push(marker);
+                map.on('zoomend', function () {
+                    let zoom = map.getZoom();
+                    markers.forEach(m => m.setOpacity(zoom > 12 ? 1 : 0));
                 });
             })
             .catch(error => {
@@ -172,6 +165,5 @@
 
         document.addEventListener("DOMContentLoaded", llenarSelectHoras);
     </script>
-
 </body>
 </html>
