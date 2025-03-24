@@ -1,8 +1,9 @@
 <?php
-$servername = "dyland.czqa2gymiigq.us-east-2.rds.amazonaws.com";
-$username = "ddeorocarmona";
-$password = "ingdylan05";
-$dbname = "dyland";
+$servername = getenv("DB_HOST");
+$username = getenv("DB_USER");
+$password = getenv("DB_PASS");
+$dbname = getenv("DB_NAME");
+
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {
