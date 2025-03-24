@@ -3,71 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta Histórica del GPS</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <title>Historial GPS</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        body {
+            font-family: "Georgia", serif;
+            background-color: #f4f4f9;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        h2 {
+            margin-top: 15px;
+            font-size: 22px;
+        }
+
+        #formulario {
+            margin: 15px auto;
+            padding: 10px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            display: inline-block;
+        }
+
+        input, button, select {
+            margin: 5px;
+            padding: 8px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        #map {
+            width: 75%;
+            height: 450px;
+            margin: 15px auto;
+            border-radius: 15px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            border: none;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+    </style>
 </head>
 <body>
-    <div class="container mt-4">
-        <h2 class="text-center">Consulta Histórica del GPS</h2>
-        <div class="d-flex justify-content-center my-3">
-            <div class="input-group mx-2">
-                <span class="input-group-text">Fecha y Hora de Inicio:</span>
-                <input type="date" id="fechaInicio" class="form-control">
-                <input type="time" id="horaInicio" class="form-control">
-            </div>
-            <div class="input-group mx-2">
-                <span class="input-group-text">Fecha y Hora de Fin:</span>
-                <input type="date" id="fechaFin" class="form-control">
-                <input type="time" id="horaFin" class="form-control">
-            </div>
-            <button class="btn btn-primary mx-2" onclick="consultarDatos()">Consultar</button>
-            <button class="btn btn-secondary" onclick="window.location.href='index.html'">Regresar a consulta en tiempo real</button>
-        </div>
-        <div id="map" style="height: 500px;"></div>
+
+    <h2>Consulta Histórica del GPS</h2>
+
+    <div id="formulario">
+        <label for="inicio">Fecha y Hora de Inicio:</label>
+        <input type="date" id="fechaInicio">
+        <select id="horaInicio"></select>
+        <select id="minutoInicio"></select>
+        
+        <label for="fin">Fecha y Hora de Fin:</label>
+        <input type="date" id="fechaFin">
+        <select id="horaFin"></select>
+        <select id="minutoFin"></select>
+
+        <button class="btn" onclick="consultarHistorico()">Consultar</button>
+        <button class="btn btn-secondary" onclick="abrirTiempoReal()">Regresar a consulta en tiempo real</button>
     </div>
+
+    <div id="map"></div>
+
     <script>
-        var map = L.map('map').setView([0, 0], 2);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
+        let map = L.map("map").setView([0, 0], 2);
+        let polyline = L.polyline([], { color: 'red', weight: 3 }).addTo(map);
+        let markers = [];
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "&copy; OpenStreetMap contributors"
         }).addTo(map);
 
-        function consultarDatos() {
+        function llenarSelectHoras() {
+            let horas = [...Array(24).keys()].map(h => h.toString().padStart(2, '0'));
+            let minutos = ["00", "10", "20", "30", "40", "50"];
+            
+            ["horaInicio", "horaFin"].forEach(id => {
+                let select = document.getElementById(id);
+                horas.forEach(h => select.appendChild(new Option(h, h)));
+            });
+            
+            ["minutoInicio", "minutoFin"].forEach(id => {
+                let select = document.getElementById(id);
+                minutos.forEach(m => select.appendChild(new Option(m, m)));
+            });
+        }
+
+        function consultarHistorico() {
             let fechaInicio = document.getElementById("fechaInicio").value;
             let horaInicio = document.getElementById("horaInicio").value;
+            let minutoInicio = document.getElementById("minutoInicio").value;
             let fechaFin = document.getElementById("fechaFin").value;
             let horaFin = document.getElementById("horaFin").value;
-            
-            if (!fechaInicio || !horaInicio || !fechaFin || !horaFin) {
-                alert("Por favor, selecciona todas las fechas y horas");
+            let minutoFin = document.getElementById("minutoFin").value;
+
+            if (!fechaInicio || !fechaFin || !horaInicio || !minutoInicio || !horaFin || !minutoFin) {
+                alert("Seleccione fecha y hora correctamente.");
                 return;
             }
-            
-            let fechaHoraInicio = fechaInicio + " " + horaInicio;
-            let fechaHoraFin = fechaFin + " " + horaFin;
-            
-            fetch(`consulta_historica.php?inicio=${fechaHoraInicio}&fin=${fechaHoraFin}`)
-                .then(response => response.json())
-                .then(data => {
-                    map.eachLayer(layer => {
-                        if (layer instanceof L.Marker) {
-                            map.removeLayer(layer);
-                        }
-                    });
-                    
-                    data.forEach(punto => {
-                        L.marker([punto.latitud, punto.longitud]).addTo(map)
-                            .bindPopup(`Fecha y Hora: ${punto.fecha_hora}`);
-                    });
-                    
-                    if (data.length > 0) {
-                        let ultimoPunto = data[data.length - 1];
-                        map.setView([ultimoPunto.latitud, ultimoPunto.longitud], 13);
-                    }
-                })
-                .catch(error => console.error('Error:', error));
+
+            let inicio = `${fechaInicio} ${horaInicio}:${minutoInicio}:00`;
+            let fin = `${fechaFin} ${horaFin}:${minutoFin}:00`;
+
+            if (new Date(inicio) >= new Date(fin)) {
+                alert("La fecha y hora de inicio deben ser anteriores a las de fin.");
+                return;
+            }
+
+            fetch(`historico.php?inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!Array.isArray(data) || data.length === 0) {
+                    alert("No hay datos en ese rango de tiempo.");
+                    return;
+                }
+
+                polyline.setLatLngs([]);
+                markers.forEach(m => map.removeLayer(m));
+                markers = [];
+
+                let coordenadas = data.map(p => [parseFloat(p.lat), parseFloat(p.lon)]);
+                polyline.setLatLngs(coordenadas);
+                map.fitBounds(polyline.getBounds());
+
+                data.forEach((p, index) => {
+                    let color = index === 0 ? "green" : index === data.length - 1 ? "red" : "blue";
+                    let marker = L.circleMarker([parseFloat(p.lat), parseFloat(p.lon)], {
+                        color: color,
+                        radius: 6
+                    }).addTo(map);
+
+                    let fechaHora = p.fecha && p.hora ? `${p.fecha} ${p.hora}` : "Fecha/Hora no disponible";
+                    marker.bindPopup(`<b>Fecha y Hora:</b> ${fechaHora} <br> <b>Lat:</b> ${p.lat} <br> <b>Lon:</b> ${p.lon}`);
+                    markers.push(marker);
+                });
+            })
+            .catch(error => {
+                console.error("Error al obtener el historial:", error);
+                alert("Ocurrió un error al consultar los datos.");
+            });
         }
+
+        function abrirTiempoReal() {
+            window.location.href = "/index.html";
+        }
+
+        document.addEventListener("DOMContentLoaded", llenarSelectHoras);
     </script>
+
 </body>
 </html>
