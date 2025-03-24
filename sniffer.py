@@ -4,7 +4,10 @@ import mysql.connector
 
 # Configurar conexión a MySQL
 import os
+from dotenv import load_dotenv
 
+# Cargar las variables desde el archivo .env
+load_dotenv()
 DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASS = os.getenv("DB_PASS")
