@@ -120,11 +120,22 @@
                 document.getElementById("hora").innerText = data.hora;
 
                 if (!marker) {
-                    marker = L.marker(nuevaLatLng).addTo(map);
-                    map.setView(nuevaLatLng, 15); // Centrar en la primera coordenada obtenida
-                } else {
-                    marker.setLatLng(nuevaLatLng);
-                }
+    marker = L.marker(nuevaLatLng).addTo(map);
+} else {
+    marker.setLatLng(nuevaLatLng);
+}
+
+// Centrar automáticamente en cada actualización
+map.setView(nuevaLatLng, 15);
+
+// Actualizar la ruta y almacenar en localStorage
+route.push(nuevaLatLng);
+localStorage.setItem("gps_route", JSON.stringify(route));
+polyline.setLatLngs(route);
+
+// Actualizar la última posición
+lastPosition = nuevaLatLng;
+
 
                 // Actualizar la ruta y almacenar en localStorage
                 route.push(nuevaLatLng);
