@@ -83,6 +83,7 @@
 
         <button class="btn" onclick="consultarHistorico()">Consultar</button>
         <button class="btn btn-secondary" onclick="abrirTiempoReal()">Regresar a consulta en tiempo real</button>
+
     </div>
 
     <div id="map"></div>
@@ -150,8 +151,9 @@
         }
 
         function abrirTiempoReal() {
-            window.open(window.location.origin, "_blank");
+            window.location.href = "/index.html"; // Asegúrate de que esta es la ruta correcta a tu página principal
         }
+
 
         document.addEventListener("DOMContentLoaded", llenarSelectHoras);
     </script>
