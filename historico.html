@@ -3,65 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta Histórica del GPS</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+    <title>Historial GPS</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        body {
+            font-family: "Georgia", serif;
+            background-color: #f4f4f9;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        h2 {
+            margin-top: 15px;
+            font-size: 22px;
+        }
+
+        #formulario {
+            margin: 15px auto;
+            padding: 10px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            display: inline-block;
+        }
+
+        input, button, select {
+            margin: 5px;
+            padding: 8px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        #map {
+            width: 75%;
+            height: 450px;
+            margin: 15px auto;
+            border-radius: 15px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            border: none;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+    </style>
 </head>
 <body>
+
     <h2>Consulta Histórica del GPS</h2>
-    <label for="fechaInicio">Fecha de Inicio:</label>
-    <input type="date" id="fechaInicio">
-    <label for="horaInicio">Hora de Inicio:</label>
-    <select id="horaInicio"></select>
-    <select id="minutoInicio"></select>
 
-    <label for="fechaFin">Fecha de Fin:</label>
-    <input type="date" id="fechaFin">
-    <label for="horaFin">Hora de Fin:</label>
-    <select id="horaFin"></select>
-    <select id="minutoFin"></select>
+    <div id="formulario">
+        <label for="inicio">Fecha y Hora de Inicio:</label>
+        <input type="date" id="fechaInicio">
+        <select id="horaInicio"></select>
+        <select id="minutoInicio"></select>
+        
+        <label for="fin">Fecha y Hora de Fin:</label>
+        <input type="date" id="fechaFin">
+        <select id="horaFin"></select>
+        <select id="minutoFin"></select>
 
-    <button onclick="consultar()">Consultar</button>
-    <button onclick="regresarTiempoReal()">Regresar a consulta en tiempo real</button>
+        <button class="btn" onclick="consultarHistorico()">Consultar</button>
+        <button class="btn btn-secondary" onclick="abrirTiempoReal()">Regresar a consulta en tiempo real</button>
+    </div>
 
-    <div id="map" style="height: 500px;"></div>
+    <div id="map"></div>
 
     <script>
-        function cargarOpcionesTiempo() {
-            let horaSelects = [document.getElementById('horaInicio'), document.getElementById('horaFin')];
-            let minutoSelects = [document.getElementById('minutoInicio'), document.getElementById('minutoFin')];
+        let map = L.map("map").setView([0, 0], 2);
+        let polyline = L.polyline([], { color: 'red', weight: 4 }).addTo(map);
+        
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "&copy; OpenStreetMap contributors"
+        }).addTo(map);
+
+        function llenarSelectHoras() {
+            let horas = [...Array(24).keys()].map(h => h.toString().padStart(2, '0'));
+            let minutos = ["00", "10", "20", "30", "40", "50"];
             
-            for (let i = 0; i < 24; i++) {
-                let opcion = document.createElement('option');
-                opcion.value = (i < 10 ? '0' : '') + i;
-                opcion.text = (i < 10 ? '0' : '') + i;
-                horaSelects.forEach(select => select.appendChild(opcion.cloneNode(true)));
+            ["horaInicio", "horaFin"].forEach(id => {
+                let select = document.getElementById(id);
+                horas.forEach(h => select.appendChild(new Option(h, h)));
+            });
+            
+            ["minutoInicio", "minutoFin"].forEach(id => {
+                let select = document.getElementById(id);
+                minutos.forEach(m => select.appendChild(new Option(m, m)));
+            });
+        }
+
+        function consultarHistorico() {
+            let fechaInicio = document.getElementById("fechaInicio").value;
+            let horaInicio = document.getElementById("horaInicio").value;
+            let minutoInicio = document.getElementById("minutoInicio").value;
+            let fechaFin = document.getElementById("fechaFin").value;
+            let horaFin = document.getElementById("horaFin").value;
+            let minutoFin = document.getElementById("minutoFin").value;
+
+            if (!fechaInicio || !fechaFin || !horaInicio || !minutoInicio || !horaFin || !minutoFin) {
+                alert("Seleccione fecha y hora correctamente.");
+                return;
             }
 
-            for (let i = 0; i < 60; i += 10) {
-                let opcion = document.createElement('option');
-                opcion.value = (i < 10 ? '0' : '') + i;
-                opcion.text = (i < 10 ? '0' : '') + i;
-                minutoSelects.forEach(select => select.appendChild(opcion.cloneNode(true)));
+            let inicio = `${fechaInicio} ${horaInicio}:${minutoInicio}`;
+            let fin = `${fechaFin} ${horaFin}:${minutoFin}`;
+
+            if (new Date(inicio) >= new Date(fin)) {
+                alert("La fecha y hora de inicio deben ser anteriores a las de fin.");
+                return;
             }
+
+            fetch(`historico.php?inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!Array.isArray(data) || data.length === 0) {
+                    alert("No hay datos en ese rango de tiempo.");
+                    return;
+                }
+
+                let coordenadas = data.map(p => [parseFloat(p.lat), parseFloat(p.lon)]);
+                polyline.setLatLngs(coordenadas);
+                map.fitBounds(polyline.getBounds());
+            })
+            .catch(error => {
+                console.error("Error al obtener el historial:", error);
+                alert("Ocurrió un error al consultar los datos.");
+            });
         }
 
-        function consultar() {
-            let fechaInicio = document.getElementById('fechaInicio').value;
-            let horaInicio = document.getElementById('horaInicio').value;
-            let minutoInicio = document.getElementById('minutoInicio').value;
-            let fechaFin = document.getElementById('fechaFin').value;
-            let horaFin = document.getElementById('horaFin').value;
-            let minutoFin = document.getElementById('minutoFin').value;
-            
-            console.log(`Consulta desde ${fechaInicio} ${horaInicio}:${minutoInicio} hasta ${fechaFin} ${horaFin}:${minutoFin}`);
+        function abrirTiempoReal() {
+            window.open("https://ddelgado.hopto.org", "_blank");
         }
 
-        function regresarTiempoReal() {
-            window.location.href = 'index.html';
-        }
-
-        document.addEventListener("DOMContentLoaded", cargarOpcionesTiempo);
+        document.addEventListener("DOMContentLoaded", llenarSelectHoras);
     </script>
+
 </body>
 </html>
