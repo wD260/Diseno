@@ -50,10 +50,19 @@
             color: white;
             cursor: pointer;
             border: none;
+            transition: 0.3s;
         }
 
         .btn:hover {
             background-color: #0056b3;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #545b62;
         }
     </style>
 </head>
@@ -69,6 +78,7 @@
         <input type="datetime-local" id="fin">
 
         <button class="btn" onclick="consultarHistorico()">Consultar</button>
+        <button class="btn btn-secondary" onclick="regresarTiempoReal()">Regresar a consulta en tiempo real</button>
     </div>
 
     <div id="map"></div>
@@ -95,19 +105,26 @@
                 return;
             }
 
-            fetch(`historico.php?inicio=${inicio}&fin=${fin}`)
+            fetch(`historico.php?inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}`)
             .then(response => response.json())
             .then(data => {
-                if (data.length === 0) {
+                if (!Array.isArray(data) || data.length === 0) {
                     alert("No hay datos en ese rango de tiempo.");
                     return;
                 }
 
-                let coordenadas = data.map(p => [p.lat, p.lon]);
+                let coordenadas = data.map(p => [parseFloat(p.lat), parseFloat(p.lon)]);
                 polyline.setLatLngs(coordenadas);
                 map.fitBounds(polyline.getBounds());
             })
-            .catch(error => console.error("Error al obtener el historial:", error));
+            .catch(error => {
+                console.error("Error al obtener el historial:", error);
+                alert("Ocurrió un error al consultar los datos.");
+            });
+        }
+
+        function regresarTiempoReal() {
+            window.location.href = "https://ddelgado.hopto.org";
         }
     </script>
 
