@@ -29,7 +29,7 @@
             display: inline-block;
         }
 
-        input, button {
+        input, button, select {
             margin: 5px;
             padding: 8px;
             font-size: 14px;
@@ -71,14 +71,17 @@
     <h2>Consulta Histórica del GPS</h2>
 
     <div id="formulario">
-        <label for="inicio">Fecha y Hora Inicio:</label>
-        <input type="datetime-local" id="inicio">
+        <label for="inicio">Fecha:</label>
+        <input type="date" id="inicio">
         
-        <label for="fin">Fecha y Hora Fin:</label>
-        <input type="datetime-local" id="fin">
+        <label for="horaInicio">Hora de Inicio:</label>
+        <select id="horaInicio"></select>
+        
+        <label for="horaFin">Hora de Fin:</label>
+        <select id="horaFin"></select>
 
         <button class="btn" onclick="consultarHistorico()">Consultar</button>
-        <button class="btn btn-secondary" onclick="regresarTiempoReal()">Regresar a consulta en tiempo real</button>
+        <button class="btn btn-secondary" onclick="abrirTiempoReal()">Regresar a consulta en tiempo real</button>
     </div>
 
     <div id="map"></div>
@@ -91,19 +94,38 @@
             attribution: "&copy; OpenStreetMap contributors"
         }).addTo(map);
 
+        function llenarSelectHoras() {
+            let selectInicio = document.getElementById("horaInicio");
+            let selectFin = document.getElementById("horaFin");
+            
+            for (let h = 0; h < 24; h++) {
+                for (let m = 0; m < 60; m += 10) {
+                    let hora = h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0');
+                    let optionInicio = new Option(hora, hora);
+                    let optionFin = new Option(hora, hora);
+                    selectInicio.appendChild(optionInicio);
+                    selectFin.appendChild(optionFin);
+                }
+            }
+        }
+
         function consultarHistorico() {
-            let inicio = document.getElementById("inicio").value;
-            let fin = document.getElementById("fin").value;
+            let fecha = document.getElementById("inicio").value;
+            let horaInicio = document.getElementById("horaInicio").value;
+            let horaFin = document.getElementById("horaFin").value;
 
-            if (!inicio || !fin) {
-                alert("Seleccione ambas fechas.");
+            if (!fecha || !horaInicio || !horaFin) {
+                alert("Seleccione la fecha y horas correctamente.");
                 return;
             }
 
-            if (inicio >= fin) {
-                alert("La fecha de inicio debe ser anterior a la de fin.");
+            if (horaInicio >= horaFin) {
+                alert("La hora de inicio debe ser anterior a la de fin.");
                 return;
             }
+
+            let inicio = fecha + " " + horaInicio;
+            let fin = fecha + " " + horaFin;
 
             fetch(`historico.php?inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}`)
             .then(response => response.json())
@@ -123,9 +145,11 @@
             });
         }
 
-        function regresarTiempoReal() {
-            window.location.href = "https://ddelgado.hopto.org";
+        function abrirTiempoReal() {
+            window.open("https://ddelgado.hopto.org", "_blank");
         }
+
+        document.addEventListener("DOMContentLoaded", llenarSelectHoras);
     </script>
 
 </body>
