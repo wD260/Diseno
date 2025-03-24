@@ -124,8 +124,8 @@
                 return;
             }
 
-            let inicio = `${fechaInicio} ${horaInicio}:${minutoInicio}`;
-            let fin = `${fechaFin} ${horaFin}:${minutoFin}`;
+            let inicio = `${fechaInicio} ${horaInicio}:${minutoInicio}:00`;
+            let fin = `${fechaFin} ${horaFin}:${minutoFin}:00`;
 
             if (new Date(inicio) >= new Date(fin)) {
                 alert("La fecha y hora de inicio deben ser anteriores a las de fin.");
@@ -152,10 +152,11 @@
                     let color = index === 0 ? "green" : index === data.length - 1 ? "red" : "blue";
                     let marker = L.circleMarker([parseFloat(p.lat), parseFloat(p.lon)], {
                         color: color,
-                        radius: 4
+                        radius: 6
                     }).addTo(map);
 
-                    marker.bindPopup(`<b>Fecha:</b> ${p.fecha} <br> <b>Hora:</b> ${p.hora} <br> <b>Lat:</b> ${p.lat} <br> <b>Lon:</b> ${p.lon}`);
+                    let fechaHora = p.fecha && p.hora ? `${p.fecha} ${p.hora}` : "Fecha/Hora no disponible";
+                    marker.bindPopup(`<b>Fecha y Hora:</b> ${fechaHora} <br> <b>Lat:</b> ${p.lat} <br> <b>Lon:</b> ${p.lon}`);
                     markers.push(marker);
                 });
             })
