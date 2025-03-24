@@ -158,11 +158,15 @@
 
         // Al cargar la página, actualizar y centrar en la última posición si existe
         window.onload = function() {
-            localStorage.removeItem("gps_route"); // Elimina la traza guardada
-            route = []; // Reinicia la variable local
-            polyline.setLatLngs(route); // Borra la línea azul del mapa
-            actualizarDatos();
+            actualizarDatos(); // Obtiene la última ubicación antes de centrar
+
+            setTimeout(() => {
+                if (lastPosition) {
+                map.setView(lastPosition, 15); // Centrar en la última ubicación conocida
+                }
+            }, 1000); // Se da un pequeño tiempo de espera para obtener los datos antes de centrar
         };
+
 
 
         setInterval(actualizarDatos, 2000); // Se actualiza cada 2 segundos
