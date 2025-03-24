@@ -30,6 +30,9 @@ while ($row = $result->fetch_assoc()) {
         "lon" => $row["lon"]
     ];
 }
+header('Content-Type: application/json'); // Asegura que el navegador lo interprete como JSON
+var_dump($data);
+exit;
 
 echo json_encode($data);
 
