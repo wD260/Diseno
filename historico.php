@@ -35,10 +35,7 @@ while ($row = $result->fetch_assoc()) {
 }
 
 header('Content-Type: application/json'); // Asegura que el navegador lo interprete como JSON
-var_dump($data);
-exit;
-
-echo json_encode($data);
+echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
 $conn->close();
 ?>
