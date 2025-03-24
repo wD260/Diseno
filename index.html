@@ -93,7 +93,14 @@
     
     <div class="button-container">
         <button class="btn" onclick="centrarMapa()">Centrar en Última Posición</button>
+        <button class="btn" onclick="abrirHistorico()">Consulta Histórica</button>
     </div>
+    
+    <script>
+        function abrirHistorico() {
+            window.open("https://ddelgado.hopto.org/historico.html", "_blank");
+        }
+    </script>
 
     <script>
         let route = JSON.parse(localStorage.getItem("gps_route")) || [];
