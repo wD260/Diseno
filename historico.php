@@ -4,20 +4,34 @@ $username = getenv("DB_USER");
 $password = getenv("DB_PASS");
 $dbname = getenv("DB_NAME");
 
-
 $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {
     die("Error de conexión: " . $conn->connect_error);
 }
 
-$sql = "SELECT lat, lon, fecha, hora FROM locations2 ORDER BY id DESC LIMIT 1";
-$result = $conn->query($sql);
+$inicio = $_GET["inicio"];
+$fin = $_GET["fin"];
 
-if ($result->num_rows > 0) {
-    echo json_encode($result->fetch_assoc());
-} else {
-    echo json_encode(["lat" => "N/A", "lon" => "N/A", "fecha" => "N/A", "hora" => "N/A"]);
+// Convertir formato de entrada `YYYY-MM-DDTHH:MM` a `YYYY-MM-DD HH:MM:SS`
+$inicio = str_replace("T", " ", $inicio) . ":00";
+$fin = str_replace("T", " ", $fin) . ":00";
+
+// Consulta SQL asegurando que fecha y hora estén en el rango
+$sql = "SELECT lat, lon FROM locations2 
+        WHERE CONCAT(fecha, ' ', hora) BETWEEN '$inicio' AND '$fin' 
+        ORDER BY fecha ASC, hora ASC";
+
+$result = $conn->query($sql);
+$data = [];
+
+while ($row = $result->fetch_assoc()) {
+    $data[] = [
+        "lat" => $row["lat"],
+        "lon" => $row["lon"]
+    ];
 }
+
+echo json_encode($data);
 
 $conn->close();
 ?>
