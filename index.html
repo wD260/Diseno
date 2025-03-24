@@ -109,45 +109,38 @@
         }).addTo(map);
 
         function actualizarDatos() {
-            fetch("datos.php")
-            .then(response => response.json())
-            .then(data => {
-                let nuevaLatLng = [data.lat, data.lon];
+    fetch("datos.php")
+    .then(response => response.json())
+    .then(data => {
+        let nuevaLatLng = [data.lat, data.lon];
 
-                document.getElementById("lat").innerText = data.lat;
-                document.getElementById("lon").innerText = data.lon;
-                document.getElementById("fecha").innerText = data.fecha;
-                document.getElementById("hora").innerText = data.hora;
+        document.getElementById("lat").innerText = data.lat;
+        document.getElementById("lon").innerText = data.lon;
+        document.getElementById("fecha").innerText = data.fecha;
+        document.getElementById("hora").innerText = data.hora;
 
-                if (!marker) {
-    marker = L.marker(nuevaLatLng).addTo(map);
-} else {
-    marker.setLatLng(nuevaLatLng);
+        if (!marker) {
+            marker = L.marker(nuevaLatLng).addTo(map);
+        } else {
+            marker.setLatLng(nuevaLatLng);
+        }
+
+        // Verificar si las coordenadas cambiaron antes de centrar el mapa
+        if (!lastPosition || lastPosition[0] !== nuevaLatLng[0] || lastPosition[1] !== nuevaLatLng[1]) {
+            map.setView(nuevaLatLng, 15); // Solo centrar si hay un nuevo paquete
+        }
+
+        // Actualizar la ruta y almacenar en localStorage
+        route.push(nuevaLatLng);
+        localStorage.setItem("gps_route", JSON.stringify(route));
+        polyline.setLatLngs(route);
+
+        // Guardar la última posición
+        lastPosition = nuevaLatLng;
+    })
+    .catch(error => console.error("Error al obtener los datos:", error));
 }
 
-// Centrar automáticamente en cada actualización
-map.setView(nuevaLatLng, 15);
-
-// Actualizar la ruta y almacenar en localStorage
-route.push(nuevaLatLng);
-localStorage.setItem("gps_route", JSON.stringify(route));
-polyline.setLatLngs(route);
-
-// Actualizar la última posición
-lastPosition = nuevaLatLng;
-
-
-                // Actualizar la ruta y almacenar en localStorage
-                route.push(nuevaLatLng);
-                localStorage.setItem("gps_route", JSON.stringify(route));
-
-                polyline.setLatLngs(route);
-
-                // Actualizar la última posición
-                lastPosition = nuevaLatLng;
-            })
-            .catch(error => console.error("Error al obtener los datos:", error));
-        }
 
         function centrarMapa() {
             if (lastPosition) {
