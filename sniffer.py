@@ -3,12 +3,20 @@ import json
 import mysql.connector
 
 # Configurar conexión a MySQL
+import os
+
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASS")
+DB_NAME = os.getenv("DB_NAME")
+
 db = mysql.connector.connect(
-    host="dyland.czqa2gymiigq.us-east-2.rds.amazonaws.com",
-    user="ddeorocarmona",  # Cambia esto si tienes otro usuario
-    password="ingdylan05",  # Si usaste contraseña en MySQL, ponla aquí
-    database="dyland"
+    host=DB_HOST,
+    user=DB_USER,
+    password=DB_PASS,
+    database=DB_NAME
 )
+
 cursor = db.cursor()
 
 # Configurar servidor UDP
