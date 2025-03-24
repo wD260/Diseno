@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial GPS</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        body {
+            font-family: "Georgia", serif;
+            background-color: #f4f4f9;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        h2 {
+            margin-top: 15px;
+            font-size: 22px;
+        }
+
+        #formulario {
+            margin: 15px auto;
+            padding: 10px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            display: inline-block;
+        }
+
+        input, button {
+            margin: 5px;
+            padding: 8px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        #map {
+            width: 75%;
+            height: 450px;
+            margin: 15px auto;
+            border-radius: 15px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Consulta Histórica del GPS</h2>
+
+    <div id="formulario">
+        <label for="inicio">Fecha y Hora Inicio:</label>
+        <input type="datetime-local" id="inicio">
+        
+        <label for="fin">Fecha y Hora Fin:</label>
+        <input type="datetime-local" id="fin">
+
+        <button class="btn" onclick="consultarHistorico()">Consultar</button>
+    </div>
+
+    <div id="map"></div>
+
+    <script>
+        let map = L.map("map").setView([0, 0], 2);
+        let polyline = L.polyline([], { color: 'red', weight: 4 }).addTo(map);
+        
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "&copy; OpenStreetMap contributors"
+        }).addTo(map);
+
+        function consultarHistorico() {
+            let inicio = document.getElementById("inicio").value;
+            let fin = document.getElementById("fin").value;
+
+            if (!inicio || !fin) {
+                alert("Seleccione ambas fechas.");
+                return;
+            }
+
+            if (inicio >= fin) {
+                alert("La fecha de inicio debe ser anterior a la de fin.");
+                return;
+            }
+
+            fetch(`historico.php?inicio=${inicio}&fin=${fin}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length === 0) {
+                    alert("No hay datos en ese rango de tiempo.");
+                    return;
+                }
+
+                let coordenadas = data.map(p => [p.lat, p.lon]);
+                polyline.setLatLngs(coordenadas);
+                map.fitBounds(polyline.getBounds());
+            })
+            .catch(error => console.error("Error al obtener el historial:", error));
+        }
+    </script>
+
+</body>
+</html>
