@@ -91,7 +91,8 @@
     <script>
         let map = L.map("map").setView([0, 0], 2);
         let polyline = L.polyline([], { color: 'red', weight: 4 }).addTo(map);
-        
+        let markers = [];
+
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             attribution: "&copy; OpenStreetMap contributors"
         }).addTo(map);
@@ -140,9 +141,33 @@
                     return;
                 }
 
+                polyline.setLatLngs([]);
+                markers.forEach(m => map.removeLayer(m));
+                markers = [];
+
                 let coordenadas = data.map(p => [parseFloat(p.lat), parseFloat(p.lon)]);
                 polyline.setLatLngs(coordenadas);
                 map.fitBounds(polyline.getBounds());
+
+                data.forEach((p, index) => {
+                    let color = "blue";
+                    if (index === 0) color = "green"; // Punto inicial
+                    if (index === data.length - 1) color = "red"; // Punto final
+
+                    let marker = L.circleMarker([parseFloat(p.lat), parseFloat(p.lon)], {
+                        color: color,
+                        radius: 6
+                    }).addTo(map);
+
+                    marker.bindPopup(`
+                        <b>Fecha:</b> ${p.fecha}<br>
+                        <b>Hora:</b> ${p.hora}<br>
+                        <b>Lat:</b> ${p.lat}<br>
+                        <b>Lon:</b> ${p.lon}
+                    `);
+
+                    markers.push(marker);
+                });
             })
             .catch(error => {
                 console.error("Error al obtener el historial:", error);
@@ -153,7 +178,6 @@
         function abrirTiempoReal() {
             window.location.href = "/index.html"; // Asegúrate de que esta es la ruta correcta a tu página principal
         }
-
 
         document.addEventListener("DOMContentLoaded", llenarSelectHoras);
     </script>
