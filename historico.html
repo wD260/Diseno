@@ -167,6 +167,7 @@
 
                     markers.push(inicioMarker, finMarker);
                 }
+                console.log("Puntos intermedios:", data.slice(1, -1));
 
                 // Puntos intermedios visibles solo en zoom alto
                 data.slice(1, -1).forEach(p => {
@@ -185,7 +186,7 @@
                 map.on("zoomend", () => {
                     let zoom = map.getZoom();
                     markers.slice(2).forEach(m => {
-                        if (zoom >= 12) {
+                        if (zoom >= 10) {
                             m.addTo(map);
                         } else {
                             map.removeLayer(m);
