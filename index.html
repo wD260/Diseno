@@ -104,6 +104,10 @@
     </script>
 
     <script>
+        // Borrar la traza almacenada cada vez que se carga la página
+        localStorage.removeItem("gps_route");
+
+
         let route = JSON.parse(localStorage.getItem("gps_route")) || [];
         let lastPosition = route.length > 0 ? route[route.length - 1] : null;
 
