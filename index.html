@@ -139,8 +139,7 @@
 
         // Verificar si las coordenadas cambiaron antes de centrar el mapa
         if (!lastPosition || lastPosition[0] !== nuevaLatLng[0] || lastPosition[1] !== nuevaLatLng[1]) {
-            let currentZoom = map.getZoom(); // Obtener el nivel de zoom actual
-            map.setView(nuevaLatLng, currentZoom); // Centrar manteniendo el zoom del usuario
+            map.setView(nuevaLatLng, 15); // Solo centrar si hay un nuevo paquete
         }
 
         // Actualizar la ruta y almacenar en localStorage
