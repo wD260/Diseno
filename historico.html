@@ -186,7 +186,7 @@
                 map.on("zoomend", () => {
                     let zoom = map.getZoom();
                     markers.slice(2).forEach(m => {
-                        if (zoom >= 12) {
+                        if (zoom >= 16) {
                             m.addTo(map);
                         } else {
                             map.removeLayer(m);
