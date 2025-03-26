@@ -34,7 +34,7 @@ h2 {
     display: flex;
     justify-content: center;
     position: relative;
-    margin-top: 8px; /* Menos espacio */
+    margin-top: 12px; /* Menos espacio */
 }
 
 .info-box {
@@ -45,7 +45,7 @@ h2 {
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(0, 0, 0, 0.1);
-    font-size: 14px; /* Reducido para que quepa mejor */
+    font-size: 13px; /* Reducido para que quepa mejor */
 }
 
 /* Estilo de botones */
