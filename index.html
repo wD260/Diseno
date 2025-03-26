@@ -3,79 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seguimiento GPS.</title>
+    <title>Seguimiento GPS</title>
+    <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <style>
-        body {
-            font-family: "Georgia", serif;
-            background-color: #f4f4f9;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-        }
-
-        h2 {
-            margin-top: 15px;
-            font-size: 22px;
-        }
-
-        #map {
-            width: 75%;
-            height: 450px;
-            margin: 15px auto;
-            border-radius: 15px;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .info-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 5px;
-        }
-
-        .info-box {
-            background: white;
-            padding: 8px 15px;
-            border-radius: 10px;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-            text-align: left;
-            font-size: 13px;
-        }
-
-        .info-box p {
-            margin: 4px 0;
-        }
-
-        .info-box strong {
-            color: #007bff;
-        }
-
-        .footer {
-            margin-top: 10px;
-            font-size: 13px;
-            color: gray;
-        }
-
-        .button-container {
-            margin-top: 10px;
-        }
-
-        .btn {
-            padding: 10px 15px;
-            font-size: 14px;
-            border: none;
-            border-radius: 5px;
-            background-color: #007bff;
-            color: white;
-            cursor: pointer;
-        }
-
-        .btn:hover {
-            background-color: #0056b3;
-        }
-    </style>
 </head>
 <body>
     <h2>Seguimiento GPS en Tiempo Real</h2>
@@ -92,26 +23,21 @@
     </div>
     
     <div class="button-container">
-        <button class="btn" onclick="centrarMapa()">Centrar en Última Posición</button>
-        <button class="btn" onclick="abrirHistorico()">Consulta Histórica</button>
+        <button class="btn btn-secondary" onclick="centrarMapa()">Centrar en Última Posición</button>
+        <button class="btn btn-primary" onclick="abrirHistorico()">Consulta Histórica</button>
     </div>
-    
+
     <script>
         function abrirHistorico() {
             window.location.href = "/historico.html";
         }
 
-    </script>
-
-    <script>
-        // Borrar la traza almacenada cada vez que se carga la página
         localStorage.removeItem("gps_route");
-
 
         let route = JSON.parse(localStorage.getItem("gps_route")) || [];
         let lastPosition = route.length > 0 ? route[route.length - 1] : null;
 
-        let map = L.map("map").setView([0, 0], 2); // Se inicia con una vista global
+        let map = L.map("map").setView([0, 0], 2);
 
         let marker = null;
         let polyline = L.polyline(route, { color: 'blue', weight: 4 }).addTo(map);
@@ -121,38 +47,33 @@
         }).addTo(map);
 
         function actualizarDatos() {
-    fetch("datos.php")
-    .then(response => response.json())
-    .then(data => {
-        let nuevaLatLng = [data.lat, data.lon];
+            fetch("datos.php")
+            .then(response => response.json())
+            .then(data => {
+                let nuevaLatLng = [data.lat, data.lon];
 
-        document.getElementById("lat").innerText = data.lat;
-        document.getElementById("lon").innerText = data.lon;
-        document.getElementById("fecha").innerText = data.fecha;
-        document.getElementById("hora").innerText = data.hora;
+                document.getElementById("lat").innerText = data.lat;
+                document.getElementById("lon").innerText = data.lon;
+                document.getElementById("fecha").innerText = data.fecha;
+                document.getElementById("hora").innerText = data.hora;
 
-        if (!marker) {
-            marker = L.marker(nuevaLatLng).addTo(map);
-        } else {
-            marker.setLatLng(nuevaLatLng);
+                if (!marker) {
+                    marker = L.marker(nuevaLatLng).addTo(map);
+                } else {
+                    marker.setLatLng(nuevaLatLng);
+                }
+
+                if (!lastPosition || lastPosition[0] !== nuevaLatLng[0] || lastPosition[1] !== nuevaLatLng[1]) {
+                    map.setView(nuevaLatLng, 15);
+                }
+
+                route.push(nuevaLatLng);
+                localStorage.setItem("gps_route", JSON.stringify(route));
+                polyline.setLatLngs(route);
+                lastPosition = nuevaLatLng;
+            })
+            .catch(error => console.error("Error al obtener los datos:", error));
         }
-
-        // Verificar si las coordenadas cambiaron antes de centrar el mapa
-        if (!lastPosition || lastPosition[0] !== nuevaLatLng[0] || lastPosition[1] !== nuevaLatLng[1]) {
-            map.setView(nuevaLatLng, 15); // Solo centrar si hay un nuevo paquete
-        }
-
-        // Actualizar la ruta y almacenar en localStorage
-        route.push(nuevaLatLng);
-        localStorage.setItem("gps_route", JSON.stringify(route));
-        polyline.setLatLngs(route);
-
-        // Guardar la última posición
-        lastPosition = nuevaLatLng;
-    })
-    .catch(error => console.error("Error al obtener los datos:", error));
-}
-
 
         function centrarMapa() {
             if (lastPosition) {
@@ -160,20 +81,16 @@
             }
         }
 
-        // Al cargar la página, actualizar y centrar en la última posición si existe
         window.onload = function() {
-            actualizarDatos(); // Obtiene la última ubicación antes de centrar
-
+            actualizarDatos();
             setTimeout(() => {
                 if (lastPosition) {
-                map.setView(lastPosition, 15); // Centrar en la última ubicación conocida
+                    map.setView(lastPosition, 15);
                 }
-            }, 1000); // Se da un pequeño tiempo de espera para obtener los datos antes de centrar
+            }, 1000);
         };
 
-
-
-        setInterval(actualizarDatos, 2000); // Se actualiza cada 2 segundos
+        setInterval(actualizarDatos, 2000);
     </script>
 </body>
 </html>
