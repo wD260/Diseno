@@ -35,21 +35,20 @@
             background-color: #fd7e14 !important;
             color: white !important;
             font-weight: bold;
-            padding: 12px 24px;
+            padding: 15px 30px; /* Tamaño más grande */
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             flex-shrink: 0;
-            font-size: 16px;
+            font-size: 18px; /* Texto más grande */
             transition: all 0.3s ease;
             margin-left: auto;
-            transform: scale(1); /* Estado normal */
         }
         .historico-btn:hover {
-            transform: scale(1.05); /* Solo se agranda al hacer hover */
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transform: scale(1.08); /* Efecto hover más pronunciado */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
         #map {
             height: 500px;
@@ -87,7 +86,7 @@
                 <p><strong>Hora:</strong> <span id="hora">16:26:44</span></p>
             </div>
             
-            <button class="btn btn-lg historico-btn animate__animated" onclick="abrirHistorico()">
+            <button class="btn historico-btn" onclick="abrirHistorico()">
                 <i class="fa-solid fa-clock-rotate-left"></i> Consulta Histórica
             </button>
         </div>
