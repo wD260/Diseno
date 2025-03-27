@@ -75,12 +75,11 @@
             background-color: #fc8c2d !important;
         }
         #map {
-            height: 500px;
+            height: 65vh;
             width: 100%;
-            border-radius: 12px;
+            border-radius: 0;
             margin-bottom: 20px;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(0, 0, 0, 0.1);
+            border: none;
         }
         h2 {
             color: #2c3e50;
@@ -105,17 +104,14 @@
             background-color: #5a6268;
         }
         .container-fluid {
-            padding: 0 15px;
-            max-width: 1400px;
-            margin: 0 auto;
+            padding: 0;
+            max-width: 100%;
         }
         .map-container {
             position: relative;
-            padding: 15px;
+            width: 100%;
             background-color: rgba(255, 255, 255, 0.8);
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            margin: 20px auto;
+            margin: 20px 0;
         }
         .background-pattern {
             position: fixed;
@@ -127,32 +123,44 @@
             background-size: 20px 20px;
             z-index: -1;
         }
+        .content-wrapper {
+            padding: 0 15px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .button-container {
+            padding: 0 15px;
+            max-width: 1400px;
+            margin: 0 auto 20px;
+        }
     </style>
 </head>
 <body>
     <div class="background-pattern"></div>
     
-    <div class="container-fluid mt-2">
-        <h2 class="fw-bold text-uppercase text-center animate__animated animate__fadeInDown">SEGUIMIENTO GPS EN TIEMPO REAL</h2>
-        
-        <div class="header-container animate__animated animate__fadeIn">
-            <div class="info-container">
-                <p><strong>Latitud:</strong> <span id="lat">10.908</span></p>
-                <p><strong>Longitud:</strong> <span id="lon">-74.7895</span></p>
-                <p><strong>Fecha:</strong> <span id="fecha">2025-03-26</span></p>
-                <p><strong>Hora:</strong> <span id="hora">16:26:44</span></p>
-            </div>
+    <div class="container-fluid">
+        <div class="content-wrapper">
+            <h2 class="fw-bold text-uppercase text-center animate__animated animate__fadeInDown">SEGUIMIENTO GPS EN TIEMPO REAL</h2>
             
-            <button class="btn historico-btn" onclick="abrirHistorico()">
-                <i class="fa-solid fa-clock-rotate-left"></i> Consulta Histórica
-            </button>
+            <div class="header-container animate__animated animate__fadeIn">
+                <div class="info-container">
+                    <p><strong>Latitud:</strong> <span id="lat">10.908</span></p>
+                    <p><strong>Longitud:</strong> <span id="lon">-74.7895</span></p>
+                    <p><strong>Fecha:</strong> <span id="fecha">2025-03-26</span></p>
+                    <p><strong>Hora:</strong> <span id="hora">16:26:44</span></p>
+                </div>
+                
+                <button class="btn historico-btn" onclick="abrirHistorico()">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Consulta Histórica
+                </button>
+            </div>
         </div>
 
         <div class="map-container">
             <div id="map"></div>
         </div>
         
-        <div class="text-center">
+        <div class="button-container text-center">
             <button class="btn btn-lg btn-secondary" onclick="centrarMapa()">
                 <i class="fa-solid fa-location-crosshairs"></i> Centrar en Última Posición
             </button>
@@ -167,10 +175,16 @@
         localStorage.removeItem("gps_route");
         let route = JSON.parse(localStorage.getItem("gps_route")) || [];
         let lastPosition = route.length > 0 ? route[route.length - 1] : null;
+        let currentZoom = 2; // Zoom inicial
 
-        let map = L.map("map").setView([0, 0], 2);
+        let map = L.map("map").setView([0, 0], currentZoom);
         let marker = null;
         let polyline = L.polyline(route, { color: 'blue', weight: 4 }).addTo(map);
+
+        // Guardar el zoom actual cuando el usuario cambia el zoom
+        map.on('zoomend', function() {
+            currentZoom = map.getZoom();
+        });
 
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             attribution: "&copy; OpenStreetMap contributors"
@@ -194,7 +208,8 @@
                 }
 
                 if (!lastPosition || lastPosition[0] !== nuevaLatLng[0] || lastPosition[1] !== nuevaLatLng[1]) {
-                    map.setView(nuevaLatLng, 15);
+                    // Centrar manteniendo el zoom actual
+                    map.setView(nuevaLatLng, currentZoom);
                 }
 
                 route.push(nuevaLatLng);
@@ -207,7 +222,8 @@
 
         function centrarMapa() {
             if (lastPosition) {
-                map.setView(lastPosition, 15);
+                // Centrar manteniendo el zoom actual
+                map.setView(lastPosition, currentZoom);
             }
         }
 
@@ -215,7 +231,8 @@
             actualizarDatos();
             setTimeout(() => {
                 if (lastPosition) {
-                    map.setView(lastPosition, 15);
+                    // Establecer zoom inicial sin forzar cambio
+                    map.setView(lastPosition, currentZoom);
                 }
             }, 1000);
         };
