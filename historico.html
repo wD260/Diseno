@@ -111,6 +111,20 @@
                 let select = document.getElementById(id);
                 minutos.forEach(m => select.appendChild(new Option(m, m)));
             });
+
+            // Establecer fecha actual
+            const hoy = new Date();
+            const fechaFormateada = hoy.toISOString().split('T')[0];
+            document.getElementById("fechaInicio").value = fechaFormateada;
+            document.getElementById("fechaFin").value = fechaFormateada;
+
+            // Establecer hora inicio a 00:00
+            document.getElementById("horaInicio").value = "00";
+            document.getElementById("minutoInicio").value = "00";
+
+            // Establecer hora fin a 23:50
+            document.getElementById("horaFin").value = "23";
+            document.getElementById("minutoFin").value = "50";
         }
 
         function consultarHistorico() {
