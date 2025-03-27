@@ -69,7 +69,9 @@
     </style>
 </head>
 <body>
+
     <h2>Consulta Histórica del GPS</h2>
+
     <div id="formulario">
         <label>Fecha y Hora de Inicio:</label>
         <input type="date" id="fechaInicio">
@@ -88,8 +90,16 @@
     <div id="map"></div>
 
     <script>
+        let map = L.map("map").setView([0, 0], 2);
+        let polyline = L.polyline([], { color: 'blue', weight: 3 }).addTo(map);
+        let markers = [];
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "&copy; OpenStreetMap contributors"
+        }).addTo(map);
+
         function llenarSelectHoras() {
-            let horas = [...Array(12).keys()].map(h => h.toString().padStart(2, '0'));
+            let horas = [...Array(24).keys()].map(h => h.toString().padStart(2, '0'));
             let minutos = ["00", "10", "20", "30", "40", "50"];
             
             ["horaInicio", "horaFin"].forEach(id => {
@@ -104,20 +114,95 @@
         }
 
         function consultarHistorico() {
-            alert("Consulta de historial en proceso...");
+            let fechaInicio = document.getElementById("fechaInicio").value;
+            let horaInicio = document.getElementById("horaInicio").value;
+            let minutoInicio = document.getElementById("minutoInicio").value;
+            let fechaFin = document.getElementById("fechaFin").value;
+            let horaFin = document.getElementById("horaFin").value;
+            let minutoFin = document.getElementById("minutoFin").value;
+
+            if (!fechaInicio || !fechaFin || !horaInicio || !minutoInicio || !horaFin || !minutoFin) {
+                alert("Seleccione fecha y hora correctamente.");
+                return;
+            }
+
+            let inicio = ${fechaInicio} ${horaInicio}:${minutoInicio}:00;
+            let fin = ${fechaFin} ${horaFin}:${minutoFin}:00;
+
+            if (new Date(inicio) >= new Date(fin)) {
+                alert("La fecha y hora de inicio deben ser anteriores a las de fin.");
+                return;
+            }
+
+            fetch(historico.php?inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)})
+            .then(response => response.json())
+            .then(data => {
+                if (!Array.isArray(data) || data.length === 0) {
+                    alert("No hay datos en ese rango de tiempo.");
+                    return;
+                }
+
+                polyline.setLatLngs([]);
+                markers.forEach(m => map.removeLayer(m));
+                markers = [];
+
+                let coordenadas = data.map(p => [parseFloat(p.lat), parseFloat(p.lon)]);
+                polyline.setLatLngs(coordenadas);
+                map.fitBounds(polyline.getBounds());
+
+                if (data.length > 0) {
+                    // Primer y último punto con marcadores diferentes
+                    let inicio = data[0];
+                    let fin = data[data.length - 1];
+
+                    let inicioMarker = L.circleMarker([parseFloat(inicio.lat), parseFloat(inicio.lon)], {
+                        color: "green",
+                        radius: 8
+                    }).addTo(map).bindPopup(<b>Inicio</b><br>Fecha y Hora: ${inicio.fecha} ${inicio.hora}<br>Lat: ${inicio.lat} <br>Lon: ${inicio.lon});
+                    
+                    let finMarker = L.circleMarker([parseFloat(fin.lat), parseFloat(fin.lon)], {
+                        color: "red",
+                        radius: 8
+                    }).addTo(map).bindPopup(<b>Fin</b><br>Fecha y Hora: ${fin.fecha} ${fin.hora}<br>Lat: ${fin.lat} <br>Lon: ${fin.lon});
+
+                    markers.push(inicioMarker, finMarker);
+                }
+                console.log("Puntos intermedios:", data.slice(1, -1));
+
+                // Puntos intermedios visibles solo en zoom alto
+                data.slice(1, -1).forEach(p => {
+                    let marker = L.circleMarker([parseFloat(p.lat), parseFloat(p.lon)], {
+                        color: "blue",
+                        radius: 4
+                    });
+
+                    marker.bindPopup(<b>Fecha y Hora:</b> ${p.fecha} ${p.hora} <br> <b>Lat:</b> ${p.lat} <br> <b>Lon:</b> ${p.lon});
+                    
+                    marker.addTo(map);
+                    markers.push(marker);
+                });
+
+                // Solo mostrar puntos intermedios al hacer zoom
+                map.on("zoomend", () => {
+                    let zoom = map.getZoom();
+                    markers.slice(2).forEach(m => {
+                        if (zoom >= 13) {
+                            m.addTo(map);
+                        } else {
+                            map.removeLayer(m);
+                        }
+                    });
+                });
+            })
+            .catch(error => {
+                console.error("Error al obtener el historial:", error);
+                alert("Ocurrió un error al consultar los datos.");
+            });
         }
 
         function abrirTiempoReal() {
             window.location.href = "/index.html";
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            let today = new Date().toISOString().split("T")[0];
-            document.getElementById("fechaInicio").value = today;
-            document.getElementById("fechaFin").value = today;
-            llenarSelectHoras();
-        });
+        document.addEventListener("DOMContentLoaded", llenarSelectHoras);
     </script>
-</body>
-</html>
-
