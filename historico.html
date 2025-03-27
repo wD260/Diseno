@@ -126,15 +126,15 @@
                 return;
             }
 
-            let inicio = ${fechaInicio} ${horaInicio}:${minutoInicio}:00;
-            let fin = ${fechaFin} ${horaFin}:${minutoFin}:00;
+            let inicio = `${fechaInicio} ${horaInicio}:${minutoInicio}:00`;
+            let fin = `${fechaFin} ${horaFin}:${minutoFin}:00`;
 
             if (new Date(inicio) >= new Date(fin)) {
                 alert("La fecha y hora de inicio deben ser anteriores a las de fin.");
                 return;
             }
 
-            fetch(historico.php?inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)})
+            fetch(`historico.php?inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}`)
             .then(response => response.json())
             .then(data => {
                 if (!Array.isArray(data) || data.length === 0) {
@@ -158,12 +158,12 @@
                     let inicioMarker = L.circleMarker([parseFloat(inicio.lat), parseFloat(inicio.lon)], {
                         color: "green",
                         radius: 8
-                    }).addTo(map).bindPopup(<b>Inicio</b><br>Fecha y Hora: ${inicio.fecha} ${inicio.hora}<br>Lat: ${inicio.lat} <br>Lon: ${inicio.lon});
+                    }).addTo(map).bindPopup(`<b>Inicio</b><br>Fecha y Hora: ${inicio.fecha} ${inicio.hora}<br>Lat: ${inicio.lat} <br>Lon: ${inicio.lon}`);
                     
                     let finMarker = L.circleMarker([parseFloat(fin.lat), parseFloat(fin.lon)], {
                         color: "red",
                         radius: 8
-                    }).addTo(map).bindPopup(<b>Fin</b><br>Fecha y Hora: ${fin.fecha} ${fin.hora}<br>Lat: ${fin.lat} <br>Lon: ${fin.lon});
+                    }).addTo(map).bindPopup(`<b>Fin</b><br>Fecha y Hora: ${fin.fecha} ${fin.hora}<br>Lat: ${fin.lat} <br>Lon: ${fin.lon}`);
 
                     markers.push(inicioMarker, finMarker);
                 }
@@ -176,7 +176,7 @@
                         radius: 4
                     });
 
-                    marker.bindPopup(<b>Fecha y Hora:</b> ${p.fecha} ${p.hora} <br> <b>Lat:</b> ${p.lat} <br> <b>Lon:</b> ${p.lon});
+                    marker.bindPopup(`<b>Fecha y Hora:</b> ${p.fecha} ${p.hora} <br> <b>Lat:</b> ${p.lat} <br> <b>Lon:</b> ${p.lon}`);
                     
                     marker.addTo(map);
                     markers.push(marker);
@@ -205,5 +205,7 @@
         }
 
         document.addEventListener("DOMContentLoaded", llenarSelectHoras);
-        
     </script>
+
+</body>
+</html>
