@@ -75,11 +75,12 @@
             background-color: #fc8c2d !important;
         }
         #map {
-            height: 65vh;
+            height: 500px;
             width: 100%;
-            border-radius: 0;
+            border-radius: 12px;
             margin-bottom: 20px;
-            border: none;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(0, 0, 0, 0.1);
         }
         h2 {
             color: #2c3e50;
@@ -104,14 +105,17 @@
             background-color: #5a6268;
         }
         .container-fluid {
-            padding: 0;
-            max-width: 100%;
+            padding: 0 15px;
+            max-width: 1400px;
+            margin: 0 auto;
         }
         .map-container {
             position: relative;
-            width: 100%;
+            padding: 15px;
             background-color: rgba(255, 255, 255, 0.8);
-            margin: 20px 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
         }
         .background-pattern {
             position: fixed;
@@ -123,44 +127,32 @@
             background-size: 20px 20px;
             z-index: -1;
         }
-        .content-wrapper {
-            padding: 0 15px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        .button-container {
-            padding: 0 15px;
-            max-width: 1400px;
-            margin: 0 auto 20px;
-        }
     </style>
 </head>
 <body>
     <div class="background-pattern"></div>
     
-    <div class="container-fluid">
-        <div class="content-wrapper">
-            <h2 class="fw-bold text-uppercase text-center animate__animated animate__fadeInDown">SEGUIMIENTO GPS EN TIEMPO REAL</h2>
-            
-            <div class="header-container animate__animated animate__fadeIn">
-                <div class="info-container">
-                    <p><strong>Latitud:</strong> <span id="lat">10.908</span></p>
-                    <p><strong>Longitud:</strong> <span id="lon">-74.7895</span></p>
-                    <p><strong>Fecha:</strong> <span id="fecha">2025-03-26</span></p>
-                    <p><strong>Hora:</strong> <span id="hora">16:26:44</span></p>
-                </div>
-                
-                <button class="btn historico-btn" onclick="abrirHistorico()">
-                    <i class="fa-solid fa-clock-rotate-left"></i> Consulta Histórica
-                </button>
+    <div class="container-fluid mt-2">
+        <h2 class="fw-bold text-uppercase text-center animate__animated animate__fadeInDown">SEGUIMIENTO GPS EN TIEMPO REAL</h2>
+        
+        <div class="header-container animate__animated animate__fadeIn">
+            <div class="info-container">
+                <p><strong>Latitud:</strong> <span id="lat">10.908</span></p>
+                <p><strong>Longitud:</strong> <span id="lon">-74.7895</span></p>
+                <p><strong>Fecha:</strong> <span id="fecha">2025-03-26</span></p>
+                <p><strong>Hora:</strong> <span id="hora">16:26:44</span></p>
             </div>
+            
+            <button class="btn historico-btn" onclick="abrirHistorico()">
+                <i class="fa-solid fa-clock-rotate-left"></i> Consulta Histórica
+            </button>
         </div>
 
         <div class="map-container">
             <div id="map"></div>
         </div>
         
-        <div class="button-container text-center">
+        <div class="text-center">
             <button class="btn btn-lg btn-secondary" onclick="centrarMapa()">
                 <i class="fa-solid fa-location-crosshairs"></i> Centrar en Última Posición
             </button>
