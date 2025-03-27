@@ -44,10 +44,11 @@
             flex-shrink: 0;
             font-size: 16px;
             transition: all 0.3s ease;
-            margin-left: auto; /* Empuja el botón a la derecha */
+            margin-left: auto;
+            transform: scale(1); /* Estado normal */
         }
         .historico-btn:hover {
-            transform: scale(1.05);
+            transform: scale(1.05); /* Solo se agranda al hacer hover */
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
         #map {
@@ -67,14 +68,10 @@
             color: white;
             font-weight: bold;
             padding: 12px 24px;
+            transition: all 0.3s ease;
         }
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+        .btn-secondary:hover {
+            transform: scale(1.05);
         }
     </style>
 </head>
@@ -90,7 +87,7 @@
                 <p><strong>Hora:</strong> <span id="hora">16:26:44</span></p>
             </div>
             
-            <button class="btn btn-lg historico-btn pulse animate__animated animate__heartBeat" onclick="abrirHistorico()">
+            <button class="btn btn-lg historico-btn animate__animated" onclick="abrirHistorico()">
                 <i class="fa-solid fa-clock-rotate-left"></i> Consulta Histórica
             </button>
         </div>
