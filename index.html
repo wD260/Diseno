@@ -175,7 +175,8 @@
         localStorage.removeItem("gps_route");
         let route = JSON.parse(localStorage.getItem("gps_route")) || [];
         let lastPosition = route.length > 0 ? route[route.length - 1] : null;
-        let currentZoom = 2; // Zoom inicial
+        let currentZoom = 15; // Zoom inicial de 15 como solicitaste
+        let isFirstLoad = true; // Bandera para primer carga
 
         let map = L.map("map").setView([0, 0], currentZoom);
         let marker = null;
@@ -184,6 +185,7 @@
         // Guardar el zoom actual cuando el usuario cambia el zoom
         map.on('zoomend', function() {
             currentZoom = map.getZoom();
+            isFirstLoad = false; // Cuando el usuario cambia el zoom, ya no es la primera carga
         });
 
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -231,8 +233,9 @@
             actualizarDatos();
             setTimeout(() => {
                 if (lastPosition) {
-                    // Establecer zoom inicial sin forzar cambio
-                    map.setView(lastPosition, currentZoom);
+                    // En la primera carga usamos zoom 15, luego respetamos el zoom del usuario
+                    const zoomToUse = isFirstLoad ? 15 : currentZoom;
+                    map.setView(lastPosition, zoomToUse);
                 }
             }, 1000);
         };
