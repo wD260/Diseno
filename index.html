@@ -12,27 +12,27 @@
     <style>
         .header-container {
             display: flex;
+            justify-content: space-between;
             align-items: center;
             background-color: white;
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 20px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            gap: 20px;
             overflow-x: auto;
-            white-space: nowrap;
         }
         .info-container {
             display: flex;
             align-items: center;
             gap: 25px;
-            flex-grow: 1;
+            flex-wrap: nowrap;
+            white-space: nowrap;
         }
         .info-container p {
             margin: 0;
         }
         .historico-btn {
-            background-color: #fd7e14 !important; /* Color naranja */
+            background-color: #fd7e14 !important;
             color: white !important;
             font-weight: bold;
             padding: 12px 24px;
@@ -44,6 +44,7 @@
             flex-shrink: 0;
             font-size: 16px;
             transition: all 0.3s ease;
+            margin-left: auto; /* Empuja el botón a la derecha */
         }
         .historico-btn:hover {
             transform: scale(1.05);
@@ -82,10 +83,12 @@
         <h2 class="fw-bold text-uppercase text-center animate__animated animate__fadeInDown">SEGUIMIENTO GPS EN TIEMPO REAL</h2>
         
         <div class="header-container animate__animated animate__fadeIn">
-            <p><strong>Latitud:</strong> <span id="lat">10.908</span></p>
-            <p><strong>Longitud:</strong> <span id="lon">-74.7895</span></p>
-            <p><strong>Fecha:</strong> <span id="fecha">2025-03-26</span></p>
-            <p><strong>Hora:</strong> <span id="hora">16:26:44</span></p>
+            <div class="info-container">
+                <p><strong>Latitud:</strong> <span id="lat">10.908</span></p>
+                <p><strong>Longitud:</strong> <span id="lon">-74.7895</span></p>
+                <p><strong>Fecha:</strong> <span id="fecha">2025-03-26</span></p>
+                <p><strong>Hora:</strong> <span id="hora">16:26:44</span></p>
+            </div>
             
             <button class="btn btn-lg historico-btn pulse animate__animated animate__heartBeat" onclick="abrirHistorico()">
                 <i class="fa-solid fa-clock-rotate-left"></i> Consulta Histórica
