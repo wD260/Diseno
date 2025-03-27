@@ -88,10 +88,26 @@
     <div id="map"></div>
 
     <script>
+        function llenarSelectHoras() {
+            let horas = [...Array(12).keys()].map(h => h.toString().padStart(2, '0'));
+            let minutos = ["00", "10", "20", "30", "40", "50"];
+            
+            ["horaInicio", "horaFin"].forEach(id => {
+                let select = document.getElementById(id);
+                horas.forEach(h => select.appendChild(new Option(h, h)));
+            });
+            
+            ["minutoInicio", "minutoFin"].forEach(id => {
+                let select = document.getElementById(id);
+                minutos.forEach(m => select.appendChild(new Option(m, m)));
+            });
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             let today = new Date().toISOString().split("T")[0];
             document.getElementById("fechaInicio").value = today;
             document.getElementById("fechaFin").value = today;
+            llenarSelectHoras();
         });
     </script>
 </body>
