@@ -10,16 +10,26 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
         .header-container {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: white;
+            background-color: rgba(255, 255, 255, 0.95);
             padding: 15px;
-            border-radius: 8px;
             margin-bottom: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            overflow-x: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 10;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
         .info-container {
             display: flex;
@@ -27,40 +37,58 @@
             gap: 25px;
             flex-wrap: nowrap;
             white-space: nowrap;
+            flex-grow: 1;
+            overflow-x: auto;
+            padding-right: 20px;
         }
         .info-container p {
             margin: 0;
+            font-size: 16px;
+            color: #333;
+            background-color: rgba(245, 245, 245, 0.7);
+            padding: 8px 12px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .info-container p span {
+            font-weight: 600;
+            color: #2c3e50;
         }
         .historico-btn {
             background-color: #fd7e14 !important;
             color: white !important;
             font-weight: bold;
-            padding: 15px 30px; /* Tamaño más grande */
+            padding: 15px 30px;
             border: none;
             border-radius: 8px;
             display: flex;
             align-items: center;
             gap: 12px;
             flex-shrink: 0;
-            font-size: 18px; /* Texto más grande */
+            font-size: 18px;
             transition: all 0.3s ease;
-            margin-left: auto;
+            box-shadow: 0 4px 8px rgba(253, 126, 20, 0.3);
         }
         .historico-btn:hover {
-            transform: scale(1.08); /* Efecto hover más pronunciado */
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transform: scale(1.08);
+            box-shadow: 0 6px 15px rgba(253, 126, 20, 0.4);
+            background-color: #fc8c2d !important;
         }
         #map {
-            height: 500px;
+            height: 65vh;
             width: 100%;
-            border-radius: 8px;
+            border-radius: 0;
             margin-bottom: 20px;
+            border: none;
         }
         h2 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 24px;
+            color: #2c3e50;
+            margin: 20px 0;
+            font-size: 28px;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            padding: 0 15px;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
         .btn-secondary {
             background-color: #6c757d;
@@ -68,32 +96,71 @@
             font-weight: bold;
             padding: 12px 24px;
             transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
         }
         .btn-secondary:hover {
             transform: scale(1.05);
+            background-color: #5a6268;
+        }
+        .container-fluid {
+            padding: 0;
+            max-width: 100%;
+        }
+        .map-container {
+            position: relative;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            margin: 20px 0;
+        }
+        .background-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: -1;
+        }
+        .content-wrapper {
+            padding: 0 15px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .button-container {
+            padding: 0 15px;
+            max-width: 1400px;
+            margin: 0 auto 20px;
         }
     </style>
 </head>
 <body>
-    <div class="container mt-2">
-        <h2 class="fw-bold text-uppercase text-center animate__animated animate__fadeInDown">SEGUIMIENTO GPS EN TIEMPO REAL</h2>
-        
-        <div class="header-container animate__animated animate__fadeIn">
-            <div class="info-container">
-                <p><strong>Latitud:</strong> <span id="lat">10.908</span></p>
-                <p><strong>Longitud:</strong> <span id="lon">-74.7895</span></p>
-                <p><strong>Fecha:</strong> <span id="fecha">2025-03-26</span></p>
-                <p><strong>Hora:</strong> <span id="hora">16:26:44</span></p>
-            </div>
+    <div class="background-pattern"></div>
+    
+    <div class="container-fluid">
+        <div class="content-wrapper">
+            <h2 class="fw-bold text-uppercase text-center animate__animated animate__fadeInDown">SEGUIMIENTO GPS EN TIEMPO REAL</h2>
             
-            <button class="btn historico-btn" onclick="abrirHistorico()">
-                <i class="fa-solid fa-clock-rotate-left"></i> Consulta Histórica
-            </button>
+            <div class="header-container animate__animated animate__fadeIn">
+                <div class="info-container">
+                    <p><strong>Latitud:</strong> <span id="lat">10.908</span></p>
+                    <p><strong>Longitud:</strong> <span id="lon">-74.7895</span></p>
+                    <p><strong>Fecha:</strong> <span id="fecha">2025-03-26</span></p>
+                    <p><strong>Hora:</strong> <span id="hora">16:26:44</span></p>
+                </div>
+                
+                <button class="btn historico-btn" onclick="abrirHistorico()">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Consulta Histórica
+                </button>
+            </div>
         </div>
 
-        <div id="map"></div>
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
         
-        <div class="text-center">
+        <div class="button-container text-center">
             <button class="btn btn-lg btn-secondary" onclick="centrarMapa()">
                 <i class="fa-solid fa-location-crosshairs"></i> Centrar en Última Posición
             </button>
