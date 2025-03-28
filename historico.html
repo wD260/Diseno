@@ -111,6 +111,24 @@
                 let select = document.getElementById(id);
                 minutos.forEach(m => select.appendChild(new Option(m, m)));
             });
+
+            // Obtener fecha local correcta (formato YYYY-MM-DD)
+            const hoy = new Date();
+            const año = hoy.getFullYear();
+            const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+            const dia = String(hoy.getDate()).padStart(2, '0');
+            const fechaFormateada = `${año}-${mes}-${dia}`;
+            
+            document.getElementById("fechaInicio").value = fechaFormateada;
+            document.getElementById("fechaFin").value = fechaFormateada;
+
+            // Establecer hora inicio a 00:00
+            document.getElementById("horaInicio").value = "00";
+            document.getElementById("minutoInicio").value = "00";
+
+            // Establecer hora fin a 23:50
+            document.getElementById("horaFin").value = "23";
+            document.getElementById("minutoFin").value = "50";
         }
 
         function consultarHistorico() {
@@ -167,7 +185,6 @@
 
                     markers.push(inicioMarker, finMarker);
                 }
-                console.log("Puntos intermedios:", data.slice(1, -1));
 
                 // Puntos intermedios visibles solo en zoom alto
                 data.slice(1, -1).forEach(p => {
@@ -206,6 +223,5 @@
 
         document.addEventListener("DOMContentLoaded", llenarSelectHoras);
     </script>
-
 </body>
 </html>
