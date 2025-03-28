@@ -5,89 +5,210 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Historial GPS</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <style>
         body {
-            font-family: "Arial", sans-serif;
-            background-color: #e9ecef;
-            text-align: center;
             margin: 0;
             padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
-        h2 {
-            margin-top: 15px;
-            font-size: 22px;
-        }
-
-        #formulario {
-            margin: 15px auto;
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.95);
             padding: 10px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 10;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        .form-container {
             display: flex;
             flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 10;
+            border-radius: 8px;
             justify-content: center;
-            gap: 10px;
         }
-
-        input, button, select {
-            padding: 8px;
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .form-group label {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
             font-size: 14px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
         }
-
-        #map {
-            width: 90%;
-            height: 500px;
-            margin: 15px auto;
-            border-radius: 15px;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        .form-input {
+            background-color: rgba(245, 245, 245, 0.7);
+            padding: 8px 12px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: 15px;
+            color: #333;
         }
-
-        .btn {
-            background-color: #007bff;
-            color: white;
-            cursor: pointer;
+        .tiempo-real-btn {
+            background-color: #6c757d !important;
+            color: white !important;
+            font-weight: bold;
+            padding: 10px 20px;
             border: none;
-            transition: 0.3s;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
         }
-
-        .btn:hover {
-            background-color: #0056b3;
+        .tiempo-real-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
+            background-color: #5a6268 !important;
         }
-
-        .btn-secondary {
-            background-color: #6c757d;
+        .consultar-btn {
+            background-color: #fd7e14 !important;
+            color: white !important;
+            font-weight: bold;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(253, 126, 20, 0.3);
         }
-
-        .btn-secondary:hover {
-            background-color: #545b62;
+        .consultar-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(253, 126, 20, 0.4);
+            background-color: #fc8c2d !important;
+        }
+        #map {
+            height: 75vh;
+            width: 100%;
+            border-radius: 0;
+            margin-bottom: 0;
+            border: none;
+        }
+        h2 {
+            color: #2c3e50;
+            margin: 10px 0;
+            font-size: 24px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            padding: 0 15px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .container-fluid {
+            padding: 0;
+            max-width: 100%;
+        }
+        .map-container {
+            position: relative;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            margin: 0;
+        }
+        .background-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: -1;
+        }
+        .content-wrapper {
+            padding: 0 15px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .button-container {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        .datetime-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .datetime-input {
+            display: flex;
+            gap: 5px;
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
         }
     </style>
 </head>
 <body>
+    <div class="background-pattern"></div>
+    
+    <div class="container-fluid">
+        <div class="content-wrapper">
+            <h2 class="fw-bold text-uppercase text-center animate__animated animate__fadeInDown">CONSULTA HISTÓRICA GPS</h2>
+            
+            <div class="form-container animate__animated animate__fadeIn">
+                <div class="form-group">
+                    <label>Fecha y Hora de Inicio:</label>
+                    <div class="datetime-input">
+                        <input type="datetime-local" id="fechaHoraInicio" class="form-input">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Fecha y Hora de Fin:</label>
+                    <div class="datetime-input">
+                        <input type="datetime-local" id="fechaHoraFin" class="form-input">
+                    </div>
+                </div>
+                
+                <div class="button-container">
+                    <button class="consultar-btn" onclick="consultarHistorico()">
+                        <i class="fa-solid fa-search"></i> Consultar
+                    </button>
+                    <button class="tiempo-real-btn" onclick="abrirTiempoReal()">
+                        <i class="fa-solid fa-clock"></i> Tiempo Real
+                    </button>
+                </div>
+            </div>
+            <div id="errorMessage" class="error-message"></div>
+        </div>
 
-    <h2>Consulta Histórica del GPS</h2>
-
-    <div id="formulario">
-        <label>Fecha y Hora de Inicio:</label>
-        <input type="date" id="fechaInicio">
-        <select id="horaInicio"></select>
-        <select id="minutoInicio"></select>
-        
-        <label>Fecha y Hora de Fin:</label>
-        <input type="date" id="fechaFin">
-        <select id="horaFin"></select>
-        <select id="minutoFin"></select>
-
-        <button class="btn" onclick="consultarHistorico()">Consultar</button>
-        <button class="btn btn-secondary" onclick="abrirTiempoReal()">Consulta en tiempo real</button>
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
     </div>
-
-    <div id="map"></div>
 
     <script>
         let map = L.map("map").setView([0, 0], 2);
@@ -98,68 +219,94 @@
             attribution: "&copy; OpenStreetMap contributors"
         }).addTo(map);
 
-        function llenarSelectHoras() {
-            let horas = [...Array(24).keys()].map(h => h.toString().padStart(2, '0'));
-            let minutos = ["00", "10", "20", "30", "40", "50"];
-            
-            ["horaInicio", "horaFin"].forEach(id => {
-                let select = document.getElementById(id);
-                horas.forEach(h => select.appendChild(new Option(h, h)));
-            });
-            
-            ["minutoInicio", "minutoFin"].forEach(id => {
-                let select = document.getElementById(id);
-                minutos.forEach(m => select.appendChild(new Option(m, m)));
-            });
-
-            // Obtener fecha local correcta (formato YYYY-MM-DD)
+        function initializeDatetimes() {
+            // Obtener fecha local correcta
             const hoy = new Date();
-            const año = hoy.getFullYear();
-            const mes = String(hoy.getMonth() + 1).padStart(2, '0');
-            const dia = String(hoy.getDate()).padStart(2, '0');
-            const fechaFormateada = `${año}-${mes}-${dia}`;
             
-            document.getElementById("fechaInicio").value = fechaFormateada;
-            document.getElementById("fechaFin").value = fechaFormateada;
-
-            // Establecer hora inicio a 00:00
-            document.getElementById("horaInicio").value = "00";
-            document.getElementById("minutoInicio").value = "00";
-
-            // Establecer hora fin a 23:50
-            document.getElementById("horaFin").value = "23";
-            document.getElementById("minutoFin").value = "50";
+            // Establecer fecha y hora de inicio (hoy a las 00:00)
+            const inicioDate = new Date(hoy);
+            inicioDate.setHours(0, 0, 0, 0);
+            
+            // Establecer fecha y hora de fin (hoy a las 23:59)
+            const finDate = new Date(hoy);
+            finDate.setHours(23, 59, 0, 0);
+            
+            // Convertir a formato datetime-local
+            const formatDateTime = (date) => {
+                return date.toISOString().slice(0, 16);
+            };
+            
+            document.getElementById("fechaHoraInicio").value = formatDateTime(inicioDate);
+            document.getElementById("fechaHoraFin").value = formatDateTime(finDate);
+            
+            // Añadir validación en cambio de fechas
+            document.getElementById("fechaHoraInicio").addEventListener("change", validarFechas);
+            document.getElementById("fechaHoraFin").addEventListener("change", validarFechas);
+        }
+        
+        function validarFechas() {
+            const fechaHoraInicio = document.getElementById("fechaHoraInicio").value;
+            const fechaHoraFin = document.getElementById("fechaHoraFin").value;
+            const errorMessage = document.getElementById("errorMessage");
+            
+            if (fechaHoraInicio && fechaHoraFin) {
+                const inicioDate = new Date(fechaHoraInicio);
+                const finDate = new Date(fechaHoraFin);
+                
+                if (inicioDate >= finDate) {
+                    errorMessage.textContent = "La fecha y hora de inicio deben ser anteriores a las de fin.";
+                    errorMessage.style.display = "block";
+                    document.getElementById("fechaHoraFin").value = "";
+                    return false;
+                } else {
+                    errorMessage.style.display = "none";
+                    return true;
+                }
+            }
+            return true;
         }
 
         function consultarHistorico() {
-            let fechaInicio = document.getElementById("fechaInicio").value;
-            let horaInicio = document.getElementById("horaInicio").value;
-            let minutoInicio = document.getElementById("minutoInicio").value;
-            let fechaFin = document.getElementById("fechaFin").value;
-            let horaFin = document.getElementById("horaFin").value;
-            let minutoFin = document.getElementById("minutoFin").value;
+            let fechaHoraInicio = document.getElementById("fechaHoraInicio").value;
+            let fechaHoraFin = document.getElementById("fechaHoraFin").value;
+            const errorMessage = document.getElementById("errorMessage");
 
-            if (!fechaInicio || !fechaFin || !horaInicio || !minutoInicio || !horaFin || !minutoFin) {
-                alert("Seleccione fecha y hora correctamente.");
+            if (!fechaHoraInicio || !fechaHoraFin) {
+                errorMessage.textContent = "Seleccione fecha y hora correctamente.";
+                errorMessage.style.display = "block";
                 return;
             }
 
-            let inicio = `${fechaInicio} ${horaInicio}:${minutoInicio}:00`;
-            let fin = `${fechaFin} ${horaFin}:${minutoFin}:00`;
-
-            if (new Date(inicio) >= new Date(fin)) {
-                alert("La fecha y hora de inicio deben ser anteriores a las de fin.");
+            if (!validarFechas()) {
                 return;
             }
+
+            // Formatear para backend
+            const inicioDate = new Date(fechaHoraInicio);
+            const finDate = new Date(fechaHoraFin);
+            
+            const formatForBackend = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${year}-${month}-${day} ${hours}:${minutes}:00`;
+            };
+            
+            const inicio = formatForBackend(inicioDate);
+            const fin = formatForBackend(finDate);
 
             fetch(`historico.php?inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}`)
             .then(response => response.json())
             .then(data => {
                 if (!Array.isArray(data) || data.length === 0) {
-                    alert("No hay datos en ese rango de tiempo.");
+                    errorMessage.textContent = "No hay datos en ese rango de tiempo.";
+                    errorMessage.style.display = "block";
                     return;
                 }
 
+                errorMessage.style.display = "none";
                 polyline.setLatLngs([]);
                 markers.forEach(m => map.removeLayer(m));
                 markers = [];
@@ -213,7 +360,8 @@
             })
             .catch(error => {
                 console.error("Error al obtener el historial:", error);
-                alert("Ocurrió un error al consultar los datos.");
+                errorMessage.textContent = "Ocurrió un error al consultar los datos.";
+                errorMessage.style.display = "block";
             });
         }
 
@@ -221,7 +369,7 @@
             window.location.href = "/index.html";
         }
 
-        document.addEventListener("DOMContentLoaded", llenarSelectHoras);
+        document.addEventListener("DOMContentLoaded", initializeDatetimes);
     </script>
 </body>
 </html>
