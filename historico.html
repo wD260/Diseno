@@ -220,34 +220,34 @@
         }).addTo(map);
 
         function initializeDatetimes() {
-    // Obtener fecha local correcta
-    const hoy = new Date();
+            // Obtener fecha local correcta
+            const hoy = new Date();
     
-    // Establecer fecha y hora de inicio (hoy a las 00:00)
-    const inicioDate = new Date(hoy);
-    inicioDate.setHours(0, 0, 0, 0);
+            // Establecer fecha y hora de inicio (hoy a las 00:00)
+            const inicioDate = new Date(hoy);
+            inicioDate.setHours(0, 0, 0, 0);
     
-    // Establecer fecha y hora de fin (hoy a las 23:59)
-    const finDate = new Date(hoy);
-    finDate.setHours(23, 59, 0, 0);
+            // Establecer fecha y hora de fin (hoy a las 23:59)
+            const finDate = new Date(hoy);
+            finDate.setHours(23, 59, 0, 0);
     
-    // Formatear para datetime-local en zona horaria local
-    const formatDateTimeLocal = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-    };
+            // Formatear para datetime-local en zona horaria local
+            const formatDateTimeLocal = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+            };
     
-    document.getElementById("fechaHoraInicio").value = formatDateTimeLocal(inicioDate);
-    document.getElementById("fechaHoraFin").value = formatDateTimeLocal(finDate);
+        document.getElementById("fechaHoraInicio").value = formatDateTimeLocal(inicioDate);
+        document.getElementById("fechaHoraFin").value = formatDateTimeLocal(finDate);
     
-    // Añadir validación en cambio de fechas
-    document.getElementById("fechaHoraInicio").addEventListener("change", validarFechas);
-    document.getElementById("fechaHoraFin").addEventListener("change", validarFechas);
-}
+        // Añadir validación en cambio de fechas
+        document.getElementById("fechaHoraInicio").addEventListener("change", validarFechas);
+        document.getElementById("fechaHoraFin").addEventListener("change", validarFechas);
+        }
         
         function validarFechas() {
             const fechaHoraInicio = document.getElementById("fechaHoraInicio").value;
