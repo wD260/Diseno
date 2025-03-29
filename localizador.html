@@ -34,9 +34,9 @@
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
             background-color: rgba(255, 255, 255, 0.95);
-            padding: 12px 15px;
+            padding: 18px 20px;
             margin-bottom: 10px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             width: 100%;
@@ -50,28 +50,36 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start;
+            margin-bottom: 5px;
         }
         .form-group label {
             font-weight: 600;
             color: #2c3e50;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-size: 14px;
         }
         .form-input {
             background-color: rgba(245, 245, 245, 0.7);
-            padding: 8px 12px;
+            padding: 10px 14px;
             border-radius: 6px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             border: 1px solid rgba(0, 0, 0, 0.1);
             font-size: 15px;
             color: #333;
-            width: 150px;
+            width: 170px;
+            transition: all 0.2s ease;
+        }
+        .form-input:focus {
+            background-color: #fff;
+            border-color: #fd7e14;
+            box-shadow: 0 0 0 3px rgba(253, 126, 20, 0.2);
+            outline: none;
         }
         .tiempo-real-btn {
             background-color: #6c757d !important;
             color: white !important;
             font-weight: bold;
-            padding: 10px 20px;
+            padding: 12px 20px;
             border: none;
             border-radius: 8px;
             display: flex;
@@ -81,6 +89,7 @@
             font-size: 16px;
             transition: all 0.3s ease;
             box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+            height: 45px;
         }
         .tiempo-real-btn:hover {
             transform: scale(1.05);
@@ -91,7 +100,7 @@
             background-color: #fd7e14 !important;
             color: white !important;
             font-weight: bold;
-            padding: 10px 20px;
+            padding: 12px 20px;
             border: none;
             border-radius: 8px;
             display: flex;
@@ -101,6 +110,7 @@
             font-size: 16px;
             transition: all 0.3s ease;
             box-shadow: 0 4px 8px rgba(253, 126, 20, 0.3);
+            height: 45px;
         }
         .consultar-btn:hover {
             transform: scale(1.05);
@@ -111,7 +121,7 @@
             background-color: #20c997 !important;
             color: white !important;
             font-weight: bold;
-            padding: 10px 20px;
+            padding: 12px 20px;
             border: none;
             border-radius: 8px;
             display: flex;
@@ -121,11 +131,35 @@
             font-size: 16px;
             transition: all 0.3s ease;
             box-shadow: 0 4px 8px rgba(32, 201, 151, 0.3);
+            height: 45px;
         }
         .historico-btn:hover {
             transform: scale(1.05);
             box-shadow: 0 6px 15px rgba(32, 201, 151, 0.4);
             background-color: #1cb386 !important;
+        }
+        .reiniciar-btn {
+            background-color: #dc3545 !important;
+            color: white !important;
+            font-weight: bold;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .reiniciar-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(220, 53, 69, 0.4);
+            background-color: #c82333 !important;
         }
         #map {
             height: 75vh;
@@ -133,15 +167,18 @@
             border-radius: 0;
             margin-bottom: 0;
             border: none;
+            position: relative;
+            z-index: 1;
         }
         h2 {
             color: #2c3e50;
-            margin: 10px 0;
-            font-size: 24px;
+            margin: 15px 0;
+            font-size: 26px;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
             padding: 0 15px;
             font-weight: 700;
             letter-spacing: 1px;
+            text-align: center;
         }
         .container-fluid {
             padding: 0;
@@ -167,11 +204,13 @@
             padding: 0 15px;
             max-width: 1400px;
             margin: 0 auto;
+            position: relative;
         }
         .button-container {
             display: flex;
-            gap: 12px;
+            gap: 16px;
             justify-content: center;
+            margin-top: 8px;
         }
         .datetime-container {
             display: flex;
@@ -185,23 +224,28 @@
         .error-message {
             color: #dc3545;
             font-size: 14px;
-            margin-top: 5px;
+            margin-top: 8px;
             text-align: center;
             font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 4px;
+            background-color: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.2);
             display: none;
         }
         .results-container {
             background-color: rgba(255, 255, 255, 0.95);
-            padding: 15px;
-            margin-top: 15px;
+            padding: 20px;
+            margin-top: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             display: none;
+            position: relative;
         }
         .results-container h3 {
             color: #2c3e50;
-            font-size: 18px;
-            margin-bottom: 10px;
+            font-size: 20px;
+            margin-bottom: 15px;
             font-weight: 600;
         }
         .results-table {
@@ -210,7 +254,7 @@
         }
         .results-table th, 
         .results-table td {
-            padding: 8px 10px;
+            padding: 10px 12px;
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
         }
@@ -218,6 +262,8 @@
             background-color: #f8f9fa;
             font-weight: 600;
             color: #495057;
+            position: sticky;
+            top: 0;
         }
         .results-table tr:hover {
             background-color: #f1f3f5;
@@ -226,8 +272,9 @@
             color: #6c757d;
             font-size: 14px;
             text-align: center;
-            margin-top: 5px;
+            margin-top: 10px;
             font-style: italic;
+            padding: 0 20px;
         }
         #radio-container {
             display: flex;
@@ -235,8 +282,42 @@
             gap: 5px;
         }
         #radioBusqueda {
-            width: 60px;
+            width: 80px;
             text-align: center;
+        }
+        #resultsTableContainer {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+        .btn-ver {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-ver:hover {
+            background-color: #0069d9;
+        }
+        @media (max-width: 768px) {
+            .form-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .form-input {
+                width: 100%;
+            }
+            .button-container {
+                flex-direction: column;
+            }
+            h2 {
+                font-size: 22px;
+            }
         }
     </style>
 </head>
@@ -287,6 +368,9 @@
 
         <div class="map-container">
             <div id="map"></div>
+            <button id="reiniciarBtn" class="reiniciar-btn" style="display: none;" onclick="reiniciarBusqueda()">
+                <i class="fa-solid fa-rotate"></i> Nueva Búsqueda
+            </button>
         </div>
 
         <div class="content-wrapper">
@@ -479,16 +563,19 @@
                     errorMessage.textContent = "No se encontraron registros de paso por este punto en el período seleccionado.";
                     errorMessage.style.display = "block";
                     document.getElementById("resultsContainer").style.display = "none";
+                    document.getElementById("reiniciarBtn").style.display = "block";
                     return;
                 }
 
                 errorMessage.style.display = "none";
                 mostrarResultados(data);
+                document.getElementById("reiniciarBtn").style.display = "block";
             })
             .catch(error => {
                 console.error("Error al obtener los registros:", error);
                 errorMessage.textContent = "Ocurrió un error al consultar los datos.";
                 errorMessage.style.display = "block";
+                document.getElementById("reiniciarBtn").style.display = "block";
             });
 
             // Para fines de demostración, simular datos
@@ -521,6 +608,7 @@
                 }
             ];
             mostrarResultados(datosSimulados);
+            document.getElementById("reiniciarBtn").style.display = "block";
         }
 
         function mostrarResultados(datos) {
@@ -540,7 +628,7 @@
                     <td>${registro.distancia.toFixed(1)}</td>
                     <td>${registro.lat}</td>
                     <td>${registro.lon}</td>
-                    <td><button class="btn btn-sm btn-primary" onclick="mostrarEnMapa(${registro.lat}, ${registro.lon}, '${registro.fecha} ${registro.hora}')">Ver</button></td>
+                    <td><button class="btn-ver" onclick="mostrarEnMapa(${registro.lat}, ${registro.lon}, '${registro.fecha} ${registro.hora}')">Ver</button></td>
                 `;
                 
                 resultsTableBody.appendChild(row);
@@ -580,6 +668,38 @@
                     m.openPopup();
                 }
             });
+        }
+
+        function reiniciarBusqueda() {
+            // Limpiar marcadores y círculo
+            if (marcadorPunto) {
+                map.removeLayer(marcadorPunto);
+                marcadorPunto = null;
+            }
+            
+            if (circuloRadio) {
+                map.removeLayer(circuloRadio);
+                circuloRadio = null;
+            }
+            
+            // Limpiar marcadores de resultados
+            marcadoresResultado.forEach(m => map.removeLayer(m));
+            marcadoresResultado = [];
+            
+            // Resetear punto seleccionado
+            puntoSeleccionado = null;
+            
+            // Ocultar resultados y botón de reinicio
+            document.getElementById("resultsContainer").style.display = "none";
+            document.getElementById("reiniciarBtn").style.display = "none";
+            document.getElementById("errorMessage").style.display = "none";
+            
+            // Resetear botón de consulta
+            document.querySelector('.consultar-btn').innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Seleccionar Punto';
+            document.querySelector('.consultar-btn').onclick = activarSeleccionPunto;
+            
+            // Volver a centrar mapa
+            map.setView([0, 0], 2);
         }
 
         function abrirTiempoReal() {
