@@ -3,440 +3,383 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>¿Cuándo Pasó Por Aquí??</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css/animate.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <title>Seguimiento de Vehículos</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body {
+        body, html {
             margin: 0;
             padding: 0;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: rgba(255, 255, 255, 0.95);
-            padding: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            box-sizing: border-box;
-            position: relative;
-            z-index: 10;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-        }
-        .form-container {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 12px;
-            background-color: rgba(255, 255, 255, 0.95);
-            padding: 12px 15px;
-            margin-bottom: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            box-sizing: border-box;
-            position: relative;
-            z-index: 10;
-            border-radius: 8px;
-            justify-content: center;
-        }
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .form-group label {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-        .form-input {
-            background-color: rgba(245, 245, 245, 0.7);
-            padding: 8px 12px;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            font-size: 15px;
-            color: #333;
-        }
-        .tiempo-real-btn {
-            background-color: #6c757d !important;
-            color: white !important;
-            font-weight: bold;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
-        }
-        .tiempo-real-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
-            background-color: #5a6268 !important;
-        }
-        .consultar-btn {
-            background-color: #fd7e14 !important;
-            color: white !important;
-            font-weight: bold;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 8px rgba(253, 126, 20, 0.3);
-        }
-        .consultar-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 15px rgba(253, 126, 20, 0.4);
-            background-color: #fc8c2d !important;
-        }
-        .historial-btn {
-            background-color: #17a2b8 !important;
-            color: white !important;
-            font-weight: bold;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
-        }
-        .historial-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 15px rgba(23, 162, 184, 0.4);
-            background-color: #138496 !important;
-        }
-        #map {
-            height: 75vh;
-            width: 100%;
-            border-radius: 0;
-            margin-bottom: 0;
-            border: none;
-        }
-        h2 {
-            color: #2c3e50;
-            margin: 10px 0;
-            font-size: 24px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-            padding: 0 15px;
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-        .container-fluid {
-            padding: 0;
-            max-width: 100%;
-        }
-        .map-container {
-            position: relative;
-            width: 100%;
-            background-color: rgba(255, 255, 255, 0.8);
-            margin: 0;
-        }
-        .background-pattern {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
             height: 100%;
-            background-image: radial-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px);
-            background-size: 20px 20px;
-            z-index: -1;
+            font-family: Arial, sans-serif;
         }
-        .content-wrapper {
-            padding: 0 15px;
-            max-width: 1400px;
-            margin: 0 auto;
+        
+        .container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            grid-template-rows: auto 1fr;
+            height: 100vh;
         }
-        .button-container {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-        }
-        .datetime-container {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        .datetime-input {
-            display: flex;
-            gap: 5px;
-        }
-        .error-message {
-            color: #dc3545;
-            font-size: 14px;
-            margin-top: 5px;
-            text-align: center;
-            font-weight: 500;
-            display: none;
-        }
-        .result-container {
-            background-color: rgba(255, 255, 255, 0.95);
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            margin-top: 15px;
-            display: none;
-        }
-        .result-title {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 10px;
-            font-size: 18px;
-        }
-        .result-item {
-            background-color: rgba(245, 245, 245, 0.7);
+        
+        header {
+            grid-column: 1 / 3;
+            background-color: #f8f9fa;
             padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 8px;
+            border-bottom: 1px solid #ddd;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .result-date {
-            font-weight: 500;
-            color: #2c3e50;
+        
+        .title {
+            font-size: 16px;
+            font-weight: bold;
         }
-        .result-action {
-            color: #17a2b8;
+        
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .nav-button {
+            padding: 6px 12px;
+            background-color: #0078A8;
+            color: white;
+            border: none;
+            border-radius: 4px;
             cursor: pointer;
         }
-        .instructions {
-            background-color: rgba(255, 255, 255, 0.7);
-            padding: 12px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        
+        .sidebar {
+            padding: 15px;
+            background-color: #f8f9fa;
+            overflow-y: auto;
+            border-right: 1px solid #ddd;
+        }
+        
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .control-group {
             margin-bottom: 15px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .datetime-container {
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        .instructions i {
-            color: #fd7e14;
-            font-size: 20px;
+        
+        .datetime-container input {
+            flex: 1;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
-        .search-radius-container {
-            display: flex;
-            flex-direction: column;
-            margin-top: 15px;
-        }
-        .radius-display {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
+        
+        .range-container {
             margin-top: 5px;
         }
-        #radioValor {
+        
+        .range-container input {
+            width: 100%;
+        }
+        
+        .range-value {
+            text-align: right;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .action-button {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
             font-weight: bold;
-            color: #17a2b8;
+        }
+        
+        .primary-button {
+            background-color: #0078A8;
+            color: white;
+        }
+        
+        .secondary-button {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+        }
+        
+        #errorMessage {
+            display: none;
+            padding: 10px;
+            background-color: #f8d7da;
+            color: #721c24;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
+        #resultContainer {
+            display: none;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .result-item {
+            padding: 10px;
+            background-color: #f0f0f0;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .result-date {
+            font-size: 14px;
+        }
+        
+        .result-action {
+            color: #0078A8;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .result-action:hover {
+            text-decoration: underline;
+        }
+        
+        .radio-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        
+        .radio-option {
+            flex: 1;
+            text-align: center;
+            padding: 5px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .radio-option.active {
+            background-color: #0078A8;
+            color: white;
         }
     </style>
 </head>
 <body>
-    <div class="background-pattern"></div>
-    
-    <div class="container-fluid">
-        <div class="content-wrapper">
-            <h2 class="fw-bold text-uppercase text-center animate__animated animate__fadeInDown">¿CUÁNDO PASÓ EL VEHÍCULO POR AQUÍ?</h2>
-            
-            <div class="instructions animate__animated animate__fadeIn">
-                <i class="fa-solid fa-info-circle"></i>
-                <div>
-                    Haga clic en cualquier punto del mapa para saber cuándo pasó el vehículo por esa ubicación.
+    <div class="container">
+        <header>
+            <div class="title">Sistema de Seguimiento de Vehículos</div>
+            <div class="nav-buttons">
+                <button class="nav-button" onclick="abrirTiempoReal()">Tiempo Real</button>
+                <button class="nav-button" onclick="abrirHistorial()">Historial</button>
+            </div>
+        </header>
+        
+        <div class="sidebar">
+            <div class="control-group">
+                <label>Fecha de Inicio</label>
+                <div class="datetime-container">
+                    <input type="date" id="fechaInicio">
+                    <input type="time" id="horaInicio">
                 </div>
             </div>
             
-            <div class="form-container animate__animated animate__fadeIn">
-                <div class="form-group">
-                    <label>Fecha de Inicio:</label>
-                    <div class="datetime-input">
-                        <input type="date" id="fechaInicio" class="form-input">
-                    </div>
+            <div class="control-group">
+                <label>Fecha de Fin</label>
+                <div class="datetime-container">
+                    <input type="date" id="fechaFin">
+                    <input type="time" id="horaFin">
                 </div>
-                
-                <div class="form-group">
-                    <label>Fecha de Fin:</label>
-                    <div class="datetime-input">
-                        <input type="date" id="fechaFin" class="form-input">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Radio de búsqueda (metros):</label>
-                    <input type="range" id="radioMetros" min="50" max="500" step="50" value="100" class="form-input">
-                    <div class="radius-display">
+            </div>
+            
+            <div class="control-group">
+                <label>Radio de búsqueda: <span id="radioValue">100 m</span></label>
+                <div class="range-container">
+                    <input type="range" id="radioSlider" min="50" max="1000" step="50" value="100">
+                    <div class="range-value">
                         <span>50m</span>
-                        <output id="radioValor">100m</output>
-                        <span>500m</span>
+                        <span style="float: right;">1km</span>
                     </div>
                 </div>
-                
-                <div class="button-container">
-                    <button class="tiempo-real-btn" onclick="abrirTiempoReal()">
-                        <i class="fa-solid fa-clock"></i> Tiempo Real
-                    </button>
-                    <button class="historial-btn" onclick="abrirHistorial()">
-                        <i class="fa-solid fa-map-marked-alt"></i> Historial
-                    </button>
-                </div>
             </div>
-            <div id="errorMessage" class="error-message"></div>
             
-            <div id="resultContainer" class="result-container">
-                <div class="result-title">Momentos en que el vehículo pasó por el área seleccionada:</div>
+            <div class="radio-options">
+                <div class="radio-option active" data-value="100">100m</div>
+                <div class="radio-option" data-value="250">250m</div>
+                <div class="radio-option" data-value="500">500m</div>
+            </div>
+            
+            <div id="errorMessage"></div>
+            
+            <div id="resultContainer">
+                <h3>Momentos en que el vehículo pasó por el área seleccionada:</h3>
                 <div id="resultList"></div>
             </div>
+            
+            <div class="action-buttons">
+                <button id="resetButton" class="action-button secondary-button">
+                    <i class="fa-solid fa-broom"></i> Limpiar Mapa
+                </button>
+            </div>
         </div>
-
-        <div class="map-container">
-            <div id="map"></div>
-        </div>
-    </div>
-
-    <script>
-        let map = L.map("map").setView([0, 0], 2);
-        let searchCircle = null;
-        let searchMarker = null;
-        let clickPosition = null;
         
-        // Inicializar el mapa con OpenStreetMap
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            attribution: "&copy; OpenStreetMap contributors"
-        }).addTo(map);
-
+        <div id="map"></div>
+    </div>
+    
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        let map;
+        let searchCircle;
+        let clickMarker;
+        let clickPosition;
+        const errorMessage = document.getElementById("errorMessage");
+        
         function initializeDatetimes() {
-            // Obtener fecha local correcta
-            const hoy = new Date();
+            // Configurar fechas y horas por defecto
+            const now = new Date();
+            const yesterday = new Date(now);
+            yesterday.setDate(now.getDate() - 1);
             
-            // Calcular hace 7 días
-            const hace7Dias = new Date(hoy);
-            hace7Dias.setDate(hoy.getDate() - 7);
+            document.getElementById("fechaInicio").valueAsDate = yesterday;
+            document.getElementById("horaInicio").value = "00:00";
+            document.getElementById("fechaFin").valueAsDate = now;
+            document.getElementById("horaFin").value = "23:59";
             
-            // Formatear para input date
-            const formatDate = (date) => {
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                return `${year}-${month}-${day}`;
-            };
+            // Inicializar el mapa
+            initializeMap();
             
-            document.getElementById("fechaInicio").value = formatDate(hace7Dias);
-            document.getElementById("fechaFin").value = formatDate(hoy);
+            // Configurar el slider de radio
+            const radioSlider = document.getElementById("radioSlider");
+            const radioValue = document.getElementById("radioValue");
             
-            // Configurar el control del radio
-            const radioInput = document.getElementById("radioMetros");
-            const radioOutput = document.getElementById("radioValor");
+            radioSlider.addEventListener("input", function() {
+                const value = this.value;
+                radioValue.textContent = value >= 1000 ? (value / 1000).toFixed(1) + " km" : value + " m";
+                updateSearchCircle();
+            });
             
-            radioInput.addEventListener("input", function() {
-                radioOutput.textContent = this.value + "m";
+            // Configurar los botones de radio preestablecidos
+            document.querySelectorAll(".radio-option").forEach(option => {
+                option.addEventListener("click", function() {
+                    document.querySelectorAll(".radio-option").forEach(opt => {
+                        opt.classList.remove("active");
+                    });
+                    this.classList.add("active");
+                    radioSlider.value = this.dataset.value;
+                    radioValue.textContent = this.dataset.value >= 1000 ? (this.dataset.value / 1000).toFixed(1) + " km" : this.dataset.value + " m";
+                    updateSearchCircle();
+                });
+            });
+            
+            // Configurar el botón de reset
+            document.getElementById("resetButton").addEventListener("click", resetMap);
+        }
+        
+        function initializeMap() {
+            map = L.map('map').setView([-33.4489, -70.6693], 13); // Santiago, Chile por defecto
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            map.on('click', onMapClick);
+        }
+        
+        function onMapClick(e) {
+            clickPosition = e.latlng;
+            
+            // Eliminar marcador y círculo si ya existen
+            if (clickMarker) map.removeLayer(clickMarker);
+            if (searchCircle) map.removeLayer(searchCircle);
+            
+            // Crear nuevo marcador
+            clickMarker = L.marker(clickPosition).addTo(map);
+            
+            // Crear círculo de búsqueda
+            const radio = parseInt(document.getElementById("radioSlider").value);
+            searchCircle = L.circle(clickPosition, {
+                color: 'blue',
+                fillColor: '#30f',
+                fillOpacity: 0.2,
+                radius: radio
+            }).addTo(map);
+            
+            // Ocultar mensajes y resultados previos
+            errorMessage.style.display = "none";
+            document.getElementById("resultContainer").style.display = "none";
+            
+            // Consultar eventos en esta ubicación
+            consultarPasosPorUbicacion(clickPosition, radio);
+        }
+        
+        function updateSearchCircle() {
+            if (clickPosition && searchCircle) {
+                const radio = parseInt(document.getElementById("radioSlider").value);
+                map.removeLayer(searchCircle);
+                searchCircle = L.circle(clickPosition, {
+                    color: 'blue',
+                    fillColor: '#30f',
+                    fillOpacity: 0.2,
+                    radius: radio
+                }).addTo(map);
                 
-                // Si ya hay un punto seleccionado, actualizar el radio del círculo
-                if (searchCircle) {
-                    searchCircle.setRadius(parseInt(this.value));
+                // Volver a consultar con el nuevo radio
+                consultarPasosPorUbicacion(clickPosition, radio);
+            }
+        }
+        
+        function resetMap() {
+            // Eliminar marcadores y círculos
+            if (clickMarker) map.removeLayer(clickMarker);
+            if (searchCircle) map.removeLayer(searchCircle);
+            
+            // Eliminar cualquier otro marcador temporal que pudiera existir
+            map.eachLayer(function(layer) {
+                if (layer instanceof L.CircleMarker) {
+                    map.removeLayer(layer);
                 }
             });
             
-            // Centrar el mapa en una ubicación predeterminada (se puede ajustar)
-            // Intenta obtener la última ubicación conocida de la base de datos
-            fetch("ultima_ubicacion.php")
-                .then(response => response.json())
-                .then(data => {
-                    if (data && data.lat && data.lon) {
-                        map.setView([parseFloat(data.lat), parseFloat(data.lon)], 13);
-                    }
-                })
-                .catch(error => {
-                    console.log("Error al obtener la última ubicación, usando ubicación predeterminada");
-                    map.setView([0, 0], 2);
-                });
+            // Ocultar mensajes y resultados
+            errorMessage.style.display = "none";
+            document.getElementById("resultContainer").style.display = "none";
+            
+            // Restablecer posición
+            clickPosition = null;
         }
         
-        // Manejar clic en el mapa
-        map.on('click', function(e) {
-            clickPosition = e.latlng;
-            
-            // Limpiar marcadores anteriores
-            if (searchMarker) {
-                map.removeLayer(searchMarker);
-            }
-            if (searchCircle) {
-                map.removeLayer(searchCircle);
-            }
-            
-            // Crear un nuevo marcador en la posición de clic
-            searchMarker = L.marker(clickPosition).addTo(map);
-            
-            // Crear un círculo con el radio especificado
-            const radio = parseInt(document.getElementById("radioMetros").value);
-            searchCircle = L.circle(clickPosition, {
-                radius: radio,
-                color: '#fd7e14',
-                fillColor: '#fd7e14',
-                fillOpacity: 0.2
-            }).addTo(map);
-            
-            // Consultar cuándo pasó el vehículo por este punto
-            consultarPuntoSeleccionado();
-        });
-        
-        function consultarPuntoSeleccionado() {
-            if (!clickPosition) {
-                return;
-            }
-            
+        function consultarPasosPorUbicacion(clickPosition, radio) {
             const fechaInicio = document.getElementById("fechaInicio").value;
+            const horaInicio = document.getElementById("horaInicio").value;
             const fechaFin = document.getElementById("fechaFin").value;
-            const radio = document.getElementById("radioMetros").value;
-            const errorMessage = document.getElementById("errorMessage");
+            const horaFin = document.getElementById("horaFin").value;
             
-            if (!fechaInicio || !fechaFin) {
-                errorMessage.textContent = "Seleccione las fechas correctamente.";
-                errorMessage.style.display = "block";
-                return;
-            }
+            const inicio = `${fechaInicio}T${horaInicio}`;
+            const fin = `${fechaFin}T${horaFin}`;
             
-            // Validar fechas
-            const inicioDate = new Date(fechaInicio);
-            const finDate = new Date(fechaFin);
-            
-            if (inicioDate > finDate) {
-                errorMessage.textContent = "La fecha de inicio debe ser anterior a la de fin.";
-                errorMessage.style.display = "block";
-                return;
-            }
-            
-            // Formatear para backend
-            const formatDateForBackend = (date) => {
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                return `${year}-${month}-${day}`;
-            };
-            
-            const inicio = formatDateForBackend(inicioDate);
-            const fin = formatDateForBackend(finDate);
-            
-            // Realizar consulta al backend
             fetch(`cuando_paso.php?lat=${clickPosition.lat}&lon=${clickPosition.lng}&radio=${radio}&inicio=${inicio}&fin=${fin}`)
                 .then(response => response.json())
                 .then(data => {
