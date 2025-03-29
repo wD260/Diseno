@@ -49,9 +49,25 @@
             font-weight: bold;
         }
         
-        #tiempo-real-btn {
-            background-color: #007bff;  /* Color azul para el botón de tiempo real */
+        .tiempo-real-btn {
+            background-color: #6c757d !important;
+            color: white !important;
+            font-weight: bold;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
         }
+        .tiempo-real-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
+            background-color: #5a6268 !important;
         
         .sidebar {
             padding: 15px;
@@ -181,7 +197,9 @@
         <header>
             <div style="font-size: 18px; font-weight: bold;">Sistema de Seguimiento de Vehículos</div>
             <div class="nav-buttons">
-                <button id="tiempo-real-btn" class="nav-button" onclick="abrirTiempoReal()">Tiempo Real</button>
+                <button class="tiempo-real-btn" onclick="abrirTiempoReal()">
+                    <i class="fa-solid fa-clock"></i> Tiempo Real
+                </button>
                 <button class="nav-button" onclick="abrirHistorial()">Historial</button>
             </div>
         </header>
