@@ -64,7 +64,7 @@
             transition: all 0.3s ease;
             box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
         }
-        .consultar-btn {
+        #tiempo-real-btn2 {
             background-color: #fd7e14 !important;
             color: white !important;
             font-weight: bold;
@@ -77,7 +77,7 @@
             flex-shrink: 0;
             font-size: 16px;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 8px rgba(253, 126, 20, 0.3);
+            box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
         }
         .sidebar {
             padding: 15px;
@@ -208,7 +208,7 @@
             <div style="font-size: 18px; font-weight: bold;">Sistema de Seguimiento de Vehículos</div>
             <div class="nav-buttons">
                 <button id="tiempo-real-btn" class="nav-button" onclick="abrirTiempoReal()">Tiempo Real</button>
-                <button id="consultar-btn" class="nav-button" onclick="abrirHistorial()">Historial</button>
+                <button id="tiempo-real-btn2" class="nav-button" onclick="abrirHistorial()">Historial</button>
             </div>
         </header>
         
@@ -319,7 +319,7 @@
             }).addTo(map);
             
             // Cargar el último dato disponible y centrar allí
-            fetch('obtener_ultimo_dato.php')
+            fetch('ultima_ubicacion.php')
                 .then(response => response.json())
                 .then(data => {
                     if (data && data.lat && data.lon) {
