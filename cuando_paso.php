@@ -20,16 +20,11 @@ if ($conn->connect_error) {
 // Obtener parámetros de la URL con validación
 $lat = isset($_GET["lat"]) ? floatval($_GET["lat"]) : 0;
 $lon = isset($_GET["lon"]) ? floatval($_GET["lon"]) : 0;
-$radio = isset($_GET["radio"]) ? intval($_GET["radio"]) : 100;
+$radio = isset($_GET["radio"]) ? floatval($_GET["radio"]) : 100; // Radio en metros
 $inicio = isset($_GET["inicio"]) ? $_GET["inicio"] : date("Y-m-d", strtotime("-7 days"));
 $fin = isset($_GET["fin"]) ? $_GET["fin"] : date("Y-m-d");
 
-// Validar fechas
-if (!preg_match("/^\d{4}-\d{2}-\d{2}$/", $inicio) || !preg_match("/^\d{4}-\d{2}-\d{2}$/", $fin)) {
-    die(json_encode(["error" => "Formato de fecha inválido"]));
-}
-
-// Consulta SQL corregida
+// Query SQL con la fórmula Haversine
 $sql = "SELECT lat, lon, fecha, hora, 
        (6371000 * acos(cos(radians(?)) * cos(radians(lat)) * cos(radians(lon) - radians(?)) + sin(radians(?)) * sin(radians(lat)))) AS distancia 
        FROM locations2 
@@ -39,11 +34,12 @@ $sql = "SELECT lat, lon, fecha, hora,
 
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
-    die(json_encode(["error" => "Error en la preparación: " . $conn->error]));
+    die(json_encode(["error" => "Error en la preparación de la consulta: " . $conn->error]));
 }
 
-// Ajuste en bind_param: Ahora usa "ddssi" en lugar de "ddssi"
-$stmt->bind_param("ddssi", $lat, $lon, $lat, $inicio, $fin, $radio);
+// **Corrección en bind_param()** - 6 placeholders, 6 variables con tipos correctos
+$stmt->bind_param("dddssd", $lat, $lon, $lat, $inicio, $fin, $radio);
+
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -58,11 +54,8 @@ while ($row = $result->fetch_assoc()) {
     ];
 }
 
-// Devolver respuesta en JSON
 echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
-// Cerrar conexiones
 $stmt->close();
 $conn->close();
-
 ?>
