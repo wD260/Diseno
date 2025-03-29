@@ -1,3 +1,4 @@
+<?php
 $lat = isset($_GET["lat"]) ? floatval($_GET["lat"]) : 0;
 $lon = isset($_GET["lon"]) ? floatval($_GET["lon"]) : 0;
 $radio = isset($_GET["radio"]) ? intval($_GET["radio"]) : 100;  // Radio en metros
