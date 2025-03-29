@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Localizador de Paso por Punto</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 10;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        .form-container {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 18px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 10;
+            border-radius: 8px;
+            justify-content: center;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 5px;
+        }
+        .form-group label {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .form-input {
+            background-color: rgba(245, 245, 245, 0.7);
+            padding: 10px 14px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: 15px;
+            color: #333;
+            width: 170px;
+            transition: all 0.2s ease;
+        }
+        .form-input:focus {
+            background-color: #fff;
+            border-color: #fd7e14;
+            box-shadow: 0 0 0 3px rgba(253, 126, 20, 0.2);
+            outline: none;
+        }
+        .tiempo-real-btn {
+            background-color: #6c757d !important;
+            color: white !important;
+            font-weight: bold;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+            height: 45px;
+        }
+        .tiempo-real-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
+            background-color: #5a6268 !important;
+        }
+        .consultar-btn {
+            background-color: #fd7e14 !important;
+            color: white !important;
+            font-weight: bold;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(253, 126, 20, 0.3);
+            height: 45px;
+        }
+        .consultar-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(253, 126, 20, 0.4);
+            background-color: #fc8c2d !important;
+        }
+        .historico-btn {
+            background-color: #20c997 !important;
+            color: white !important;
+            font-weight: bold;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(32, 201, 151, 0.3);
+            height: 45px;
+        }
+        .historico-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(32, 201, 151, 0.4);
+            background-color: #1cb386 !important;
+        }
+        .reiniciar-btn {
+            background-color: #dc3545 !important;
+            color: white !important;
+            font-weight: bold;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .reiniciar-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(220, 53, 69, 0.4);
+            background-color: #c82333 !important;
+        }
+        #map {
+            height: 75vh;
+            width: 100%;
+            border-radius: 0;
+            margin-bottom: 0;
+            border: none;
+            position: relative;
+            z-index: 1;
+        }
+        h2 {
+            color: #2c3e50;
+            margin: 15px 0;
+            font-size: 26px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            padding: 0 15px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+        .container-fluid {
+            padding: 0;
+            max-width: 100%;
+        }
+        .map-container {
+            position: relative;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            margin: 0;
+        }
+        .background-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: -1;
+        }
+        .content-wrapper {
+            padding: 0 15px;
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+        }
+        .button-container {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 8px;
+        }
+        .datetime-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .datetime-input {
+            display: flex;
+            gap: 5px;
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 8px;
+            text-align: center;
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 4px;
+            background-color: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.2);
+            display: none;
+        }
+        .results-container {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: none;
+            position: relative;
+        }
+        .results-container h3 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .results-table th, 
+        .results-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .results-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+            position: sticky;
+            top: 0;
+        }
+        .results-table tr:hover {
+            background-color: #f1f3f5;
+        }
+        .instruction-text {
+            color: #6c757d;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 10px;
+            font-style: italic;
+            padding: 0 20px;
+        }
+        #radio-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        #radioBusqueda {
+            width: 80px;
+            text-align: center;
+        }
+        #resultsTableContainer {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+        .btn-ver {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-ver:hover {
+            background-color: #0069d9;
+        }
+        @media (max-width: 768px) {
+            .form-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .form-input {
+                width: 100%;
+            }
+            .button-container {
+                flex-direction: column;
+            }
+            h2 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-pattern"></div>
+    
+    <div class="container-fluid">
+        <div class="content-wrapper">
+            <h2 class="fw-bold text-uppercase text-center animate__animated animate__fadeInDown">¿CUÁNDO PASÓ EL VEHÍCULO POR ESTE PUNTO?</h2>
+            
+            <div class="form-container animate__animated animate__fadeIn">
+                <div class="form-group">
+                    <label>Fecha de Inicio:</label>
+                    <div class="datetime-input">
+                        <input type="datetime-local" id="fechaHoraInicio" class="form-input">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Fecha de Fin:</label>
+                    <div class="datetime-input">
+                        <input type="datetime-local" id="fechaHoraFin" class="form-input">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Radio de búsqueda (m):</label>
+                    <div id="radio-container">
+                        <input type="number" id="radioBusqueda" class="form-input" value="100" min="10" max="1000">
+                    </div>
+                </div>
+                
+                <div class="button-container">
+                    <button class="consultar-btn" onclick="activarSeleccionPunto()">
+                        <i class="fa-solid fa-location-crosshairs"></i> Seleccionar Punto
+                    </button>
+                    <button class="tiempo-real-btn" onclick="abrirTiempoReal()">
+                        <i class="fa-solid fa-clock"></i> Tiempo Real
+                    </button>
+                    <button class="historico-btn" onclick="abrirHistorico()">
+                        <i class="fa-solid fa-route"></i> Histórico
+                    </button>
+                </div>
+            </div>
+            <p class="instruction-text">Haga clic en "Seleccionar Punto" y luego haga clic en el mapa para elegir un lugar.</p>
+            <div id="errorMessage" class="error-message"></div>
+        </div>
+
+        <div class="map-container">
+            <div id="map"></div>
+            <button id="reiniciarBtn" class="reiniciar-btn" style="display: none;" onclick="reiniciarBusqueda()">
+                <i class="fa-solid fa-rotate"></i> Nueva Búsqueda
+            </button>
+        </div>
+
+        <div class="content-wrapper">
+            <div id="resultsContainer" class="results-container">
+                <h3>Registros de paso del vehículo</h3>
+                <div id="resultsTableContainer">
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Distancia (m)</th>
+                                <th>Latitud</th>
+                                <th>Longitud</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody">
+                            <!-- Los resultados se cargarán aquí dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let map = L.map("map").setView([0, 0], 2);
+        let puntoSeleccionado = null;
+        let marcadorPunto = null;
+        let marcadoresResultado = [];
+        let circuloRadio = null;
+        let seleccionActiva = false;
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "&copy; OpenStreetMap contributors"
+        }).addTo(map);
+
+        function initializeDatetimes() {
+            // Obtener fecha local correcta
+            const hoy = new Date();
+            
+            // Establecer fecha y hora de inicio (hoy a las 00:00)
+            const inicioDate = new Date(hoy);
+            inicioDate.setHours(0, 0, 0, 0);
+            
+            // Establecer fecha y hora de fin (hoy a las 23:59)
+            const finDate = new Date(hoy);
+            finDate.setHours(23, 59, 0, 0);
+            
+            // Formatear para datetime-local en zona horaria local
+            const formatDateTimeLocal = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${year}-${month}-${day}T${hours}:${minutes}`;
+            };
+            
+            document.getElementById("fechaHoraInicio").value = formatDateTimeLocal(inicioDate);
+            document.getElementById("fechaHoraFin").value = formatDateTimeLocal(finDate);
+            
+            // Añadir validación en cambio de fechas
+            document.getElementById("fechaHoraInicio").addEventListener("change", validarFechas);
+            document.getElementById("fechaHoraFin").addEventListener("change", validarFechas);
+        }
+        
+        function validarFechas() {
+            const fechaHoraInicio = document.getElementById("fechaHoraInicio").value;
+            const fechaHoraFin = document.getElementById("fechaHoraFin").value;
+            const errorMessage = document.getElementById("errorMessage");
+            
+            if (fechaHoraInicio && fechaHoraFin) {
+                const inicioDate = new Date(fechaHoraInicio);
+                const finDate = new Date(fechaHoraFin);
+                
+                if (inicioDate >= finDate) {
+                    errorMessage.textContent = "La fecha y hora de inicio deben ser anteriores a las de fin.";
+                    errorMessage.style.display = "block";
+                    document.getElementById("fechaHoraFin").value = "";
+                    return false;
+                } else {
+                    errorMessage.style.display = "none";
+                    return true;
+                }
+            }
+            return true;
+        }
+
+        function activarSeleccionPunto() {
+            const errorMessage = document.getElementById("errorMessage");
+            errorMessage.style.display = "none";
+            
+            if (seleccionActiva) {
+                seleccionActiva = false;
+                map.off('click');
+                document.querySelector('.consultar-btn').innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Seleccionar Punto';
+            } else {
+                seleccionActiva = true;
+                document.querySelector('.consultar-btn').innerHTML = '<i class="fa-solid fa-times"></i> Cancelar Selección';
+                
+                map.on('click', function(e) {
+                    seleccionarPunto(e.latlng);
+                });
+            }
+        }
+
+        function seleccionarPunto(latlng) {
+            // Limpiar marcador anterior si existe
+            if (marcadorPunto) {
+                map.removeLayer(marcadorPunto);
+            }
+            
+            if (circuloRadio) {
+                map.removeLayer(circuloRadio);
+            }
+            
+            puntoSeleccionado = latlng;
+            
+            // Crear nuevo marcador en el punto seleccionado
+            marcadorPunto = L.marker(latlng).addTo(map);
+            marcadorPunto.bindPopup(`<b>Punto seleccionado</b><br>Lat: ${latlng.lat.toFixed(6)}<br>Lon: ${latlng.lng.toFixed(6)}`).openPopup();
+            
+            // Crear círculo con el radio de búsqueda
+            const radio = parseInt(document.getElementById("radioBusqueda").value);
+            circuloRadio = L.circle(latlng, {
+                radius: radio,
+                color: 'rgba(253, 126, 20, 0.8)',
+                fillColor: 'rgba(253, 126, 20, 0.2)',
+                fillOpacity: 0.5
+            }).addTo(map);
+            
+            // Desactivar modo selección
+            seleccionActiva = false;
+            map.off('click');
+            document.querySelector('.consultar-btn').innerHTML = '<i class="fa-solid fa-search"></i> Buscar Registros';
+            document.querySelector('.consultar-btn').onclick = buscarRegistros;
+        }
+
+        function buscarRegistros() {
+            if (!puntoSeleccionado) {
+                const errorMessage = document.getElementById("errorMessage");
+                errorMessage.textContent = "Primero debe seleccionar un punto en el mapa.";
+                errorMessage.style.display = "block";
+                return;
+            }
+            
+            let fechaHoraInicio = document.getElementById("fechaHoraInicio").value;
+            let fechaHoraFin = document.getElementById("fechaHoraFin").value;
+            const radio = document.getElementById("radioBusqueda").value;
+            const errorMessage = document.getElementById("errorMessage");
+
+            if (!fechaHoraInicio || !fechaHoraFin) {
+                errorMessage.textContent = "Seleccione fecha y hora correctamente.";
+                errorMessage.style.display = "block";
+                return;
+            }
+
+            if (!validarFechas()) {
+                return;
+            }
+
+            // Formatear para backend
+            const inicioDate = new Date(fechaHoraInicio);
+            const finDate = new Date(fechaHoraFin);
+            
+            const formatForBackend = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${year}-${month}-${day} ${hours}:${minutes}:00`;
+            };
+            
+            const inicio = formatForBackend(inicioDate);
+            const fin = formatForBackend(finDate);
+
+            // Limpiar marcadores de resultados anteriores
+            marcadoresResultado.forEach(m => map.removeLayer(m));
+            marcadoresResultado = [];
+
+            // Simular llamada al backend
+            // En producción, reemplazar por la llamada real a la API
+            fetch(`punto_paso.php?inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}&lat=${puntoSeleccionado.lat}&lon=${puntoSeleccionado.lng}&radio=${radio}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!Array.isArray(data) || data.length === 0) {
+                    errorMessage.textContent = "No se encontraron registros de paso por este punto en el período seleccionado.";
+                    errorMessage.style.display = "block";
+                    document.getElementById("resultsContainer").style.display = "none";
+                    document.getElementById("reiniciarBtn").style.display = "block";
+                    return;
+                }
+
+                errorMessage.style.display = "none";
+                mostrarResultados(data);
+                document.getElementById("reiniciarBtn").style.display = "block";
+            })
+            .catch(error => {
+                console.error("Error al obtener los registros:", error);
+                errorMessage.textContent = "Ocurrió un error al consultar los datos.";
+                errorMessage.style.display = "block";
+                document.getElementById("reiniciarBtn").style.display = "block";
+            });
+
+            // Para fines de demostración, simular datos
+            // Eliminar este bloque en producción
+            const fechaHoy = new Date();
+            const datosSimulados = [
+                {
+                    id: 1,
+                    fecha: fechaHoy.toISOString().split('T')[0],
+                    hora: '08:32:15',
+                    lat: (puntoSeleccionado.lat + 0.0001).toFixed(6),
+                    lon: (puntoSeleccionado.lng - 0.0002).toFixed(6),
+                    distancia: 25.4
+                },
+                {
+                    id: 2,
+                    fecha: fechaHoy.toISOString().split('T')[0],
+                    hora: '12:15:33',
+                    lat: (puntoSeleccionado.lat - 0.0003).toFixed(6),
+                    lon: (puntoSeleccionado.lng + 0.0001).toFixed(6),
+                    distancia: 45.2
+                },
+                {
+                    id: 3,
+                    fecha: fechaHoy.toISOString().split('T')[0],
+                    hora: '18:47:10',
+                    lat: (puntoSeleccionado.lat + 0.0005).toFixed(6),
+                    lon: (puntoSeleccionado.lng + 0.0004).toFixed(6),
+                    distancia: 62.8
+                }
+            ];
+            mostrarResultados(datosSimulados);
+            document.getElementById("reiniciarBtn").style.display = "block";
+        }
+
+        function mostrarResultados(datos) {
+            const resultsContainer = document.getElementById("resultsContainer");
+            const resultsTableBody = document.getElementById("resultsTableBody");
+            
+            // Limpiar tabla anterior
+            resultsTableBody.innerHTML = '';
+            
+            // Añadir datos a la tabla
+            datos.forEach(registro => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${registro.fecha}</td>
+                    <td>${registro.hora}</td>
+                    <td>${registro.distancia.toFixed(1)}</td>
+                    <td>${registro.lat}</td>
+                    <td>${registro.lon}</td>
+                    <td><button class="btn-ver" onclick="mostrarEnMapa(${registro.lat}, ${registro.lon}, '${registro.fecha} ${registro.hora}')">Ver</button></td>
+                `;
+                
+                resultsTableBody.appendChild(row);
+                
+                // Añadir marcador al mapa
+                const marker = L.circleMarker([parseFloat(registro.lat), parseFloat(registro.lon)], {
+                    color: "purple",
+                    radius: 6
+                }).addTo(map);
+                
+                marker.bindPopup(`<b>Paso registrado</b><br>Fecha: ${registro.fecha}<br>Hora: ${registro.hora}<br>Distancia: ${registro.distancia.toFixed(1)} m`);
+                
+                marcadoresResultado.push(marker);
+            });
+            
+            // Mostrar contenedor de resultados
+            resultsContainer.style.display = "block";
+            
+            // Ajustar mapa para mostrar todos los puntos
+            if (marcadoresResultado.length > 0) {
+                const grupo = new L.featureGroup([marcadorPunto, ...marcadoresResultado]);
+                map.fitBounds(grupo.getBounds(), { padding: [50, 50] });
+            }
+        }
+
+        function mostrarEnMapa(lat, lon, fechaHora) {
+            // Buscar el marcador correspondiente
+            const punto = [parseFloat(lat), parseFloat(lon)];
+            map.setView(punto, 16);
+            
+            // Buscar y abrir el popup del marcador
+            marcadoresResultado.forEach(m => {
+                const mLat = m.getLatLng().lat;
+                const mLng = m.getLatLng().lng;
+                
+                if (Math.abs(mLat - lat) < 0.0001 && Math.abs(mLng - lon) < 0.0001) {
+                    m.openPopup();
+                }
+            });
+        }
+
+        function reiniciarBusqueda() {
+            // Limpiar marcadores y círculo
+            if (marcadorPunto) {
+                map.removeLayer(marcadorPunto);
+                marcadorPunto = null;
+            }
+            
+            if (circuloRadio) {
+                map.removeLayer(circuloRadio);
+                circuloRadio = null;
+            }
+            
+            // Limpiar marcadores de resultados
+            marcadoresResultado.forEach(m => map.removeLayer(m));
+            marcadoresResultado = [];
+            
+            // Resetear punto seleccionado
+            puntoSeleccionado = null;
+            
+            // Ocultar resultados y botón de reinicio
+            document.getElementById("resultsContainer").style.display = "none";
+            document.getElementById("reiniciarBtn").style.display = "none";
+            document.getElementById("errorMessage").style.display = "none";
+            
+            // Resetear botón de consulta
+            document.querySelector('.consultar-btn').innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Seleccionar Punto';
+            document.querySelector('.consultar-btn').onclick = activarSeleccionPunto;
+            
+            // Volver a centrar mapa
+            map.setView([0, 0], 2);
+        }
+
+        function abrirTiempoReal() {
+            window.location.href = "/index.html";
+        }
+        
+        function abrirHistorico() {
+            window.location.href = "/historico.html";
+        }
+
+        document.getElementById("radioBusqueda").addEventListener("change", function() {
+            if (puntoSeleccionado && circuloRadio) {
+                const radio = parseInt(this.value);
+                map.removeLayer(circuloRadio);
+                circuloRadio = L.circle(puntoSeleccionado, {
+                    radius: radio,
+                    color: 'rgba(253, 126, 20, 0.8)',
+                    fillColor: 'rgba(253, 126, 20, 0.2)',
+                    fillOpacity: 0.5
+                }).addTo(map);
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", initializeDatetimes);
+    </script>
+</body>
+</html>
