@@ -1,4 +1,10 @@
 <?php
+
+$servername = getenv("DB_HOST");
+$username = getenv("DB_USER");
+$password = getenv("DB_PASS");
+$dbname = getenv("DB_NAME");
+
 header('Content-Type: application/json');
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -11,7 +17,7 @@ $inicio = isset($_GET["inicio"]) ? $_GET["inicio"] : date("Y-m-d", strtotime("-7
 $fin = isset($_GET["fin"]) ? $_GET["fin"] : date("Y-m-d");
 
 // Conexión a la base de datos
-$conn = new mysqli("localhost", "usuario", "contraseña", "base_de_datos");
+$conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {
     die(json_encode(["error" => "Error en la conexión: " . $conn->connect_error]));
 }
