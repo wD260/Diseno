@@ -3,11 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<<<<<<< HEAD
-    <title><?php echo getenv("PAGE_TITLE") ?: "Usuario"; ?></title>
-=======
-    <title>Seguimiento GPS Mejorado</title>
->>>>>>> 59aa4578646a3151b1ad9453ad98c61dd53f9a59
+    <title>Seguimiento GPS</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
@@ -194,56 +190,11 @@
             box-shadow: 0 4px 8px rgba(253, 126, 20, 0.2);
             font-size: 0.95rem;
         }
-        .historico-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(253, 126, 20, 0.3);
-            background-color: #e86a00 !important;
+        .button-container {
+            padding: 0 15px;
+            max-width: 1400px;
+            margin: 0 auto 20px;
         }
-        .btn-centrar {
-             background-color: #6c757d;
-             color: white;
-             font-weight: 600;
-             padding: 0.75rem 1.5rem;
-             transition: all 0.3s ease;
-             border: none;
-             box-shadow: 0 4px 8px rgba(108, 117, 125, 0.2);
-         }
-        .btn-centrar:hover {
-             transform: translateY(-2px);
-             background-color: #5a6268;
-             box-shadow: 0 6px 12px rgba(108, 117, 125, 0.3);
-         }
-
-        /* Ajustes responsivos */
-        @media (max-width: 991px) {
-            .info-container {
-                 justify-content: center !important;
-                 text-align: center;
-            }
-             .historico-btn-container {
-                 text-align: center;
-                 margin-top: 1rem;
-            }
-        }
-         @media (max-width: 767px) {
-             .info-item {
-                 width: 48%; /* Dos items por fila en móviles */
-                 margin-bottom: 0.75rem;
-             }
-             .info-container {
-                 justify-content: space-between !important;
-             }
-             h1 {
-                 font-size: 1.75rem;
-             }
-         }
-          @media (max-width: 480px) {
-              .info-item {
-                  width: 100%; /* Un item por fila en pantallas muy pequeñas */
-             }
-          }
-
->>>>>>> 59aa4578646a3151b1ad9453ad98c61dd53f9a59
     </style>
 </head>
 <body>
@@ -271,16 +222,9 @@
                 </div>
 <<<<<<< HEAD
                 
-                <div class="button-group">
-                    <button class="btn historico-btn" onclick="abrirHistorico()">
-                        <i class="fa-solid fa-clock-rotate-left"></i> Consulta Histórica
-                    </button>
-                    <button class="btn localizador-btn" onclick="abrirLocalizador()">
-                        <i class="fa-solid fa-location-dot"></i> Localizador
-                    </button>
-                </div>
-=======
->>>>>>> 59aa4578646a3151b1ad9453ad98c61dd53f9a59
+                <button class="btn historico-btn" onclick="abrirHistorico()">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Consulta Histórica
+                </button>
             </div>
         </div>
 
@@ -302,6 +246,10 @@
         }
 
 <<<<<<< HEAD
+        function abrirLocalizador() {
+            window.location.href = "/localizador.html";
+        }
+
         function abrirLocalizador() {
             window.location.href = "/localizador.html";
         }
@@ -359,31 +307,14 @@
 
 <<<<<<< HEAD
                 if (!lastPosition || lastPosition[0] !== nuevaLatLng[0] || lastPosition[1] !== nuevaLatLng[1]) {
-
-                    let currentZoom = map.getZoom(); // Obtener el nivel de zoom actual
-                    map.setView(nuevaLatLng, currentZoom); // Centrar manteniendo el zoom del usuario
+                    // Centrar manteniendo el zoom actual
+                    map.setView(nuevaLatLng, currentZoom);
                 }
-=======
-                     // Solo centrar si la posición cambió significativamente (evita recentrar si no hay movimiento)
-                      const positionChanged = !lastPosition || Math.abs(lastPosition[0] - nuevaLatLng[0]) > 0.00001 || Math.abs(lastPosition[1] - nuevaLatLng[1]) > 0.00001;
->>>>>>> 59aa4578646a3151b1ad9453ad98c61dd53f9a59
 
-                     if (positionChanged) {
-                          // Centrar manteniendo el zoom actual SÓLO si el usuario no ha interactuado con el zoom
-                          // O podrías decidir siempre centrar si los datos son nuevos.
-                          // Aquí mantenemos el centrado automático si la posición cambia.
-                         map.setView(nuevaLatLng, currentZoom);
-
-                         // Actualizar ruta solo si la posición cambió
-                         route.push(nuevaLatLng);
-                         localStorage.setItem("gps_route", JSON.stringify(route));
-                         polyline.setLatLngs(route);
-                         lastPosition = nuevaLatLng;
-                     }
-
-                 } else {
-                     console.error("Datos recibidos no válidos:", data);
-                 }
+                route.push(nuevaLatLng);
+                localStorage.setItem("gps_route", JSON.stringify(route));
+                polyline.setLatLngs(route);
+                lastPosition = nuevaLatLng;
             })
             .catch(error => console.error("Error al obtener los datos:", error));
         }
