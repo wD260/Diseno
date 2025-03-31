@@ -200,6 +200,55 @@
             font-weight: bold;
             margin-top: 15px;
         }
+        
+        /* Estilo para el buscador de ubicaciones */
+        .search-container {
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .search-container input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .search-container button {
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 100%;
+            padding: 0 10px;
+            background: #0078A8;
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+        }
+        
+        #searchResults {
+            position: absolute;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .search-result-item {
+            padding: 8px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .search-result-item:hover {
+            background-color: #f8f9fa;
+        }
     </style>
 </head>
 <body>
@@ -213,6 +262,13 @@
         </header>
         
         <div class="sidebar">
+            <!-- Añadir el buscador de ubicaciones -->
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Buscar ubicación...">
+                <button id="searchButton"><i class="fa-solid fa-search"></i></button>
+                <div id="searchResults"></div>
+            </div>
+            
             <div class="control-group">
                 <label>Fecha de Inicio</label>
                 <div class="datetime-container">
@@ -308,6 +364,19 @@
             
             // Configurar el botón de reset
             document.getElementById("resetButton").addEventListener("click", resetMap);
+            
+            // Configurar el buscador de ubicaciones
+            document.getElementById("searchButton").addEventListener("click", performSearch);
+            document.getElementById("searchInput").addEventListener("keypress", function(e) {
+                if (e.key === "Enter") {
+                    performSearch();
+                }
+            });
+            
+            // Cerrar los resultados de búsqueda al hacer clic en el mapa
+            document.getElementById("map").addEventListener("click", function() {
+                document.getElementById("searchResults").style.display = "none";
+            });
         }
         
         function initializeMap() {
@@ -335,17 +404,20 @@
         
         function onMapClick(e) {
             clickPosition = e.latlng;
-            
+            createMarkerAndCircle(clickPosition);
+        }
+        
+        function createMarkerAndCircle(position) {
             // Eliminar marcador y círculo si ya existen
             if (clickMarker) map.removeLayer(clickMarker);
             if (searchCircle) map.removeLayer(searchCircle);
             
             // Crear nuevo marcador
-            clickMarker = L.marker(clickPosition).addTo(map);
+            clickMarker = L.marker(position).addTo(map);
             
             // Crear círculo de búsqueda
             const radio = parseInt(document.getElementById("radioSlider").value);
-            searchCircle = L.circle(clickPosition, {
+            searchCircle = L.circle(position, {
                 color: 'blue',
                 fillColor: '#30f',
                 fillOpacity: 0.2,
@@ -357,7 +429,10 @@
             document.getElementById("resultContainer").style.display = "none";
             
             // Consultar eventos en esta ubicación
-            consultarPasosPorUbicacion(clickPosition, radio);
+            consultarPasosPorUbicacion(position, radio);
+            
+            // Centrar el mapa en la posición
+            map.setView(position, 14);
         }
         
         function updateSearchCircle() {
@@ -394,9 +469,13 @@
             
             // Restablecer posición
             clickPosition = null;
+            
+            // Limpiar el buscador
+            document.getElementById("searchInput").value = "";
+            document.getElementById("searchResults").style.display = "none";
         }
         
-        function consultarPasosPorUbicacion(clickPosition, radio) {
+        function consultarPasosPorUbicacion(position, radio) {
             const fechaInicio = document.getElementById("fechaInicio").value;
             const horaInicio = document.getElementById("horaInicio").value;
             const fechaFin = document.getElementById("fechaFin").value;
@@ -405,7 +484,7 @@
             const inicio = `${fechaInicio}T${horaInicio}`;
             const fin = `${fechaFin}T${horaFin}`;
             
-            fetch(`cuando_paso.php?lat=${clickPosition.lat}&lon=${clickPosition.lng}&radio=${radio}&inicio=${inicio}&fin=${fin}`)
+            fetch(`cuando_paso.php?lat=${position.lat}&lon=${position.lng}&radio=${radio}&inicio=${inicio}&fin=${fin}`)
                 .then(response => response.json())
                 .then(data => {
                     const resultContainer = document.getElementById("resultContainer");
@@ -470,6 +549,51 @@
                     console.error("Error al consultar los datos:", error);
                     errorMessage.textContent = "Ocurrió un error al consultar los datos.";
                     errorMessage.style.display = "block";
+                });
+        }
+        
+        function performSearch() {
+            const query = document.getElementById("searchInput").value.trim();
+            if (!query) return;
+            
+            const searchResultsContainer = document.getElementById("searchResults");
+            searchResultsContainer.innerHTML = '<div class="search-result-item">Buscando...</div>';
+            searchResultsContainer.style.display = "block";
+            
+            // Utilizar la API de Nominatim de OpenStreetMap para geocodificación
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    searchResultsContainer.innerHTML = "";
+                    
+                    if (data.length === 0) {
+                        searchResultsContainer.innerHTML = '<div class="search-result-item">No se encontraron resultados</div>';
+                        return;
+                    }
+                    
+                    data.forEach(result => {
+                        const resultItem = document.createElement("div");
+                        resultItem.className = "search-result-item";
+                        resultItem.textContent = result.display_name;
+                        resultItem.addEventListener("click", function() {
+                            // Actualizar la posición del marcador
+                            clickPosition = L.latLng(parseFloat(result.lat), parseFloat(result.lon));
+                            createMarkerAndCircle(clickPosition);
+                            
+                            // Cerrar los resultados de búsqueda
+                            searchResultsContainer.style.display = "none";
+                            
+                            // Establecer el texto de búsqueda al seleccionado
+                            document.getElementById("searchInput").value = result.display_name;
+                        });
+                        searchResultsContainer.appendChild(resultItem);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error en la búsqueda:", error);
+                    searchResultsContainer.innerHTML = '<div class="search-result-item">Error en la búsqueda</div>';
                 });
         }
         
