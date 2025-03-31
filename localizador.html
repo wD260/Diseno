@@ -249,6 +249,21 @@
         .search-result-item:hover {
             background-color: #f8f9fa;
         }
+        
+        /* Estilo para el botón de buscar nuevamente */
+        #searchAgainButton {
+            display: none;
+            width: 100%;
+            padding: 8px;
+            background-color: #0078A8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
@@ -268,6 +283,9 @@
                 <button id="searchButton"><i class="fa-solid fa-search"></i></button>
                 <div id="searchResults"></div>
             </div>
+            
+            <!-- Botón para buscar nuevamente -->
+            <button id="searchAgainButton"><i class="fa-solid fa-search"></i> Buscar nuevamente</button>
             
             <div class="control-group">
                 <label>Fecha de Inicio</label>
@@ -323,6 +341,7 @@
         let searchCircle;
         let clickMarker;
         let clickPosition;
+        let exactMarkers = []; // Array para almacenar todos los marcadores de paquetes
         const errorMessage = document.getElementById("errorMessage");
         
         function initializeDatetimes() {
@@ -373,6 +392,13 @@
                 }
             });
             
+            // Configurar el botón para buscar nuevamente
+            document.getElementById("searchAgainButton").addEventListener("click", function() {
+                document.getElementById("searchInput").value = "";
+                document.getElementById("searchAgainButton").style.display = "none";
+                document.getElementById("searchInput").focus();
+            });
+            
             // Cerrar los resultados de búsqueda al hacer clic en el mapa
             document.getElementById("map").addEventListener("click", function() {
                 document.getElementById("searchResults").style.display = "none";
@@ -412,6 +438,9 @@
             if (clickMarker) map.removeLayer(clickMarker);
             if (searchCircle) map.removeLayer(searchCircle);
             
+            // Limpiar marcadores antiguos de paquetes
+            clearExactMarkers();
+            
             // Crear nuevo marcador
             clickMarker = L.marker(position).addTo(map);
             
@@ -433,6 +462,11 @@
             
             // Centrar el mapa en la posición
             map.setView(position, 14);
+            
+            // Mostrar el botón de buscar nuevamente si se ha realizado una búsqueda
+            if (document.getElementById("searchInput").value.trim() !== "") {
+                document.getElementById("searchAgainButton").style.display = "block";
+            }
         }
         
         function updateSearchCircle() {
@@ -446,9 +480,20 @@
                     radius: radio
                 }).addTo(map);
                 
+                // Limpiar marcadores antiguos de paquetes
+                clearExactMarkers();
+                
                 // Volver a consultar con el nuevo radio
                 consultarPasosPorUbicacion(clickPosition, radio);
             }
+        }
+        
+        function clearExactMarkers() {
+            // Eliminar todos los marcadores de paquetes anteriores
+            exactMarkers.forEach(marker => {
+                map.removeLayer(marker);
+            });
+            exactMarkers = [];
         }
         
         function resetMap() {
@@ -456,12 +501,8 @@
             if (clickMarker) map.removeLayer(clickMarker);
             if (searchCircle) map.removeLayer(searchCircle);
             
-            // Eliminar cualquier otro marcador temporal que pudiera existir
-            map.eachLayer(function(layer) {
-                if (layer instanceof L.CircleMarker) {
-                    map.removeLayer(layer);
-                }
-            });
+            // Limpiar marcadores de paquetes
+            clearExactMarkers();
             
             // Ocultar mensajes y resultados
             errorMessage.style.display = "none";
@@ -470,9 +511,10 @@
             // Restablecer posición
             clickPosition = null;
             
-            // Limpiar el buscador
+            // Limpiar el buscador y ocultar el botón de buscar nuevamente
             document.getElementById("searchInput").value = "";
             document.getElementById("searchResults").style.display = "none";
+            document.getElementById("searchAgainButton").style.display = "none";
         }
         
         function consultarPasosPorUbicacion(position, radio) {
@@ -514,8 +556,11 @@
                         actionDiv.className = "result-action";
                         actionDiv.innerHTML = `<i class="fa-solid fa-map-pin"></i> Ver en mapa`;
                         actionDiv.addEventListener("click", function() {
-                            // Centrar mapa en la ubicación exacta
-                            map.setView([parseFloat(item.lat), parseFloat(item.lon)], 16);
+                            // Obtener el nivel de zoom actual para mantenerlo
+                            const currentZoom = map.getZoom();
+                            
+                            // Centrar mapa en la ubicación exacta pero mantener el nivel de zoom
+                            map.setView([parseFloat(item.lat), parseFloat(item.lon)], currentZoom);
                             
                             // Crear marcador temporal destacado
                             const exactMarker = L.circleMarker([parseFloat(item.lat), parseFloat(item.lon)], {
@@ -525,17 +570,15 @@
                                 radius: 8
                             }).addTo(map);
                             
+                            // Guardar el marcador en el array para poder eliminarlo después
+                            exactMarkers.push(exactMarker);
+                            
                             // Mostrar popup con la información
                             exactMarker.bindPopup(`<b>Vehículo detectado</b><br>
                                                   Fecha: ${item.fecha}<br>
                                                   Hora: ${item.hora}<br>
                                                   Lat: ${item.lat}<br>
                                                   Lon: ${item.lon}`).openPopup();
-                            
-                            // Eliminar el marcador después de 5 segundos
-                            setTimeout(() => {
-                                map.removeLayer(exactMarker);
-                            }, 5000);
                         });
                         
                         resultItem.appendChild(dateDiv);
@@ -587,6 +630,9 @@
                             
                             // Establecer el texto de búsqueda al seleccionado
                             document.getElementById("searchInput").value = result.display_name;
+                            
+                            // Mostrar el botón de buscar nuevamente
+                            document.getElementById("searchAgainButton").style.display = "block";
                         });
                         searchResultsContainer.appendChild(resultItem);
                     });
