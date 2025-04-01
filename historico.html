@@ -3,189 +3,613 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Seguimiento de Vehículos</title>
+    <title>Sistema de Seguimiento GPS</title>
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css/animate.min.css">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #f39c12;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+        }
+        
         body {
             margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        .header {
-            background-color: #f5f5f5;
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .title {
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-            margin: 0;
-        }
-        .buttons-container {
-            display: flex;
-            gap: 5px;
-        }
-        .nav-button {
-            padding: 8px 15px;
-            border: none;
-            border-radius: 5px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .tiempo-real-btn {
-            background-color: #777;
-        }
-        .localizador-btn {
-            background-color: #4CAF50;
-        }
-        .sidebar {
-            width: 230px;
-            background-color: white;
-            padding: 15px;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-        }
-        .date-input-group {
-            margin-bottom: 15px;
-        }
-        .date-input-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        .date-input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .date-input input {
-            border: none;
-            outline: none;
-            width: 100%;
-            font-size: 14px;
-        }
-        .time-icon {
-            color: #777;
-        }
-        .consultar-btn {
-            background-color: #ff8c00;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 10px 0;
-            width: 100%;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 10px;
-        }
-        .main-content {
-            display: flex;
-            flex: 1;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
         }
-        #map {
-            flex: 1;
-            height: 100%;
+        
+        .main-layout {
+            display: flex;
+            height: 100vh;
         }
+        
+        .sidebar {
+            width: 320px;
+            background-color: #ffffff;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        
+        .map-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .app-title {
+            color: #2c3e50;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary-color);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .form-control {
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+            background-color: #f8f9fa;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .form-control:focus, .form-control:hover {
+            background-color: #ffffff;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        }
+        
+        .date-input-container {
+            position: relative;
+        }
+        
+        .date-input-container i {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+        
+        .btn-warning {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background-color: #e67e22;
+            border-color: #e67e22;
+            color: white;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+            border-color: #27ae60;
+        }
+        
+        .top-buttons {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .top-buttons .btn {
+            min-width: 150px;
+        }
+        
+        .error-message {
+            color: var(--danger-color);
+            background-color: rgba(231, 76, 60, 0.1);
+            border-left: 4px solid var(--danger-color);
+            padding: 12px;
+            margin-top: 20px;
+            border-radius: 5px;
+            font-weight: 500;
+            display: none;
+        }
+        
         .zoom-controls {
             position: absolute;
-            top: 10px;
-            left: 260px;
+            top: 20px;
+            left: 20px;
             z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
+        
         .zoom-btn {
-            display: block;
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             background-color: white;
-            border: 1px solid #ccc;
-            text-align: center;
-            line-height: 30px;
-            font-size: 18px;
-            font-weight: bold;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
             cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
         }
-        .zoom-in {
-            border-bottom: none;
-            border-radius: 4px 4px 0 0;
+        
+        .zoom-btn:hover {
+            background-color: #f8f9fa;
+            transform: scale(1.05);
         }
-        .zoom-out {
-            border-radius: 0 0 4px 4px;
+        
+        @media (max-width: 768px) {
+            .main-layout {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 40vh;
+            }
+            
+            .top-buttons {
+                top: 10px;
+                right: 10px;
+            }
+            
+            .top-buttons .btn {
+                padding: 8px 12px;
+                min-width: initial;
+            }
+        }
+        
+        /* Mejoras visuales */
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(46, 204, 113, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
+            }
+        }
+        
+        .leaflet-popup-content {
+            padding: 10px;
+        }
+        
+        .popup-title {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        
+        .popup-content {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 5px;
+        }
+        
+        .popup-label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .map-attribution {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 11px;
+            z-index: 1000;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1 class="title">Sistema de Seguimiento de Vehículos</h1>
-        <div class="buttons-container">
-            <button class="nav-button tiempo-real-btn">Tiempo real</button>
-            <button class="nav-button localizador-btn">Localizador</button>
-        </div>
-    </div>
-    
-    <div class="main-content">
+    <div class="main-layout">
+        <!-- Sidebar con controles -->
         <div class="sidebar">
-            <div class="date-input-group">
-                <label>Fecha de Inicio</label>
-                <div class="date-input">
-                    <input type="date" id="fechaInicio" value="2025-03-31">
-                    <input type="time" id="horaInicio" value="12:00">
-                    <i class="fas fa-clock time-icon"></i>
+            <h2 class="app-title animate__animated animate__fadeInDown">CONSULTA HISTÓRICA GPS</h2>
+            
+            <div class="form-group">
+                <label class="form-label">Fecha y Hora de Inicio:</label>
+                <div class="date-input-container">
+                    <input type="datetime-local" id="fechaHoraInicio" class="form-control">
                 </div>
             </div>
             
-            <div class="date-input-group">
-                <label>Fecha de Fin</label>
-                <div class="date-input">
-                    <input type="date" id="fechaFin" value="2025-04-01">
-                    <input type="time" id="horaFin" value="11:59">
-                    <i class="fas fa-clock time-icon"></i>
+            <div class="form-group">
+                <label class="form-label">Fecha y Hora de Fin:</label>
+                <div class="date-input-container">
+                    <input type="datetime-local" id="fechaHoraFin" class="form-control">
                 </div>
             </div>
             
-            <button class="consultar-btn" onclick="consultarHistorico()">Consultar</button>
+            <button class="btn btn-warning w-100 mb-3" onclick="consultarHistorico()">
+                <i class="fas fa-search"></i> Consultar
+            </button>
+            
+            <div id="errorMessage" class="error-message">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span id="errorText"></span>
+            </div>
         </div>
         
-        <div id="map"></div>
-        
-        <div class="zoom-controls">
-            <div class="zoom-btn zoom-in" onclick="zoomIn()">+</div>
-            <div class="zoom-btn zoom-out" onclick="zoomOut()">−</div>
+        <!-- Contenedor del mapa -->
+        <div class="map-container">
+            <!-- Botones en la parte superior derecha -->
+            <div class="top-buttons">
+                <button class="btn btn-primary" onclick="abrirTiempoReal()">
+                    <i class="fas fa-clock"></i> Tiempo Real
+                </button>
+                <button class="btn btn-success" onclick="abrirLocalizador()">
+                    <i class="fas fa-location-dot"></i> Localizador
+                </button>
+            </div>
+            
+            <!-- Controles de zoom personalizados -->
+            <div class="zoom-controls">
+                <div class="zoom-btn" onclick="zoomIn()"><i class="fas fa-plus"></i></div>
+                <div class="zoom-btn" onclick="zoomOut()"><i class="fas fa-minus"></i></div>
+            </div>
+            
+            <div id="map"></div>
+            
+            <div class="map-attribution">
+                © Leaflet | © OpenStreetMap contributors
+            </div>
         </div>
     </div>
 
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+    
     <script>
-        // Inicializar el mapa
         let map = L.map("map", {
-            zoomControl: false // Desactivamos los controles de zoom predeterminados
-        }).setView([10.9878, -74.7889], 12); // Coordenadas para Barranquilla, Colombia
+            zoomControl: false  // Desactivamos los controles de zoom por defecto
+        }).setView([0, 0], 2);
         
-        // Añadir capa de mapa base
+        let polyline = L.polyline([], { 
+            color: '#3498db',
+            weight: 4,
+            opacity: 0.8,
+            lineJoin: 'round'
+        }).addTo(map);
+        
+        let markers = [];
+
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             attribution: "&copy; OpenStreetMap contributors"
         }).addTo(map);
+
+        function initializeDatetimes() {
+            // Obtener fecha local correcta
+            const hoy = new Date();
+            
+            // Establecer fecha y hora de inicio (hoy a las 00:00)
+            const inicioDate = new Date(hoy);
+            inicioDate.setHours(0, 0, 0, 0);
+            
+            // Establecer fecha y hora de fin (hoy a las 23:59)
+            const finDate = new Date(hoy);
+            finDate.setHours(23, 59, 0, 0);
+            
+            // Formatear para datetime-local en zona horaria local
+            const formatDateTimeLocal = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${year}-${month}-${day}T${hours}:${minutes}`;
+            };
+            
+            document.getElementById("fechaHoraInicio").value = formatDateTimeLocal(inicioDate);
+            document.getElementById("fechaHoraFin").value = formatDateTimeLocal(finDate);
+            
+            // Añadir validación en cambio de fechas
+            document.getElementById("fechaHoraInicio").addEventListener("change", validarFechas);
+            document.getElementById("fechaHoraFin").addEventListener("change", validarFechas);
+        }
         
-        // Variables para el tracking
-        let polyline = L.polyline([], { color: 'blue', weight: 3 }).addTo(map);
-        let markers = [];
+        function validarFechas() {
+            const fechaHoraInicio = document.getElementById("fechaHoraInicio").value;
+            const fechaHoraFin = document.getElementById("fechaHoraFin").value;
+            const errorMessage = document.getElementById("errorMessage");
+            const errorText = document.getElementById("errorText");
+            
+            if (fechaHoraInicio && fechaHoraFin) {
+                const inicioDate = new Date(fechaHoraInicio);
+                const finDate = new Date(fechaHoraFin);
+                
+                if (inicioDate >= finDate) {
+                    errorText.textContent = "La fecha y hora de inicio deben ser anteriores a las de fin.";
+                    errorMessage.style.display = "block";
+                    document.getElementById("fechaHoraFin").value = "";
+                    return false;
+                } else {
+                    errorMessage.style.display = "none";
+                    return true;
+                }
+            }
+            return true;
+        }
+
+        function consultarHistorico() {
+            let fechaHoraInicio = document.getElementById("fechaHoraInicio").value;
+            let fechaHoraFin = document.getElementById("fechaHoraFin").value;
+            const errorMessage = document.getElementById("errorMessage");
+            const errorText = document.getElementById("errorText");
+
+            if (!fechaHoraInicio || !fechaHoraFin) {
+                errorText.textContent = "Seleccione fecha y hora correctamente.";
+                errorMessage.style.display = "block";
+                return;
+            }
+
+            if (!validarFechas()) {
+                return;
+            }
+
+            // Mostrar loader
+            Swal.fire({
+                title: 'Consultando datos',
+                text: 'Espere un momento...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Formatear para backend
+            const inicioDate = new Date(fechaHoraInicio);
+            const finDate = new Date(fechaHoraFin);
+            
+            const formatForBackend = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${year}-${month}-${day} ${hours}:${minutes}:00`;
+            };
+            
+            const inicio = formatForBackend(inicioDate);
+            const fin = formatForBackend(finDate);
+
+            fetch(`historico.php?inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}`)
+            .then(response => response.json())
+            .then(data => {
+                // Cerrar loader
+                Swal.close();
+                
+                if (!Array.isArray(data) || data.length === 0) {
+                    errorText.textContent = "No hay datos en ese rango de tiempo.";
+                    errorMessage.style.display = "block";
+                    return;
+                }
+
+                errorMessage.style.display = "none";
+                polyline.setLatLngs([]);
+                markers.forEach(m => map.removeLayer(m));
+                markers = [];
+
+                let coordenadas = data.map(p => [parseFloat(p.lat), parseFloat(p.lon)]);
+                polyline.setLatLngs(coordenadas);
+                map.fitBounds(polyline.getBounds());
+
+                if (data.length > 0) {
+                    // Primer y último punto con marcadores diferentes
+                    let inicio = data[0];
+                    let fin = data[data.length - 1];
+
+                    let inicioMarker = L.circleMarker([parseFloat(inicio.lat), parseFloat(inicio.lon)], {
+                        color: "#2ecc71",
+                        fillColor: "#2ecc71",
+                        fillOpacity: 0.7,
+                        radius: 8,
+                        weight: 2
+                    }).addTo(map);
+                    
+                    inicioMarker.bindPopup(createPopupContent("Punto de Inicio", {
+                        "Fecha": inicio.fecha,
+                        "Hora": inicio.hora,
+                        "Latitud": inicio.lat,
+                        "Longitud": inicio.lon
+                    }));
+                    
+                    let finMarker = L.circleMarker([parseFloat(fin.lat), parseFloat(fin.lon)], {
+                        color: "#e74c3c",
+                        fillColor: "#e74c3c",
+                        fillOpacity: 0.7,
+                        radius: 8,
+                        weight: 2
+                    }).addTo(map);
+                    
+                    finMarker.bindPopup(createPopupContent("Punto Final", {
+                        "Fecha": fin.fecha,
+                        "Hora": fin.hora,
+                        "Latitud": fin.lat,
+                        "Longitud": fin.lon
+                    }));
+
+                    markers.push(inicioMarker, finMarker);
+                    
+                    // Añadir una animación al punto final
+                    const finLatLng = L.latLng(parseFloat(fin.lat), parseFloat(fin.lon));
+                    const pulseCircle = L.circleMarker(finLatLng, {
+                        radius: 10,
+                        color: "#e74c3c",
+                        fillColor: "#e74c3c",
+                        fillOpacity: 0.3,
+                        weight: 0,
+                        className: 'pulse'
+                    }).addTo(map);
+                    
+                    markers.push(pulseCircle);
+                }
+
+                // Puntos intermedios visibles solo en zoom alto
+                data.slice(1, -1).forEach(p => {
+                    let marker = L.circleMarker([parseFloat(p.lat), parseFloat(p.lon)], {
+                        color: "#3498db",
+                        fillColor: "#3498db",
+                        fillOpacity: 0.6,
+                        radius: 5,
+                        weight: 1
+                    });
+
+                    marker.bindPopup(createPopupContent("Punto Intermedio", {
+                        "Fecha": p.fecha,
+                        "Hora": p.hora,
+                        "Latitud": p.lat,
+                        "Longitud": p.lon
+                    }));
+                    
+                    markers.push(marker);
+                });
+
+                // Solo mostrar puntos intermedios al hacer zoom
+                showMarkersBasedOnZoom();
+                
+                // Mostrar mensaje de éxito
+                Swal.fire({
+                    title: 'Datos cargados',
+                    text: `Se encontraron ${data.length} registros en el rango seleccionado`,
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            })
+            .catch(error => {
+                // Cerrar loader
+                Swal.close();
+                
+                console.error("Error al obtener el historial:", error);
+                errorText.textContent = "Ocurrió un error al consultar los datos.";
+                errorMessage.style.display = "block";
+            });
+        }
+
+        function createPopupContent(title, data) {
+            let content = `<div class="popup-title">${title}</div><div class="popup-content">`;
+            
+            for (const [key, value] of Object.entries(data)) {
+                content += `<div class="popup-label">${key}:</div><div>${value}</div>`;
+            }
+            
+            content += `</div>`;
+            return content;
+        }
         
-        // Funciones de zoom personalizadas
+        function showMarkersBasedOnZoom() {
+            let zoom = map.getZoom();
+            
+            // Primeros dos marcadores son inicio/fin y siempre se muestran
+            // El tercero es la animación de pulso
+            if (markers.length > 3) {
+                markers.slice(3).forEach(m => {
+                    if (zoom >= 13) {
+                        m.addTo(map);
+                    } else {
+                        map.removeLayer(m);
+                    }
+                });
+            }
+        }
+
+        function abrirTiempoReal() {
+            window.location.href = "/index.html";
+        }
+
+        function abrirLocalizador() {
+            window.location.href = "/localizador.html";
+        }
+        
         function zoomIn() {
             map.zoomIn();
         }
@@ -193,94 +617,12 @@
         function zoomOut() {
             map.zoomOut();
         }
-        
-        // Función para consultar histórico
-        function consultarHistorico() {
-            const fechaInicio = document.getElementById("fechaInicio").value;
-            const horaInicio = document.getElementById("horaInicio").value;
-            const fechaFin = document.getElementById("fechaFin").value;
-            const horaFin = document.getElementById("horaFin").value;
+
+        document.addEventListener("DOMContentLoaded", function() {
+            initializeDatetimes();
             
-            const inicio = `${fechaInicio} ${horaInicio}:00`;
-            const fin = `${fechaFin} ${horaFin}:00`;
-            
-            // Aquí iría la llamada al API real
-            // Por ahora simularemos una ruta en Barranquilla
-            simulateRoute();
-        }
-        
-        // Función para simular ruta (para demostración)
-        function simulateRoute() {
-            // Limpiar marcadores y rutas anteriores
-            polyline.setLatLngs([]);
-            markers.forEach(m => map.removeLayer(m));
-            markers = [];
-            
-            // Crear ruta simulada en Barranquilla
-            const route = [
-                [10.9878, -74.7889], // Centro de Barranquilla
-                [10.9950, -74.7950],
-                [11.0050, -74.8050],
-                [11.0100, -74.8100],
-                [11.0150, -74.8000],
-                [11.0200, -74.7900],
-                [11.0250, -74.7800]
-            ];
-            
-            polyline.setLatLngs(route);
-            map.fitBounds(polyline.getBounds());
-            
-            // Añadir marcadores
-            const inicioMarker = L.circleMarker(route[0], {
-                color: "green",
-                radius: 8
-            }).addTo(map).bindPopup("<b>Inicio</b><br>Fecha y Hora: 2025-03-31 12:00");
-            
-            const finMarker = L.circleMarker(route[route.length-1], {
-                color: "red",
-                radius: 8
-            }).addTo(map).bindPopup("<b>Fin</b><br>Fecha y Hora: 2025-04-01 11:59");
-            
-            markers.push(inicioMarker, finMarker);
-            
-            // Puntos intermedios
-            route.slice(1, -1).forEach((coord, index) => {
-                const marker = L.circleMarker(coord, {
-                    color: "blue",
-                    radius: 4
-                }).bindPopup(`<b>Punto ${index+1}</b>`);
-                
-                markers.push(marker);
-                
-                // Solo mostrar en zoom alto
-                if (map.getZoom() >= 13) {
-                    marker.addTo(map);
-                }
-            });
-        }
-        
-        // Evento de zoom para mostrar/ocultar puntos intermedios
-        map.on("zoomend", () => {
-            const zoom = map.getZoom();
-            markers.slice(2).forEach(m => {
-                if (zoom >= 13) {
-                    m.addTo(map);
-                } else {
-                    map.removeLayer(m);
-                }
-            });
-        });
-        
-        // Función para cambiar a vista en tiempo real
-        document.querySelector('.tiempo-real-btn').addEventListener('click', function() {
-            alert("Cambiando a vista en tiempo real");
-            // window.location.href = "/index.html";
-        });
-        
-        // Función para cambiar a localizador
-        document.querySelector('.localizador-btn').addEventListener('click', function() {
-            alert("Cambiando a localizador");
-            // window.location.href = "/localizador.html";
+            // Manejar el cambio de zoom para los marcadores
+            map.on("zoomend", showMarkersBasedOnZoom);
         });
     </script>
 </body>
