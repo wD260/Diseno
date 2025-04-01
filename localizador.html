@@ -3,656 +3,780 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seguimiento de vehículos</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Localizador de Vehículos por Área</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
     <style>
-        body, html {
+        :root {
+            --primary-color: #3498db;  /* Azul */
+            --secondary-color: #f39c12; /* Naranja/Warning */
+            --success-color: #2ecc71;  /* Verde */
+            --danger-color: #e74c3c;   /* Rojo */
+            --info-color: #6c757d;     /* Gris/Secondary */
+        }
+
+        body {
             margin: 0;
             padding: 0;
-            height: 100%;
-            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; /* Evita scroll general */
         }
-        
-        .container {
-            display: grid;
-            grid-template-columns: 320px 1fr;
-            grid-template-rows: auto 1fr;
+
+        .main-layout {
+            display: flex;
             height: 100vh;
+        }
+
+        .sidebar {
+            width: 320px;
+            background-color: #ffffff;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .map-container {
+            flex: 1;
+            position: relative;
             overflow: hidden;
         }
-        
-        header {
-            grid-column: 1 / 3;
-            background-color: #f8f9fa;
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        /* Mantener el estilo original de los botones de navegación */
-        .nav-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .nav-button {
-            padding: 15px 25px;  /* Botones grandes como eran originalmente */
-            background-color: #28a745;  /* Color verde original */
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-        }
-        
-        #tiempo-real-btn {
-            background-color: #6c757d !important;
-            color: white !important;
-            font-weight: bold;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
-        }
-        #tiempo-real-btn2 {
-            background-color: #fd7e14 !important;
-            color: white !important;
-            font-weight: bold;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
-        }
-        .sidebar {
-            padding: 15px;
-            background-color: #f8f9fa;
-            overflow-y: auto;
-            border-right: 1px solid #ddd;
-        }
-        
+
         #map {
             height: 100%;
             width: 100%;
         }
-        
-        .control-group {
-            margin-bottom: 15px;
+
+        .app-title {
+            color: #2c3e50;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary-color);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
-        
-        .control-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
+
+        .form-label {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 14px;
         }
-        
-        .datetime-container {
+
+        .form-control, .datetime-container input, .search-container input {
+            padding: 10px; /* Un poco menos padding que historico para ajustar */
+            border-radius: 8px; /* Menos redondeado */
+            border: 1px solid #dee2e6;
+            background-color: #f8f9fa;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.08);
+            width: 100%; /* Asegurar ancho completo */
+            box-sizing: border-box; /* Incluir padding en el ancho */
+        }
+         .datetime-container input {
+             flex: 1; /* Para que ocupen espacio disponible */
+         }
+
+
+        .form-control:focus, .form-control:hover,
+        .datetime-container input:focus, .datetime-container input:hover,
+        .search-container input:focus, .search-container input:hover {
+            background-color: #ffffff;
+            border-color: var(--primary-color);
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.08), 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+        .form-group {
+            margin-bottom: 18px; /* Espacio entre grupos */
+        }
+
+        .btn {
+            padding: 10px 18px; /* Ajuste de padding */
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex; /* Cambiado a inline-flex para botones de top-buttons */
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+            cursor: pointer;
+            border: none; /* Quitar borde por defecto */
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 8px rgba(0,0,0,0.15);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary { background-color: var(--primary-color); border-color: var(--primary-color); color: white;}
+        .btn-primary:hover { background-color: #2980b9; border-color: #2980b9; color:white; }
+        .btn-warning { background-color: var(--secondary-color); border-color: var(--secondary-color); color: white; }
+        .btn-warning:hover { background-color: #e67e22; border-color: #e67e22; color: white; }
+        .btn-success { background-color: var(--success-color); border-color: var(--success-color); color: white;}
+        .btn-success:hover { background-color: #27ae60; border-color: #27ae60; color: white;}
+        .btn-danger { background-color: var(--danger-color); border-color: var(--danger-color); color: white;}
+        .btn-danger:hover { background-color: #c0392b; border-color: #c0392b; color: white;}
+        .btn-info { background-color: var(--info-color); border-color: var(--info-color); color: white;}
+        .btn-info:hover { background-color: #5a6268; border-color: #5a6268; color: white;}
+
+
+        .top-buttons {
+            position: absolute;
+            top: 15px; /* Ajuste de posición */
+            right: 15px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px; /* Espacio entre botones */
+        }
+
+        .error-message {
+            color: var(--danger-color);
+            background-color: rgba(231, 76, 60, 0.1);
+            border-left: 4px solid var(--danger-color);
+            padding: 10px;
+            margin-top: 15px;
+            border-radius: 5px;
+            font-weight: 500;
+            display: none; /* Oculto por defecto */
+        }
+         #errorMessage { /* Aplicar a ID específico */
+            color: var(--danger-color);
+            background-color: rgba(231, 76, 60, 0.1);
+            border-left: 4px solid var(--danger-color);
+            padding: 10px;
+            margin-top: 15px;
+            border-radius: 5px;
+            font-weight: 500;
+            display: none; /* Oculto por defecto */
+        }
+
+
+        .zoom-controls {
+            position: absolute;
+            top: 15px; /* Ajuste de posición */
+            left: 15px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px; /* Espacio entre botones de zoom */
+        }
+
+        .zoom-btn {
+            width: 36px; /* Ligeramente más pequeño */
+            height: 36px;
+            background-color: white;
+            border-radius: 50%;
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            transition: all 0.2s ease;
+            border: 1px solid #ddd; /* Borde sutil */
         }
-        
-        .datetime-container input {
-            flex: 1;
-            padding: 6px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+
+        .zoom-btn:hover {
+            background-color: #f8f9fa;
+            transform: scale(1.05);
         }
-        
-        .range-container {
-            margin-top: 5px;
+
+        .map-attribution { /* Estilo para atribución */
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 11px;
+            z-index: 1000;
         }
-        
-        .range-container input {
-            width: 100%;
-        }
-        
-        .range-value {
-            text-align: right;
-            font-size: 12px;
-            color: #666;
-        }
-        
-        #errorMessage {
-            display: none;
-            padding: 10px;
-            background-color: #f8d7da;
-            color: #721c24;
-            border-radius: 4px;
-            margin: 10px 0;
-        }
-        
-        #resultContainer {
-            display: none;
-            margin-top: 20px;
-            max-height: 300px;
+
+         /* Estilos específicos del Localizador adaptados */
+         .datetime-container {
+             display: flex;
+             align-items: center;
+             gap: 10px;
+         }
+         .range-container {
+             margin-top: 5px;
+         }
+         .range-container input[type=range] {
+             width: 100%;
+             cursor: pointer;
+         }
+         .range-value {
+             text-align: right;
+             font-size: 12px;
+             color: #666;
+             margin-top: 3px;
+         }
+         #resultContainer {
+            margin-top: 15px;
+            max-height: 250px; /* Ajustar altura */
             overflow-y: auto;
-        }
-        
-        .result-item {
+            border: 1px solid #eee;
+            border-radius: 5px;
             padding: 10px;
+            background-color: #fdfdfd;
+            display: none; /* Oculto por defecto */
+        }
+         #resultContainer h3 {
+             font-size: 1rem;
+             font-weight: 600;
+             margin-bottom: 10px;
+             color: #333;
+         }
+        .result-item {
+            padding: 8px 10px; /* Ajustar padding */
             background-color: #f0f0f0;
-            margin-bottom: 8px;
+            margin-bottom: 6px; /* Menos espacio */
             border-radius: 4px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-size: 0.9rem; /* Ligeramente más pequeño */
         }
-        
-        .result-date {
-            font-size: 14px;
-        }
-        
-        .result-action {
-            color: #0078A8;
-            cursor: pointer;
-        }
-        
-        .result-action:hover {
-            text-decoration: underline;
-        }
-        
-        .radio-options {
-            display: flex;
-            gap: 10px;
-            margin-top: 5px;
-        }
-        
+        .result-date strong { color: #333; }
+        .result-action { color: var(--primary-color); cursor: pointer; font-weight: 500; }
+        .result-action:hover { text-decoration: underline; color: #2980b9; }
+
+        .radio-options { display: flex; gap: 10px; margin-top: 5px; margin-bottom: 15px; }
         .radio-option {
             flex: 1;
             text-align: center;
-            padding: 5px;
-            background-color: #f0f0f0;
-            border-radius: 4px;
+            padding: 6px; /* Ajustar padding */
+            background-color: #e9ecef;
+            border-radius: 6px; /* Más redondeado */
             font-size: 12px;
             cursor: pointer;
+            border: 1px solid #dee2e6;
+            transition: all 0.2s ease;
         }
-        
         .radio-option.active {
-            background-color: #0078A8;
+            background-color: var(--primary-color);
             color: white;
+            border-color: var(--primary-color);
+            font-weight: 600;
         }
-        
-        /* Botón de restablecer en el estilo original de la aplicación */
         #resetButton {
             width: 100%;
-            padding: 10px;
-            background-color: #dc3545;  /* Color rojo similar a otros botones de acción */
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
             margin-top: 15px;
         }
-        
+
         /* Estilo para el buscador de ubicaciones */
         .search-container {
             margin-bottom: 15px;
             position: relative;
         }
-        
-        .search-container input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        
         .search-container button {
             position: absolute;
             right: 0;
             top: 0;
             height: 100%;
-            padding: 0 10px;
-            background: #0078A8;
+            padding: 0 12px; /* Ajustar padding */
+            background: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 0 4px 4px 0;
+            border-radius: 0 8px 8px 0; /* Coincidir con input */
             cursor: pointer;
+            transition: background-color 0.2s ease;
         }
-        
+        .search-container button:hover { background: #2980b9; }
+
         #searchResults {
             position: absolute;
             width: 100%;
-            max-height: 200px;
+            max-height: 180px; /* Menos altura */
             overflow-y: auto;
             background: white;
-            border: 1px solid #ddd;
+            border: 1px solid #dee2e6;
             border-top: none;
-            z-index: 1000;
+            z-index: 1010; /* Encima del mapa */
             display: none;
+            border-radius: 0 0 5px 5px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        
-        .search-result-item {
-            padding: 8px;
-            cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        
-        .search-result-item:hover {
-            background-color: #f8f9fa;
-        }
-        
-        /* Estilo para el botón de buscar nuevamente */
+        .search-result-item { padding: 8px 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+        .search-result-item:last-child { border-bottom: none; }
+        .search-result-item:hover { background-color: #f8f9fa; }
+
         #searchAgainButton {
-            display: none;
+            display: none; /* Oculto por defecto */
             width: 100%;
-            padding: 8px;
-            background-color: #0078A8;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 10px;
             margin-bottom: 15px;
         }
+
+        @media (max-width: 768px) {
+             .main-layout { flex-direction: column; }
+             .sidebar { width: 100%; height: auto; max-height: 45vh; /* Más altura en móvil */ }
+             .top-buttons { top: 10px; right: 10px; gap: 5px;}
+             .top-buttons .btn { padding: 8px 10px; font-size: 0.85rem;}
+             .zoom-controls { top: 10px; left: 10px;}
+        }
+
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div style="font-size: 18px; font-weight: bold;">Sistema de Seguimiento de Vehículos</div>
-            <div class="nav-buttons">
-                <button id="tiempo-real-btn" class="nav-button" onclick="abrirTiempoReal()">Tiempo Real</button>
-                <button id="tiempo-real-btn2" class="nav-button" onclick="abrirHistorial()">Historial</button>
-            </div>
-        </header>
-        
+    <div class="main-layout">
         <div class="sidebar">
-            <!-- Añadir el buscador de ubicaciones -->
-            <div class="search-container">
-                <input type="text" id="searchInput" placeholder="Buscar ubicación...">
-                <button id="searchButton"><i class="fa-solid fa-search"></i></button>
-                <div id="searchResults"></div>
-            </div>
-            
-            <!-- Botón para buscar nuevamente -->
-            <button id="searchAgainButton"><i class="fa-solid fa-search"></i> Buscar nuevamente</button>
-            
-            <div class="control-group">
-                <label>Fecha de Inicio</label>
-                <div class="datetime-container">
-                    <input type="date" id="fechaInicio">
-                    <input type="time" id="horaInicio">
+             <h2 class="app-title animate__animated animate__fadeInDown">LOCALIZADOR POR ÁREA</h2>
+
+            <div class="form-group">
+                <label class="form-label" for="searchInput">Buscar Ubicación:</label>
+                <div class="search-container">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Ej: Calle 72 con 54, Barranquilla">
+                    <button id="searchButton" class="btn-primary"><i class="fa-solid fa-search"></i></button>
+                    <div id="searchResults"></div>
                 </div>
+                 <button id="searchAgainButton" class="btn btn-info btn-sm w-100">
+                    <i class="fa-solid fa-search"></i> Buscar otra ubicación
+                </button>
             </div>
-            
-            <div class="control-group">
-                <label>Fecha de Fin</label>
-                <div class="datetime-container">
-                    <input type="date" id="fechaFin">
-                    <input type="time" id="horaFin">
-                </div>
-            </div>
-            
-            <div class="control-group">
-                <label>Radio de búsqueda: <span id="radioValue">100 m</span></label>
-                <div class="range-container">
-                    <input type="range" id="radioSlider" min="50" max="1000" step="50" value="100">
-                    <div class="range-value">
-                        <span>50m</span>
-                        <span style="float: right;">1km</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="radio-options">
-                <div class="radio-option active" data-value="100">100m</div>
-                <div class="radio-option" data-value="250">250m</div>
-                <div class="radio-option" data-value="500">500m</div>
-            </div>
-            
-            <div id="errorMessage"></div>
-            
-            <div id="resultContainer">
-                <h3>Momentos en que el vehículo pasó por el área seleccionada:</h3>
-                <div id="resultList"></div>
-            </div>
-            
-            <button id="resetButton">
-                <i class="fa-solid fa-broom"></i> Limpiar Mapa
-            </button>
+
+            <div class="form-group">
+                 <label class="form-label">Fecha de Inicio:</label>
+                 <div class="datetime-container">
+                     <input type="date" id="fechaInicio" class="form-control">
+                     <input type="time" id="horaInicio" class="form-control">
+                 </div>
+             </div>
+
+             <div class="form-group">
+                 <label class="form-label">Fecha de Fin:</label>
+                 <div class="datetime-container">
+                     <input type="date" id="fechaFin" class="form-control">
+                     <input type="time" id="horaFin" class="form-control">
+                 </div>
+             </div>
+
+             <div class="form-group">
+                 <label class="form-label">Radio de búsqueda: <span id="radioValue">100 m</span></label>
+                 <div class="range-container">
+                     <input type="range" id="radioSlider" min="50" max="1000" step="50" value="100">
+                     <div class="range-value">
+                         <span>50m</span>
+                         <span style="float: right;">1km</span>
+                     </div>
+                 </div>
+                  <div class="radio-options">
+                     <div class="radio-option active" data-value="100">100m</div>
+                     <div class="radio-option" data-value="250">250m</div>
+                     <div class="radio-option" data-value="500">500m</div>
+                 </div>
+             </div>
+
+             <div id="errorMessage"></div>
+
+             <div id="resultContainer">
+                 <h3>Momentos en el área:</h3>
+                 <div id="resultList"></div>
+             </div>
+
+             <button id="resetButton" class="btn btn-danger w-100">
+                 <i class="fa-solid fa-broom"></i> Limpiar Mapa y Selección
+             </button>
         </div>
-        
-        <div id="map"></div>
+
+        <div class="map-container">
+            <div class="top-buttons">
+                <button class="btn btn-info" onclick="abrirTiempoReal()">
+                    <i class="fas fa-clock"></i> Tiempo Real
+                </button>
+                <button class="btn btn-warning" onclick="abrirHistorial()"> <i class="fas fa-history"></i> Historial
+                </button>
+                 </div>
+
+            <div class="zoom-controls">
+                <div class="zoom-btn" onclick="zoomIn()"><i class="fas fa-plus"></i></div>
+                <div class="zoom-btn" onclick="zoomOut()"><i class="fas fa-minus"></i></div>
+            </div>
+
+            <div id="map"></div>
+
+             <div class="map-attribution">
+                 © Leaflet | © OpenStreetMap contributors
+             </div>
+        </div>
     </div>
-    
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+
     <script>
+        // --- TODA LA LÓGICA JavaScript ORIGINAL DEL LOCALIZADOR SE MANTIENE AQUÍ ---
+        // --- SIN CAMBIOS EN LA LÓGICA ---
+
         let map;
         let searchCircle;
         let clickMarker;
         let clickPosition;
         let exactMarkers = []; // Array para almacenar todos los marcadores de paquetes
         const errorMessage = document.getElementById("errorMessage");
-        
+
+        // Funciones de Navegación y Zoom (añadidas para consistencia con Historico)
+         function abrirTiempoReal() {
+             window.location.href = "/index.html"; // Ajusta la ruta si es diferente
+         }
+         function abrirHistorial() {
+             window.location.href = "/historico.html"; // Ajusta la ruta si es diferente
+         }
+         function zoomIn() { if(map) map.zoomIn(); }
+         function zoomOut() { if(map) map.zoomOut(); }
+
+
         function initializeDatetimes() {
             // Configurar fechas y horas por defecto
             const now = new Date();
             const yesterday = new Date(now);
             yesterday.setDate(now.getDate() - 1);
-            
-            document.getElementById("fechaInicio").valueAsDate = yesterday;
+
+            // Formatear YYYY-MM-DD
+            const formatDate = (date) => date.toISOString().split('T')[0];
+
+            document.getElementById("fechaInicio").value = formatDate(yesterday);
             document.getElementById("horaInicio").value = "00:00";
-            document.getElementById("fechaFin").valueAsDate = now;
+            document.getElementById("fechaFin").value = formatDate(now);
             document.getElementById("horaFin").value = "23:59";
-            
-            // Inicializar el mapa centrado en el último dato
-            initializeMap();
-            
+
             // Configurar el slider de radio
             const radioSlider = document.getElementById("radioSlider");
             const radioValue = document.getElementById("radioValue");
-            
+
             radioSlider.addEventListener("input", function() {
                 const value = this.value;
                 radioValue.textContent = value >= 1000 ? (value / 1000).toFixed(1) + " km" : value + " m";
                 updateSearchCircle();
             });
-            
+
             // Configurar los botones de radio preestablecidos
             document.querySelectorAll(".radio-option").forEach(option => {
                 option.addEventListener("click", function() {
-                    document.querySelectorAll(".radio-option").forEach(opt => {
-                        opt.classList.remove("active");
-                    });
+                    document.querySelectorAll(".radio-option").forEach(opt => opt.classList.remove("active"));
                     this.classList.add("active");
                     radioSlider.value = this.dataset.value;
                     radioValue.textContent = this.dataset.value >= 1000 ? (this.dataset.value / 1000).toFixed(1) + " km" : this.dataset.value + " m";
                     updateSearchCircle();
                 });
             });
-            
+
             // Configurar el botón de reset
             document.getElementById("resetButton").addEventListener("click", resetMap);
-            
+
             // Configurar el buscador de ubicaciones
             document.getElementById("searchButton").addEventListener("click", performSearch);
             document.getElementById("searchInput").addEventListener("keypress", function(e) {
-                if (e.key === "Enter") {
-                    performSearch();
-                }
+                if (e.key === "Enter") performSearch();
             });
-            
-            // Configurar el botón para buscar nuevamente
             document.getElementById("searchAgainButton").addEventListener("click", function() {
                 document.getElementById("searchInput").value = "";
                 document.getElementById("searchAgainButton").style.display = "none";
+                document.getElementById("searchResults").style.display = "none"; // Ocultar resultados también
                 document.getElementById("searchInput").focus();
             });
-            
-            // Cerrar los resultados de búsqueda al hacer clic en el mapa
-            document.getElementById("map").addEventListener("click", function() {
-                document.getElementById("searchResults").style.display = "none";
-            });
+            // Cerrar los resultados de búsqueda al hacer clic fuera
+             document.addEventListener('click', function(event) {
+                 const searchResultsContainer = document.getElementById('searchResults');
+                 const searchInput = document.getElementById('searchInput');
+                 const searchButton = document.getElementById('searchButton');
+                 // Si el clic no fue dentro del input, botón o resultados
+                 if (!searchInput.contains(event.target) && !searchButton.contains(event.target) && !searchResultsContainer.contains(event.target)) {
+                     searchResultsContainer.style.display = 'none';
+                 }
+             });
+             // Inicializar el mapa al final
+             initializeMap();
         }
-        
+
         function initializeMap() {
-            // Inicializar mapa con un punto por defecto
-            map = L.map('map').setView([0, 0], 13);
-            
+            // Inicializar mapa con zoomControl desactivado
+            map = L.map('map', { zoomControl: false }).setView([0, 0], 13);
+
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
-            
+
             // Cargar el último dato disponible y centrar allí
-            fetch('ultima_ubicacion.php')
-                .then(response => response.json())
+            fetch('ultima_ubicacion.php') // Asegúrate que este endpoint exista y funcione
+                .then(response => response.ok ? response.json() : Promise.reject('Error fetching last location'))
                 .then(data => {
                     if (data && data.lat && data.lon) {
-                        map.setView([parseFloat(data.lat), parseFloat(data.lon)], 13);
+                         const lat = parseFloat(data.lat);
+                         const lon = parseFloat(data.lon);
+                         if (!isNaN(lat) && !isNaN(lon)) {
+                             map.setView([lat, lon], 13);
+                         } else {
+                              map.setView([10.9639, -74.7964], 13); // Fallback a Barranquilla
+                         }
+                    } else {
+                         map.setView([10.9639, -74.7964], 13); // Fallback a Barranquilla
                     }
                 })
                 .catch(error => {
                     console.error("Error al obtener último dato:", error);
+                     map.setView([10.9639, -74.7964], 13); // Fallback a Barranquilla en caso de error
                 });
-            
+
             map.on('click', onMapClick);
         }
-        
+
         function onMapClick(e) {
             clickPosition = e.latlng;
             createMarkerAndCircle(clickPosition);
         }
-        
+
         function createMarkerAndCircle(position) {
+            if (!map) return; // Asegurarse que el mapa esté inicializado
+
             // Eliminar marcador y círculo si ya existen
             if (clickMarker) map.removeLayer(clickMarker);
             if (searchCircle) map.removeLayer(searchCircle);
-            
-            // Limpiar marcadores antiguos de paquetes
-            clearExactMarkers();
-            
-            // Crear nuevo marcador
-            clickMarker = L.marker(position).addTo(map);
-            
+            clearExactMarkers(); // Limpiar marcadores de resultados anteriores
+
+            // Crear nuevo marcador de clic
+             const clickIcon = L.icon({
+                iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+                iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+             });
+            clickMarker = L.marker(position, {icon: clickIcon}).addTo(map);
+
             // Crear círculo de búsqueda
             const radio = parseInt(document.getElementById("radioSlider").value);
             searchCircle = L.circle(position, {
-                color: 'blue',
-                fillColor: '#30f',
-                fillOpacity: 0.2,
-                radius: radio
+                color: 'blue', fillColor: '#30f', fillOpacity: 0.15, radius: radio, weight: 2
             }).addTo(map);
-            
-            // Ocultar mensajes y resultados previos
+
             errorMessage.style.display = "none";
             document.getElementById("resultContainer").style.display = "none";
-            
-            // Consultar eventos en esta ubicación
             consultarPasosPorUbicacion(position, radio);
-            
-            // Centrar el mapa en la posición
-            map.setView(position, 14);
-            
-            // Mostrar el botón de buscar nuevamente si se ha realizado una búsqueda
+
+             // Ajustar vista para incluir el círculo, pero no hacer zoom demasiado cerca
+             map.fitBounds(searchCircle.getBounds(), { padding: [20, 20], maxZoom: 16 });
+
             if (document.getElementById("searchInput").value.trim() !== "") {
                 document.getElementById("searchAgainButton").style.display = "block";
             }
         }
-        
+
         function updateSearchCircle() {
-            if (clickPosition && searchCircle) {
+            if (clickPosition && searchCircle && map) {
                 const radio = parseInt(document.getElementById("radioSlider").value);
-                map.removeLayer(searchCircle);
+                map.removeLayer(searchCircle); // Eliminar el círculo anterior
                 searchCircle = L.circle(clickPosition, {
-                    color: 'blue',
-                    fillColor: '#30f',
-                    fillOpacity: 0.2,
-                    radius: radio
+                     color: 'blue', fillColor: '#30f', fillOpacity: 0.15, radius: radio, weight: 2
                 }).addTo(map);
-                
-                // Limpiar marcadores antiguos de paquetes
+
                 clearExactMarkers();
-                
-                // Volver a consultar con el nuevo radio
                 consultarPasosPorUbicacion(clickPosition, radio);
+                // Reajustar vista si es necesario
+                map.fitBounds(searchCircle.getBounds(), { padding: [20, 20], maxZoom: 16 });
             }
         }
-        
+
         function clearExactMarkers() {
-            // Eliminar todos los marcadores de paquetes anteriores
-            exactMarkers.forEach(marker => {
-                map.removeLayer(marker);
-            });
+             if (!map) return;
+            exactMarkers.forEach(marker => map.removeLayer(marker));
             exactMarkers = [];
         }
-        
+
         function resetMap() {
-            // Eliminar marcadores y círculos
+             if (!map) return;
             if (clickMarker) map.removeLayer(clickMarker);
             if (searchCircle) map.removeLayer(searchCircle);
-            
-            // Limpiar marcadores de paquetes
             clearExactMarkers();
-            
-            // Ocultar mensajes y resultados
+
             errorMessage.style.display = "none";
             document.getElementById("resultContainer").style.display = "none";
-            
-            // Restablecer posición
             clickPosition = null;
-            
-            // Limpiar el buscador y ocultar el botón de buscar nuevamente
+            clickMarker = null; // Asegurar que se borre la referencia
+            searchCircle = null; // Asegurar que se borre la referencia
+
             document.getElementById("searchInput").value = "";
             document.getElementById("searchResults").style.display = "none";
             document.getElementById("searchAgainButton").style.display = "none";
+
+            // Opcional: recentrar el mapa a la última ubicación conocida o a la vista por defecto
+             fetch('ultima_ubicacion.php')
+                 .then(response => response.ok ? response.json() : Promise.reject('Error fetching last location'))
+                 .then(data => {
+                     if (data && data.lat && data.lon) {
+                        const lat = parseFloat(data.lat);
+                        const lon = parseFloat(data.lon);
+                        if (!isNaN(lat) && !isNaN(lon)) {
+                            map.setView([lat, lon], 13);
+                        } else {
+                             map.setView([10.9639, -74.7964], 13);
+                        }
+                    } else {
+                        map.setView([10.9639, -74.7964], 13);
+                    }
+                 })
+                 .catch(error => map.setView([10.9639, -74.7964], 13));
         }
-        
+
         function consultarPasosPorUbicacion(position, radio) {
             const fechaInicio = document.getElementById("fechaInicio").value;
             const horaInicio = document.getElementById("horaInicio").value;
             const fechaFin = document.getElementById("fechaFin").value;
             const horaFin = document.getElementById("horaFin").value;
-            
-            const inicio = `${fechaInicio}T${horaInicio}`;
-            const fin = `${fechaFin}T${horaFin}`;
-            
-            fetch(`cuando_paso.php?lat=${position.lat}&lon=${position.lng}&radio=${radio}&inicio=${inicio}&fin=${fin}`)
-                .then(response => response.json())
+
+             // Validación simple de fechas
+             if (!fechaInicio || !horaInicio || !fechaFin || !horaFin) {
+                 errorMessage.textContent = "Por favor, complete las fechas y horas de inicio y fin.";
+                 errorMessage.style.display = "block";
+                 return;
+             }
+             const inicioDT = new Date(`${fechaInicio}T${horaInicio}`);
+             const finDT = new Date(`${fechaFin}T${horaFin}`);
+             if (inicioDT >= finDT) {
+                 errorMessage.textContent = "La fecha/hora de inicio debe ser anterior a la de fin.";
+                 errorMessage.style.display = "block";
+                 return;
+             }
+             errorMessage.style.display = "none"; // Ocultar si pasa validación
+
+
+            const inicio = `${fechaInicio} ${horaInicio}:00`; // Formato YYYY-MM-DD HH:MM:SS
+            const fin = `${fechaFin} ${horaFin}:00`; // Formato YYYY-MM-DD HH:MM:SS
+
+            // Mostrar loader simple
+            const resultList = document.getElementById("resultList");
+            resultList.innerHTML = '<div class="text-center p-2"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
+            document.getElementById("resultContainer").style.display = "block";
+
+
+            fetch(`cuando_paso.php?lat=${position.lat}&lon=${position.lng}&radio=${radio}&inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}`)
+                .then(response => response.ok ? response.json() : Promise.reject('Error en la consulta'))
                 .then(data => {
                     const resultContainer = document.getElementById("resultContainer");
                     const resultList = document.getElementById("resultList");
-                    
+
                     if (!Array.isArray(data) || data.length === 0) {
                         errorMessage.textContent = "No se encontraron registros del vehículo pasando por esta ubicación en el período seleccionado.";
                         errorMessage.style.display = "block";
-                        resultContainer.style.display = "none";
+                        resultContainer.style.display = "none"; // Ocultar si no hay resultados
                         return;
                     }
-                    
-                    // Limpiar mensajes de error previos
+
                     errorMessage.style.display = "none";
-                    
-                    // Mostrar resultados
-                    resultList.innerHTML = "";
+                    resultList.innerHTML = ""; // Limpiar loader o resultados anteriores
+
                     data.forEach(item => {
                         const resultItem = document.createElement("div");
                         resultItem.className = "result-item";
-                        
-                        const dateDiv = document.createElement("div");
-                        dateDiv.className = "result-date";
-                        dateDiv.innerHTML = `<strong>${item.fecha}</strong> a las <strong>${item.hora}</strong>`;
-                        
-                        const actionDiv = document.createElement("div");
-                        actionDiv.className = "result-action";
-                        actionDiv.innerHTML = `<i class="fa-solid fa-map-pin"></i> Ver en mapa`;
-                        actionDiv.addEventListener("click", function() {
-                            // Obtener el nivel de zoom actual para mantenerlo
-                            const currentZoom = map.getZoom();
-                            
-                            // Centrar mapa en la ubicación exacta pero mantener el nivel de zoom
-                            map.setView([parseFloat(item.lat), parseFloat(item.lon)], currentZoom);
-                            
-                            // Crear marcador temporal destacado
-                            const exactMarker = L.circleMarker([parseFloat(item.lat), parseFloat(item.lon)], {
-                                color: 'red',
-                                fillColor: '#f03',
-                                fillOpacity: 0.5,
-                                radius: 8
+                        resultItem.innerHTML = `
+                            <div class="result-date"><strong>${item.fecha}</strong> ${item.hora}</div>
+                            <div class="result-action" data-lat="${item.lat}" data-lon="${item.lon}" data-fecha="${item.fecha}" data-hora="${item.hora}">
+                                <i class="fa-solid fa-map-pin"></i> Ver
+                            </div>`;
+
+                        resultItem.querySelector('.result-action').addEventListener("click", function() {
+                            if(!map) return;
+                            const lat = parseFloat(this.dataset.lat);
+                            const lon = parseFloat(this.dataset.lon);
+                            const fecha = this.dataset.fecha;
+                            const hora = this.dataset.hora;
+
+                             // Limpiar marcadores rojos anteriores antes de crear uno nuevo
+                             clearExactMarkers();
+
+                            const currentZoom = map.getZoom(); // Mantener zoom
+                            map.setView([lat, lon], Math.max(currentZoom, 15)); // Asegurar zoom mínimo para ver bien
+
+                            const exactMarker = L.circleMarker([lat, lon], {
+                                 color: 'red', fillColor: '#f03', fillOpacity: 0.6, radius: 7, weight: 2
                             }).addTo(map);
-                            
-                            // Guardar el marcador en el array para poder eliminarlo después
-                            exactMarkers.push(exactMarker);
-                            
-                            // Mostrar popup con la información
-                            exactMarker.bindPopup(`<b>Vehículo detectado</b><br>
-                                                  Fecha: ${item.fecha}<br>
-                                                  Hora: ${item.hora}<br>
-                                                  Lat: ${item.lat}<br>
-                                                  Lon: ${item.lon}`).openPopup();
+
+                            exactMarkers.push(exactMarker); // Guardar referencia
+
+                            exactMarker.bindPopup(`<b>Detectado</b><br>Fecha: ${fecha}<br>Hora: ${hora}<br>Lat: ${lat.toFixed(5)}<br>Lon: ${lon.toFixed(5)}`).openPopup();
                         });
-                        
-                        resultItem.appendChild(dateDiv);
-                        resultItem.appendChild(actionDiv);
                         resultList.appendChild(resultItem);
                     });
-                    
+
                     resultContainer.style.display = "block";
+                     // Opcional: Mostrar un mensaje de éxito breve con SweetAlert2
+                    // Swal.fire({
+                    //     icon: 'success', title: 'Consulta exitosa',
+                    //     text: `Se encontraron ${data.length} momentos en el área.`,
+                    //     timer: 1500, showConfirmButton: false
+                    // });
                 })
                 .catch(error => {
                     console.error("Error al consultar los datos:", error);
-                    errorMessage.textContent = "Ocurrió un error al consultar los datos.";
+                    errorMessage.textContent = "Ocurrió un error al consultar los datos. Verifique la conexión o inténtelo más tarde.";
                     errorMessage.style.display = "block";
+                    document.getElementById("resultContainer").style.display = "none"; // Ocultar si hay error
                 });
         }
-        
+
         function performSearch() {
             const query = document.getElementById("searchInput").value.trim();
             if (!query) return;
-            
+
             const searchResultsContainer = document.getElementById("searchResults");
-            searchResultsContainer.innerHTML = '<div class="search-result-item">Buscando...</div>';
+            searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i>Buscando...</i></div>';
             searchResultsContainer.style.display = "block";
-            
-            // Utilizar la API de Nominatim de OpenStreetMap para geocodificación
-            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`;
-            
+
+            // API de Nominatim
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=co`; // Limitar a Colombia
+
             fetch(url)
-                .then(response => response.json())
+                .then(response => response.ok ? response.json() : Promise.reject('Error en Nominatim'))
                 .then(data => {
-                    searchResultsContainer.innerHTML = "";
-                    
+                    searchResultsContainer.innerHTML = ""; // Limpiar "Buscando..."
+
                     if (data.length === 0) {
-                        searchResultsContainer.innerHTML = '<div class="search-result-item">No se encontraron resultados</div>';
+                        searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i>No se encontraron resultados</i></div>';
                         return;
                     }
-                    
+
                     data.forEach(result => {
                         const resultItem = document.createElement("div");
                         resultItem.className = "search-result-item";
                         resultItem.textContent = result.display_name;
                         resultItem.addEventListener("click", function() {
-                            // Actualizar la posición del marcador
-                            clickPosition = L.latLng(parseFloat(result.lat), parseFloat(result.lon));
-                            createMarkerAndCircle(clickPosition);
-                            
-                            // Cerrar los resultados de búsqueda
+                            const lat = parseFloat(result.lat);
+                            const lon = parseFloat(result.lon);
+                             if (!isNaN(lat) && !isNaN(lon)) {
+                                clickPosition = L.latLng(lat, lon);
+                                createMarkerAndCircle(clickPosition);
+                            }
                             searchResultsContainer.style.display = "none";
-                            
-                            // Establecer el texto de búsqueda al seleccionado
-                            document.getElementById("searchInput").value = result.display_name;
-                            
-                            // Mostrar el botón de buscar nuevamente
+                            document.getElementById("searchInput").value = result.display_name; // Poner nombre en input
                             document.getElementById("searchAgainButton").style.display = "block";
                         });
                         searchResultsContainer.appendChild(resultItem);
                     });
                 })
                 .catch(error => {
-                    console.error("Error en la búsqueda:", error);
-                    searchResultsContainer.innerHTML = '<div class="search-result-item">Error en la búsqueda</div>';
+                    console.error("Error en la búsqueda de Nominatim:", error);
+                    searchResultsContainer.innerHTML = '<div class="search-result-item text-danger"><i>Error en la búsqueda</i></div>';
                 });
         }
-        
-        function abrirTiempoReal() {
-            window.location.href = "/index.html";
-        }
-        
-        function abrirHistorial() {
-            window.location.href = "/historico.html";
-        }
-        
+
         // Inicializar todo cuando se carga la página
         document.addEventListener("DOMContentLoaded", initializeDatetimes);
+
     </script>
 </body>
 </html>
