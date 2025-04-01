@@ -3,405 +3,285 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historial GPS</title>
+    <title>Sistema de Seguimiento de Vehículos</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css/animate.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <style>
         body {
             margin: 0;
             padding: 0;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
-        .header-container {
+        .header {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: rgba(255, 255, 255, 0.95);
-            padding: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            box-sizing: border-box;
-            position: relative;
-            z-index: 10;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
-        .form-container {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 12px;
-            background-color: rgba(255, 255, 255, 0.95);
-            padding: 12px 15px;
-            margin-bottom: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            box-sizing: border-box;
-            position: relative;
-            z-index: 10;
-            border-radius: 8px;
-            justify-content: center;
-        }
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .form-group label {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-        .form-input {
-            background-color: rgba(245, 245, 245, 0.7);
-            padding: 8px 12px;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            font-size: 15px;
+        .title {
+            font-size: 16px;
+            font-weight: bold;
             color: #333;
-        }
-        .tiempo-real-btn {
-            background-color: #6c757d !important;
-            color: white !important;
-            font-weight: bold;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
-        }
-        .tiempo-real-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
-            background-color: #5a6268 !important;
-        }
-        .consultar-btn {
-            background-color: #fd7e14 !important;
-            color: white !important;
-            font-weight: bold;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 8px rgba(253, 126, 20, 0.3);
-        }
-        .consultar-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 15px rgba(253, 126, 20, 0.4);
-            background-color: #fc8c2d !important;
-        }
-        .localizador-btn {
-            background-color: #28a745 !important;
-            color: white !important;
-            font-weight: bold;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
-        }
-        .localizador-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
-            background-color: #218838 !important;
-        }
-        #map {
-            height: 75vh;
-            width: 100%;
-            border-radius: 0;
-            margin-bottom: 0;
-            border: none;
-        }
-        h2 {
-            color: #2c3e50;
-            margin: 10px 0;
-            font-size: 24px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-            padding: 0 15px;
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-        .container-fluid {
-            padding: 0;
-            max-width: 100%;
-        }
-        .map-container {
-            position: relative;
-            width: 100%;
-            background-color: rgba(255, 255, 255, 0.8);
             margin: 0;
         }
-        .background-pattern {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: radial-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px);
-            background-size: 20px 20px;
-            z-index: -1;
-        }
-        .content-wrapper {
-            padding: 0 15px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        .button-container {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-        }
-        .datetime-container {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        .datetime-input {
+        .buttons-container {
             display: flex;
             gap: 5px;
         }
-        .error-message {
-            color: #dc3545;
+        .nav-button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .tiempo-real-btn {
+            background-color: #777;
+        }
+        .localizador-btn {
+            background-color: #4CAF50;
+        }
+        .sidebar {
+            width: 230px;
+            background-color: white;
+            padding: 15px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        .date-input-group {
+            margin-bottom: 15px;
+        }
+        .date-input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
             font-size: 14px;
-            margin-top: 5px;
+        }
+        .date-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .date-input input {
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 14px;
+        }
+        .time-icon {
+            color: #777;
+        }
+        .consultar-btn {
+            background-color: #ff8c00;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 0;
+            width: 100%;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+        .zoom-controls {
+            position: absolute;
+            top: 10px;
+            left: 260px;
+            z-index: 1000;
+        }
+        .zoom-btn {
+            display: block;
+            width: 30px;
+            height: 30px;
+            background-color: white;
+            border: 1px solid #ccc;
             text-align: center;
-            font-weight: 500;
-            display: none;
+            line-height: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .zoom-in {
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+        }
+        .zoom-out {
+            border-radius: 0 0 4px 4px;
         }
     </style>
 </head>
 <body>
-    <div class="background-pattern"></div>
+    <div class="header">
+        <h1 class="title">Sistema de Seguimiento de Vehículos</h1>
+        <div class="buttons-container">
+            <button class="nav-button tiempo-real-btn">Tiempo real</button>
+            <button class="nav-button localizador-btn">Localizador</button>
+        </div>
+    </div>
     
-    <div class="container-fluid">
-        <div class="content-wrapper">
-            <h2 class="fw-bold text-uppercase text-center animate__animated animate__fadeInDown">CONSULTA HISTÓRICA GPS</h2>
-            
-            <div class="form-container animate__animated animate__fadeIn">
-                <div class="form-group">
-                    <label>Fecha y Hora de Inicio:</label>
-                    <div class="datetime-input">
-                        <input type="datetime-local" id="fechaHoraInicio" class="form-input">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Fecha y Hora de Fin:</label>
-                    <div class="datetime-input">
-                        <input type="datetime-local" id="fechaHoraFin" class="form-input">
-                    </div>
-                </div>
-                
-                <div class="button-container">
-                    <button class="consultar-btn" onclick="consultarHistorico()">
-                        <i class="fa-solid fa-search"></i> Consultar
-                    </button>
-                    <button class="tiempo-real-btn" onclick="abrirTiempoReal()">
-                        <i class="fa-solid fa-clock"></i> Tiempo Real
-                    </button>
-                    <button class="localizador-btn" onclick="abrirLocalizador()">
-                        <i class="fa-solid fa-location-dot"></i> Localizador
-                    </button>
+    <div class="main-content">
+        <div class="sidebar">
+            <div class="date-input-group">
+                <label>Fecha de Inicio</label>
+                <div class="date-input">
+                    <input type="date" id="fechaInicio" value="2025-03-31">
+                    <input type="time" id="horaInicio" value="12:00">
+                    <i class="fas fa-clock time-icon"></i>
                 </div>
             </div>
-            <div id="errorMessage" class="error-message"></div>
+            
+            <div class="date-input-group">
+                <label>Fecha de Fin</label>
+                <div class="date-input">
+                    <input type="date" id="fechaFin" value="2025-04-01">
+                    <input type="time" id="horaFin" value="11:59">
+                    <i class="fas fa-clock time-icon"></i>
+                </div>
+            </div>
+            
+            <button class="consultar-btn" onclick="consultarHistorico()">Consultar</button>
         </div>
-
-        <div class="map-container">
-            <div id="map"></div>
+        
+        <div id="map"></div>
+        
+        <div class="zoom-controls">
+            <div class="zoom-btn zoom-in" onclick="zoomIn()">+</div>
+            <div class="zoom-btn zoom-out" onclick="zoomOut()">−</div>
         </div>
     </div>
 
     <script>
-        let map = L.map("map").setView([0, 0], 2);
-        let polyline = L.polyline([], { color: 'blue', weight: 3 }).addTo(map);
-        let markers = [];
-
+        // Inicializar el mapa
+        let map = L.map("map", {
+            zoomControl: false // Desactivamos los controles de zoom predeterminados
+        }).setView([10.9878, -74.7889], 12); // Coordenadas para Barranquilla, Colombia
+        
+        // Añadir capa de mapa base
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             attribution: "&copy; OpenStreetMap contributors"
         }).addTo(map);
-
-        function initializeDatetimes() {
-            // Obtener fecha local correcta
-            const hoy = new Date();
-            
-            // Establecer fecha y hora de inicio (hoy a las 00:00)
-            const inicioDate = new Date(hoy);
-            inicioDate.setHours(0, 0, 0, 0);
-            
-            // Establecer fecha y hora de fin (hoy a las 23:59)
-            const finDate = new Date(hoy);
-            finDate.setHours(23, 59, 0, 0);
-            
-            // Formatear para datetime-local en zona horaria local
-            const formatDateTimeLocal = (date) => {
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                return `${year}-${month}-${day}T${hours}:${minutes}`;
-            };
-            
-            document.getElementById("fechaHoraInicio").value = formatDateTimeLocal(inicioDate);
-            document.getElementById("fechaHoraFin").value = formatDateTimeLocal(finDate);
-            
-            // Añadir validación en cambio de fechas
-            document.getElementById("fechaHoraInicio").addEventListener("change", validarFechas);
-            document.getElementById("fechaHoraFin").addEventListener("change", validarFechas);
+        
+        // Variables para el tracking
+        let polyline = L.polyline([], { color: 'blue', weight: 3 }).addTo(map);
+        let markers = [];
+        
+        // Funciones de zoom personalizadas
+        function zoomIn() {
+            map.zoomIn();
         }
         
-        function validarFechas() {
-            const fechaHoraInicio = document.getElementById("fechaHoraInicio").value;
-            const fechaHoraFin = document.getElementById("fechaHoraFin").value;
-            const errorMessage = document.getElementById("errorMessage");
-            
-            if (fechaHoraInicio && fechaHoraFin) {
-                const inicioDate = new Date(fechaHoraInicio);
-                const finDate = new Date(fechaHoraFin);
-                
-                if (inicioDate >= finDate) {
-                    errorMessage.textContent = "La fecha y hora de inicio deben ser anteriores a las de fin.";
-                    errorMessage.style.display = "block";
-                    document.getElementById("fechaHoraFin").value = "";
-                    return false;
-                } else {
-                    errorMessage.style.display = "none";
-                    return true;
-                }
-            }
-            return true;
+        function zoomOut() {
+            map.zoomOut();
         }
-
+        
+        // Función para consultar histórico
         function consultarHistorico() {
-            let fechaHoraInicio = document.getElementById("fechaHoraInicio").value;
-            let fechaHoraFin = document.getElementById("fechaHoraFin").value;
-            const errorMessage = document.getElementById("errorMessage");
-
-            if (!fechaHoraInicio || !fechaHoraFin) {
-                errorMessage.textContent = "Seleccione fecha y hora correctamente.";
-                errorMessage.style.display = "block";
-                return;
-            }
-
-            if (!validarFechas()) {
-                return;
-            }
-
-            // Formatear para backend
-            const inicioDate = new Date(fechaHoraInicio);
-            const finDate = new Date(fechaHoraFin);
+            const fechaInicio = document.getElementById("fechaInicio").value;
+            const horaInicio = document.getElementById("horaInicio").value;
+            const fechaFin = document.getElementById("fechaFin").value;
+            const horaFin = document.getElementById("horaFin").value;
             
-            const formatForBackend = (date) => {
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                return `${year}-${month}-${day} ${hours}:${minutes}:00`;
-            };
+            const inicio = `${fechaInicio} ${horaInicio}:00`;
+            const fin = `${fechaFin} ${horaFin}:00`;
             
-            const inicio = formatForBackend(inicioDate);
-            const fin = formatForBackend(finDate);
-
-            fetch(`historico.php?inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}`)
-            .then(response => response.json())
-            .then(data => {
-                if (!Array.isArray(data) || data.length === 0) {
-                    errorMessage.textContent = "No hay datos en ese rango de tiempo.";
-                    errorMessage.style.display = "block";
-                    return;
-                }
-
-                errorMessage.style.display = "none";
-                polyline.setLatLngs([]);
-                markers.forEach(m => map.removeLayer(m));
-                markers = [];
-
-                let coordenadas = data.map(p => [parseFloat(p.lat), parseFloat(p.lon)]);
-                polyline.setLatLngs(coordenadas);
-                map.fitBounds(polyline.getBounds());
-
-                if (data.length > 0) {
-                    // Primer y último punto con marcadores diferentes
-                    let inicio = data[0];
-                    let fin = data[data.length - 1];
-
-                    let inicioMarker = L.circleMarker([parseFloat(inicio.lat), parseFloat(inicio.lon)], {
-                        color: "green",
-                        radius: 8
-                    }).addTo(map).bindPopup(`<b>Inicio</b><br>Fecha y Hora: ${inicio.fecha} ${inicio.hora}<br>Lat: ${inicio.lat} <br>Lon: ${inicio.lon}`);
-                    
-                    let finMarker = L.circleMarker([parseFloat(fin.lat), parseFloat(fin.lon)], {
-                        color: "red",
-                        radius: 8
-                    }).addTo(map).bindPopup(`<b>Fin</b><br>Fecha y Hora: ${fin.fecha} ${fin.hora}<br>Lat: ${fin.lat} <br>Lon: ${fin.lon}`);
-
-                    markers.push(inicioMarker, finMarker);
-                }
-
-                // Puntos intermedios visibles solo en zoom alto
-                data.slice(1, -1).forEach(p => {
-                    let marker = L.circleMarker([parseFloat(p.lat), parseFloat(p.lon)], {
-                        color: "blue",
-                        radius: 4
-                    });
-
-                    marker.bindPopup(`<b>Fecha y Hora:</b> ${p.fecha} ${p.hora} <br> <b>Lat:</b> ${p.lat} <br> <b>Lon:</b> ${p.lon}`);
-                    
+            // Aquí iría la llamada al API real
+            // Por ahora simularemos una ruta en Barranquilla
+            simulateRoute();
+        }
+        
+        // Función para simular ruta (para demostración)
+        function simulateRoute() {
+            // Limpiar marcadores y rutas anteriores
+            polyline.setLatLngs([]);
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+            
+            // Crear ruta simulada en Barranquilla
+            const route = [
+                [10.9878, -74.7889], // Centro de Barranquilla
+                [10.9950, -74.7950],
+                [11.0050, -74.8050],
+                [11.0100, -74.8100],
+                [11.0150, -74.8000],
+                [11.0200, -74.7900],
+                [11.0250, -74.7800]
+            ];
+            
+            polyline.setLatLngs(route);
+            map.fitBounds(polyline.getBounds());
+            
+            // Añadir marcadores
+            const inicioMarker = L.circleMarker(route[0], {
+                color: "green",
+                radius: 8
+            }).addTo(map).bindPopup("<b>Inicio</b><br>Fecha y Hora: 2025-03-31 12:00");
+            
+            const finMarker = L.circleMarker(route[route.length-1], {
+                color: "red",
+                radius: 8
+            }).addTo(map).bindPopup("<b>Fin</b><br>Fecha y Hora: 2025-04-01 11:59");
+            
+            markers.push(inicioMarker, finMarker);
+            
+            // Puntos intermedios
+            route.slice(1, -1).forEach((coord, index) => {
+                const marker = L.circleMarker(coord, {
+                    color: "blue",
+                    radius: 4
+                }).bindPopup(`<b>Punto ${index+1}</b>`);
+                
+                markers.push(marker);
+                
+                // Solo mostrar en zoom alto
+                if (map.getZoom() >= 13) {
                     marker.addTo(map);
-                    markers.push(marker);
-                });
-
-                // Solo mostrar puntos intermedios al hacer zoom
-                map.on("zoomend", () => {
-                    let zoom = map.getZoom();
-                    markers.slice(2).forEach(m => {
-                        if (zoom >= 13) {
-                            m.addTo(map);
-                        } else {
-                            map.removeLayer(m);
-                        }
-                    });
-                });
-            })
-            .catch(error => {
-                console.error("Error al obtener el historial:", error);
-                errorMessage.textContent = "Ocurrió un error al consultar los datos.";
-                errorMessage.style.display = "block";
+                }
             });
         }
-
-        function abrirTiempoReal() {
-            window.location.href = "/index.html";
-        }
-
-        function abrirLocalizador() {
-            window.location.href = "/localizador.html";
-        }
-
-        document.addEventListener("DOMContentLoaded", initializeDatetimes);
+        
+        // Evento de zoom para mostrar/ocultar puntos intermedios
+        map.on("zoomend", () => {
+            const zoom = map.getZoom();
+            markers.slice(2).forEach(m => {
+                if (zoom >= 13) {
+                    m.addTo(map);
+                } else {
+                    map.removeLayer(m);
+                }
+            });
+        });
+        
+        // Función para cambiar a vista en tiempo real
+        document.querySelector('.tiempo-real-btn').addEventListener('click', function() {
+            alert("Cambiando a vista en tiempo real");
+            // window.location.href = "/index.html";
+        });
+        
+        // Función para cambiar a localizador
+        document.querySelector('.localizador-btn').addEventListener('click', function() {
+            alert("Cambiando a localizador");
+            // window.location.href = "/localizador.html";
+        });
     </script>
 </body>
 </html>
