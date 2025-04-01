@@ -242,17 +242,16 @@
          /* .range-value span:last-child { float: right; } */
 
          #resultContainer {
-             margin-top: 15px;
-             /* max-height: 250px; */ /* Quitar max-height para que use espacio */
-             flex-grow: 1; /* Permite que el contenedor crezca */
-             overflow-y: auto;
-             border: 1px solid #eee;
-             border-radius: 5px;
-             padding: 10px;
-             background-color: #fdfdfd;
-             display: none; /* Oculto por defecto */
-             min-height: 50px; /* Altura mnima para que no colapse */
-         }
+    margin-top: 15px;
+    flex-grow: 1; /* Permite que el contenedor crezca */
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    padding: 10px;
+    background-color: #fdfdfd;
+    display: none; /* Oculto por defecto */
+    min-height: 150px; /* Altura mínima para que sea visible */
+}
          #resultContainer h3 {
              font-size: 1rem;
              font-weight: 600;
@@ -260,17 +259,19 @@
              color: #333;
              flex-shrink: 0;
          }
-        .result-item {
-            padding: 8px 10px;
-            background-color: #f0f0f0;
-            margin-bottom: 6px;
-            border-radius: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9rem;
-            flex-shrink: 0;
-        }
+         .result-item {
+    padding: 10px 12px; /* Aumentar padding */
+    background-color: #f8f9fa; /* Fondo más claro */
+    margin-bottom: 8px; /* Más espacio entre elementos */
+    border-radius: 6px; /* Borde más redondeado */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95rem; /* Texto ligeramente más grande */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* Sombra sutil */
+    border: 1px solid #eaeaea; /* Borde sutil */
+    flex-shrink: 0;
+}
         .result-date strong { color: #333; }
         .result-action { color: var(--primary-color); cursor: pointer; font-weight: 500; white-space: nowrap; margin-left: 10px; }
         .result-action:hover { text-decoration: underline; color: #2980b9; }
@@ -346,15 +347,15 @@
         }
 
         @media (max-width: 768px) {
-             .main-layout { flex-direction: column; height: auto;} /* Ajustar altura en mvil */
-             .sidebar { width: 100%; height: auto; max-height: 50vh; /* Ajustar segn necesidad */ box-shadow: 0 2px 15px rgba(0,0,0,0.1); } /* Sombra abajo */
-             .map-container { height: 50vh; /* Altura fija o restante */ }
-             .top-buttons { top: 10px; right: 10px; gap: 5px;}
-             .top-buttons .btn { padding: 8px 10px; font-size: 0.85rem;}
-             .zoom-controls { top: 10px; left: 10px;}
-             /* Asegurar que el contenedor de resultados tambin tenga scroll */
-             #resultContainer { max-height: 150px; }
-        }
+    .main-layout { flex-direction: column; height: auto;} /* Ajustar altura en móvil */
+    .sidebar { width: 100%; height: auto; max-height: 60vh; /* Aumentar altura en móvil */ box-shadow: 0 2px 15px rgba(0,0,0,0.1); } /* Sombra abajo */
+    .map-container { height: 40vh; /* Reducir mapa para dar más espacio a sidebar */ }
+    .top-buttons { top: 10px; right: 10px; gap: 5px;}
+    .top-buttons .btn { padding: 8px 10px; font-size: 0.85rem;}
+    .zoom-controls { top: 10px; left: 10px;}
+    /* Asegurar que el contenedor de resultados también tenga scroll */
+    #resultContainer { max-height: 200px; }
+}
 
     </style>
 </head>
@@ -488,27 +489,26 @@
 
             // --- Event Listeners ---
 
-            // Slider de Radio
-            radioSlider.addEventListener("input", function() {
-                const value = this.value;
-                radioValue.textContent = value >= 1000 ? (value / 1000).toFixed(1) + " km" : value + " m";
-                // Actualizar botones de radio visualmente si coincide el valor (opcional)
-                document.querySelectorAll(".radio-option").forEach(opt => {
-                     opt.classList.toggle("active", opt.dataset.value === value);
-                });
-                attemptAutoRefresh(); // Llama a la actualización si hay ubicación
-            });
-
-            // Botones de Radio
-            document.querySelectorAll(".radio-option").forEach(option => {
-                option.addEventListener("click", function() {
-                    document.querySelectorAll(".radio-option").forEach(opt => opt.classList.remove("active"));
-                    this.classList.add("active");
-                    radioSlider.value = this.dataset.value; // Sincronizar slider
-                    radioValue.textContent = this.dataset.value >= 1000 ? (this.dataset.value / 1000).toFixed(1) + " km" : this.dataset.value + " m";
-                    attemptAutoRefresh(); // Llama a la actualización si hay ubicación
-                });
-            });
+// Slider de Radio
+radioSlider.addEventListener("input", function() {
+    const value = this.value;
+    radioValue.textContent = value >= 1000 ? (value / 1000).toFixed(1) + " km" : value + " m";
+    // Actualizar botones de radio visualmente si coincide el valor (opcional)
+    document.querySelectorAll(".radio-option").forEach(opt => {
+         opt.classList.toggle("active", opt.dataset.value === value);
+    });
+    attemptAutoRefresh(); // Llama a la actualización si hay ubicación
+});
+// Botones de Radio
+document.querySelectorAll(".radio-option").forEach(option => {
+    option.addEventListener("click", function() {
+        document.querySelectorAll(".radio-option").forEach(opt => opt.classList.remove("active"));
+        this.classList.add("active");
+        radioSlider.value = this.dataset.value; // Sincronizar slider
+        radioValue.textContent = this.dataset.value >= 1000 ? (this.dataset.value / 1000).toFixed(1) + " km" : this.dataset.value + " m";
+        attemptAutoRefresh(); // Llama a la actualización si hay ubicación
+    });
+});
 
             // Inputs de Fecha y Hora (evento 'change' para que se active al perder foco o seleccionar)
             [fechaInicioInput, horaInicioInput, fechaFinInput, horaFinInput].forEach(input => {
