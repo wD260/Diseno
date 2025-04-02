@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Localizador de Vehículos por Área</title>
+    <title>Localizador de Vehículos por Área (Corregido)</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -20,35 +20,40 @@
             --info-color: #6c757d;     /* Gris/Secondary */
         }
 
-        body {
+        html, body {
+            height: 100%; /* Asegura que html y body ocupen toda la altura */
             margin: 0;
             padding: 0;
-            min-height: 100vh;
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden; /* Evita scroll general */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
         }
 
         .main-layout {
             display: flex;
-            height: 100vh;
+            height: 100%; /* Ocupa toda la altura disponible */
+            width: 100%; /* Ocupa todo el ancho disponible */
         }
 
         .sidebar {
-            width: 320px;
+            width: 320px; /* Ancho fijo para la barra lateral */
+            flex-shrink: 0; /* Evita que la barra lateral se encoja */
             background-color: #ffffff;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1); /* Sombra a la derecha */
             z-index: 1000;
             padding: 20px;
             display: flex;
             flex-direction: column;
-            overflow-y: auto;
+            overflow-y: auto; /* Scroll si el contenido excede */
+            height: 100%; /* Asegura que ocupe la altura completa */
+            box-sizing: border-box; /* Incluye padding en el height/width */
         }
 
         .map-container {
-            flex: 1;
+            flex-grow: 1; /* Ocupa el espacio restante */
             position: relative;
             overflow: hidden;
+            height: 100%; /* Asegura que ocupe la altura completa */
         }
 
         #map {
@@ -65,6 +70,7 @@
             padding-bottom: 15px;
             border-bottom: 2px solid var(--primary-color);
             text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            flex-shrink: 0; /* Evita que el título se encoja */
         }
 
         .form-label {
@@ -75,17 +81,17 @@
         }
 
         .form-control, .datetime-container input, .search-container input {
-            padding: 10px; /* Un poco menos padding que historico para ajustar */
-            border-radius: 8px; /* Menos redondeado */
+            padding: 10px;
+            border-radius: 8px;
             border: 1px solid #dee2e6;
             background-color: #f8f9fa;
             transition: all 0.3s ease;
             box-shadow: inset 0 1px 2px rgba(0,0,0,0.08);
-            width: 100%; /* Asegurar ancho completo */
-            box-sizing: border-box; /* Incluir padding en el ancho */
+            width: 100%;
+            box-sizing: border-box;
         }
          .datetime-container input {
-             flex: 1; /* Para que ocupen espacio disponible */
+             flex: 1;
          }
 
 
@@ -98,21 +104,22 @@
         }
 
         .form-group {
-            margin-bottom: 18px; /* Espacio entre grupos */
+            margin-bottom: 18px;
+            flex-shrink: 0; /* Evita que los grupos se encojan */
         }
 
         .btn {
-            padding: 10px 18px; /* Ajuste de padding */
+            padding: 10px 18px;
             border-radius: 8px;
             font-weight: 600;
             transition: all 0.3s ease;
-            display: inline-flex; /* Cambiado a inline-flex para botones de top-buttons */
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
             box-shadow: 0 3px 5px rgba(0,0,0,0.1);
             cursor: pointer;
-            border: none; /* Quitar borde por defecto */
+            border: none;
         }
 
         .btn:hover {
@@ -138,11 +145,11 @@
 
         .top-buttons {
             position: absolute;
-            top: 15px; /* Ajuste de posición */
+            top: 15px;
             right: 15px;
-            z-index: 1000;
+            z-index: 1000; /* Encima del mapa pero debajo del sidebar si se superpone */
             display: flex;
-            gap: 10px; /* Espacio entre botones */
+            gap: 10px;
         }
 
         .error-message {
@@ -154,31 +161,33 @@
             border-radius: 5px;
             font-weight: 500;
             display: none; /* Oculto por defecto */
+            flex-shrink: 0;
         }
          #errorMessage { /* Aplicar a ID específico */
-            color: var(--danger-color);
-            background-color: rgba(231, 76, 60, 0.1);
-            border-left: 4px solid var(--danger-color);
-            padding: 10px;
-            margin-top: 15px;
-            border-radius: 5px;
-            font-weight: 500;
-            display: none; /* Oculto por defecto */
-        }
+             color: var(--danger-color);
+             background-color: rgba(231, 76, 60, 0.1);
+             border-left: 4px solid var(--danger-color);
+             padding: 10px;
+             margin-top: 15px;
+             border-radius: 5px;
+             font-weight: 500;
+             display: none; /* Oculto por defecto */
+             flex-shrink: 0;
+         }
 
 
         .zoom-controls {
             position: absolute;
-            top: 15px; /* Ajuste de posición */
+            top: 15px;
             left: 15px;
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            gap: 8px; /* Espacio entre botones de zoom */
+            gap: 8px;
         }
 
         .zoom-btn {
-            width: 36px; /* Ligeramente más pequeño */
+            width: 36px;
             height: 36px;
             background-color: white;
             border-radius: 50%;
@@ -189,7 +198,7 @@
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0,0,0,0.15);
             transition: all 0.2s ease;
-            border: 1px solid #ddd; /* Borde sutil */
+            border: 1px solid #ddd;
         }
 
         .zoom-btn:hover {
@@ -197,7 +206,7 @@
             transform: scale(1.05);
         }
 
-        .map-attribution { /* Estilo para atribución */
+        .map-attribution { /* Estilo para atribucin */
             position: absolute;
             bottom: 5px;
             right: 5px;
@@ -208,7 +217,7 @@
             z-index: 1000;
         }
 
-         /* Estilos específicos del Localizador adaptados */
+         /* Estilos especficos del Localizador adaptados */
          .datetime-container {
              display: flex;
              align-items: center;
@@ -226,44 +235,65 @@
              font-size: 12px;
              color: #666;
              margin-top: 3px;
+             display: flex; /* Usar flex para alinear */
+             justify-content: space-between; /* Espacio entre min y max */
          }
+          /* Quitar float: right; de span */
+         /* .range-value span:last-child { float: right; } */
+
          #resultContainer {
-            margin-top: 15px;
-            max-height: 250px; /* Ajustar altura */
-            overflow-y: auto;
-            border: 1px solid #eee;
-            border-radius: 5px;
-            padding: 10px;
-            background-color: #fdfdfd;
-            display: none; /* Oculto por defecto */
-        }
+    margin-top: 15px;
+    flex-grow: 1; /* Permite que el contenedor crezca */
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    padding: 10px;
+    background-color: #fdfdfd;
+    display: none; /* Oculto por defecto */
+    min-height: 220px; /* Aumentado de 150px a 220px */
+    max-height: 40vh; /* Añadido para asegurar que no sea demasiado grande en pantallas altas */
+}
          #resultContainer h3 {
              font-size: 1rem;
              font-weight: 600;
              margin-bottom: 10px;
              color: #333;
+             flex-shrink: 0;
          }
-        .result-item {
-            padding: 8px 10px; /* Ajustar padding */
-            background-color: #f0f0f0;
-            margin-bottom: 6px; /* Menos espacio */
-            border-radius: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9rem; /* Ligeramente más pequeño */
-        }
+         .result-item {
+    padding: 12px 14px; /* Padding aumentado */
+    background-color: #f8f9fa; /* Fondo más claro */
+    margin-bottom: 10px; /* Más espacio entre elementos */
+    border-radius: 6px; /* Borde más redondeado */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1rem; /* Texto más grande */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08); /* Sombra más visible */
+    border: 1px solid #e0e0e0; /* Borde más visible */
+    flex-shrink: 0;
+    transition: all 0.2s ease; /* Transición suave */
+}
+
+/* Añadir efecto hover */
+.result-item:hover {
+    background-color: #f1f5fd;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.12);
+}
         .result-date strong { color: #333; }
-        .result-action { color: var(--primary-color); cursor: pointer; font-weight: 500; }
+        .result-action { color: var(--primary-color); cursor: pointer; font-weight: 500; white-space: nowrap; margin-left: 10px; }
         .result-action:hover { text-decoration: underline; color: #2980b9; }
+        .result-date { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* Evita que fecha larga desborde */
+
 
         .radio-options { display: flex; gap: 10px; margin-top: 5px; margin-bottom: 15px; }
         .radio-option {
             flex: 1;
             text-align: center;
-            padding: 6px; /* Ajustar padding */
+            padding: 6px;
             background-color: #e9ecef;
-            border-radius: 6px; /* Más redondeado */
+            border-radius: 6px;
             font-size: 12px;
             cursor: pointer;
             border: 1px solid #dee2e6;
@@ -277,7 +307,8 @@
         }
         #resetButton {
             width: 100%;
-            margin-top: 15px;
+            margin-top: 15px; /* Empuja hacia abajo */
+            flex-shrink: 0; /* Evita que el botn se encoja */
         }
 
         /* Estilo para el buscador de ubicaciones */
@@ -290,11 +321,11 @@
             right: 0;
             top: 0;
             height: 100%;
-            padding: 0 12px; /* Ajustar padding */
+            padding: 0 12px;
             background: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 0 8px 8px 0; /* Coincidir con input */
+            border-radius: 0 8px 8px 0;
             cursor: pointer;
             transition: background-color 0.2s ease;
         }
@@ -303,15 +334,16 @@
         #searchResults {
             position: absolute;
             width: 100%;
-            max-height: 180px; /* Menos altura */
+            max-height: 180px;
             overflow-y: auto;
             background: white;
             border: 1px solid #dee2e6;
             border-top: none;
-            z-index: 1010; /* Encima del mapa */
+            z-index: 1010; /* Encima del mapa y sidebar */
             display: none;
             border-radius: 0 0 5px 5px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-sizing: border-box;
         }
         .search-result-item { padding: 8px 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
         .search-result-item:last-child { border-bottom: none; }
@@ -320,16 +352,19 @@
         #searchAgainButton {
             display: none; /* Oculto por defecto */
             width: 100%;
-            margin-bottom: 15px;
+            margin-bottom: 15px; /* Era margin-top, cambiado a bottom */
         }
 
         @media (max-width: 768px) {
-             .main-layout { flex-direction: column; }
-             .sidebar { width: 100%; height: auto; max-height: 45vh; /* Más altura en móvil */ }
-             .top-buttons { top: 10px; right: 10px; gap: 5px;}
-             .top-buttons .btn { padding: 8px 10px; font-size: 0.85rem;}
-             .zoom-controls { top: 10px; left: 10px;}
-        }
+    .main-layout { flex-direction: column; height: auto;} /* Ajustar altura en móvil */
+    .sidebar { width: 100%; height: auto; max-height: 60vh; /* Aumentar altura en móvil */ box-shadow: 0 2px 15px rgba(0,0,0,0.1); } /* Sombra abajo */
+    .map-container { height: 40vh; /* Reducir mapa para dar más espacio a sidebar */ }
+    .top-buttons { top: 10px; right: 10px; gap: 5px;}
+    .top-buttons .btn { padding: 8px 10px; font-size: 0.85rem;}
+    .zoom-controls { top: 10px; left: 10px;}
+    /* Asegurar que el contenedor de resultados también tenga scroll */
+    #resultContainer { min-height: 180px; max-height: 250px; }
+}
 
     </style>
 </head>
@@ -338,81 +373,81 @@
         <div class="sidebar">
              <h2 class="app-title animate__animated animate__fadeInDown">LOCALIZADOR POR ÁREA</h2>
 
-            <div class="form-group">
-                <label class="form-label" for="searchInput">Buscar Ubicación:</label>
-                <div class="search-container">
-                    <input type="text" id="searchInput" class="form-control" placeholder="Ej: Calle 72 con 54, Barranquilla">
-                    <button id="searchButton" class="btn-primary"><i class="fa-solid fa-search"></i></button>
-                    <div id="searchResults"></div>
-                </div>
-                 <button id="searchAgainButton" class="btn btn-info btn-sm w-100">
-                    <i class="fa-solid fa-search"></i> Buscar otra ubicación
-                </button>
-            </div>
-
-            <div class="form-group">
-                 <label class="form-label">Fecha de Inicio:</label>
-                 <div class="datetime-container">
-                     <input type="date" id="fechaInicio" class="form-control">
-                     <input type="time" id="horaInicio" class="form-control">
+             <div class="form-group">
+                 <label class="form-label" for="searchInput">Buscar Ubicación:</label>
+                 <div class="search-container">
+                     <input type="text" id="searchInput" class="form-control" placeholder="Ej: Calle 72 con 54, Barranquilla">
+                     <button id="searchButton" class="btn-primary"><i class="fa-solid fa-search"></i></button>
+                     <div id="searchResults"></div>
                  </div>
+                  <button id="searchAgainButton" class="btn btn-info btn-sm w-100">
+                     <i class="fa-solid fa-search"></i> Buscar otra ubicación
+                  </button>
              </div>
 
              <div class="form-group">
-                 <label class="form-label">Fecha de Fin:</label>
-                 <div class="datetime-container">
-                     <input type="date" id="fechaFin" class="form-control">
-                     <input type="time" id="horaFin" class="form-control">
-                 </div>
+                  <label class="form-label">Fecha de Inicio:</label>
+                  <div class="datetime-container">
+                       <input type="date" id="fechaInicio" class="form-control">
+                       <input type="time" id="horaInicio" class="form-control">
+                  </div>
              </div>
 
              <div class="form-group">
-                 <label class="form-label">Radio de búsqueda: <span id="radioValue">100 m</span></label>
-                 <div class="range-container">
-                     <input type="range" id="radioSlider" min="50" max="1000" step="50" value="100">
-                     <div class="range-value">
-                         <span>50m</span>
-                         <span style="float: right;">1km</span>
-                     </div>
-                 </div>
-                  <div class="radio-options">
-                     <div class="radio-option active" data-value="100">100m</div>
-                     <div class="radio-option" data-value="250">250m</div>
-                     <div class="radio-option" data-value="500">500m</div>
-                 </div>
+                  <label class="form-label">Fecha de Fin:</label>
+                  <div class="datetime-container">
+                       <input type="date" id="fechaFin" class="form-control">
+                       <input type="time" id="horaFin" class="form-control">
+                  </div>
+             </div>
+
+             <div class="form-group">
+                  <label class="form-label">Radio de búsqueda: <span id="radioValue">100 m</span></label>
+                  <div class="range-container">
+                       <input type="range" id="radioSlider" min="50" max="1000" step="50" value="100">
+                       <div class="range-value">
+                            <span>50m</span>
+                            <span>1km</span>
+                       </div>
+                  </div>
+                   <div class="radio-options">
+                       <div class="radio-option active" data-value="100">100m</div>
+                       <div class="radio-option" data-value="250">250m</div>
+                       <div class="radio-option" data-value="500">500m</div>
+                   </div>
              </div>
 
              <div id="errorMessage"></div>
 
              <div id="resultContainer">
-                 <h3>Momentos en el área:</h3>
-                 <div id="resultList"></div>
+                  <h3>Momentos en el área:</h3>
+                  <div id="resultList"></div>
              </div>
 
              <button id="resetButton" class="btn btn-danger w-100">
-                 <i class="fa-solid fa-broom"></i> Limpiar Mapa y Selección
+                  <i class="fa-solid fa-broom"></i> Limpiar Mapa y Selección
              </button>
         </div>
 
         <div class="map-container">
-            <div class="top-buttons">
-                <button class="btn btn-info" onclick="abrirTiempoReal()">
-                    <i class="fas fa-clock"></i> Tiempo Real
-                </button>
-                <button class="btn btn-warning" onclick="abrirHistorial()"> <i class="fas fa-history"></i> Consulta Histórica
-                </button>
-                 </div>
+             <div class="top-buttons">
+                  <button class="btn btn-info" onclick="abrirTiempoReal()">
+                      <i class="fas fa-clock"></i> Tiempo Real
+                  </button>
+                  <button class="btn btn-warning" onclick="abrirHistorial()"> <i class="fas fa-history"></i> Consulta Histórica
+                  </button>
+                  </div>
 
-            <div class="zoom-controls">
-                <div class="zoom-btn" onclick="zoomIn()"><i class="fas fa-plus"></i></div>
-                <div class="zoom-btn" onclick="zoomOut()"><i class="fas fa-minus"></i></div>
-            </div>
-
-            <div id="map"></div>
-
-             <div class="map-attribution">
-                 © Leaflet | © OpenStreetMap contributors
+             <div class="zoom-controls">
+                  <div class="zoom-btn" onclick="zoomIn()"><i class="fas fa-plus"></i></div>
+                  <div class="zoom-btn" onclick="zoomOut()"><i class="fas fa-minus"></i></div>
              </div>
+
+             <div id="map"></div>
+
+              <div class="map-attribution">
+                   © Leaflet | © OpenStreetMap contributors
+              </div>
         </div>
     </div>
 
@@ -421,23 +456,29 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
 
     <script>
-        // --- TODA LA LÓGICA JavaScript ORIGINAL DEL LOCALIZADOR SE MANTIENE AQUÍ ---
-        // --- SIN CAMBIOS EN LA LÓGICA ---
-
         let map;
         let searchCircle;
         let clickMarker;
-        let clickPosition;
-        let exactMarkers = []; // Array para almacenar todos los marcadores de paquetes
+        let clickPosition = null; // Inicializar como null
+        let exactMarkers = [];
         const errorMessage = document.getElementById("errorMessage");
+        const resultContainer = document.getElementById("resultContainer");
+        const resultList = document.getElementById("resultList");
+        const searchResultsContainer = document.getElementById("searchResults");
+        const searchInput = document.getElementById("searchInput");
+        const searchButton = document.getElementById("searchButton");
+        const searchAgainButton = document.getElementById("searchAgainButton");
+        const radioSlider = document.getElementById("radioSlider");
+        const radioValue = document.getElementById("radioValue");
+        const fechaInicioInput = document.getElementById("fechaInicio");
+        const horaInicioInput = document.getElementById("horaInicio");
+        const fechaFinInput = document.getElementById("fechaFin");
+        const horaFinInput = document.getElementById("horaFin");
 
-        // Funciones de Navegación y Zoom (añadidas para consistencia con Historico)
-         function abrirTiempoReal() {
-             window.location.href = "/index.html"; // Ajusta la ruta si es diferente
-         }
-         function abrirHistorial() {
-             window.location.href = "/historico.html"; // Ajusta la ruta si es diferente
-         }
+
+        // Funciones de Navegación y Zoom
+         function abrirTiempoReal() { window.location.href = "/index.html"; }
+         function abrirHistorial() { window.location.href = "/historico.html"; }
          function zoomIn() { if(map) map.zoomIn(); }
          function zoomOut() { if(map) map.zoomOut(); }
 
@@ -447,150 +488,180 @@
             const now = new Date();
             const yesterday = new Date(now);
             yesterday.setDate(now.getDate() - 1);
-
-            // Formatear YYYY-MM-DD
             const formatDate = (date) => date.toISOString().split('T')[0];
+            const formatTime = (date) => date.toTimeString().split(' ')[0].substring(0,5); // HH:MM
 
-            document.getElementById("fechaInicio").value = formatDate(yesterday);
-            document.getElementById("horaInicio").value = "00:00";
-            document.getElementById("fechaFin").value = formatDate(now);
-            document.getElementById("horaFin").value = "23:59";
+            fechaInicioInput.value = formatDate(yesterday);
+            horaInicioInput.value = "00:00";
+            fechaFinInput.value = formatDate(now);
+            horaFinInput.value = "23:59"; // O usar formatTime(now) para la hora actual
 
-            // Configurar el slider de radio
-            const radioSlider = document.getElementById("radioSlider");
-            const radioValue = document.getElementById("radioValue");
+            // --- Event Listeners ---
 
-            radioSlider.addEventListener("input", function() {
-                const value = this.value;
-                radioValue.textContent = value >= 1000 ? (value / 1000).toFixed(1) + " km" : value + " m";
-                updateSearchCircle();
+// Slider de Radio
+radioSlider.addEventListener("input", function() {
+    const value = this.value;
+    radioValue.textContent = value >= 1000 ? (value / 1000).toFixed(1) + " km" : value + " m";
+    // Actualizar botones de radio visualmente si coincide el valor (opcional)
+    document.querySelectorAll(".radio-option").forEach(opt => {
+         opt.classList.toggle("active", opt.dataset.value === value);
+    });
+    
+    // Actualizar círculo inmediatamente si existe
+    if (clickPosition && searchCircle) {
+        map.removeLayer(searchCircle);
+        searchCircle = L.circle(clickPosition, {
+            color: 'blue', fillColor: '#30f', fillOpacity: 0.15, radius: parseInt(value), weight: 2
+        }).addTo(map);
+        map.fitBounds(searchCircle.getBounds(), { padding: [30, 30], maxZoom: 17 });
+    }
+    
+    attemptAutoRefresh(); // Llama a la actualización si hay ubicación
+});
+// Botones de Radio
+document.querySelectorAll(".radio-option").forEach(option => {
+    option.addEventListener("click", function() {
+        document.querySelectorAll(".radio-option").forEach(opt => opt.classList.remove("active"));
+        this.classList.add("active");
+        const value = this.dataset.value;
+        radioSlider.value = value; // Sincronizar slider
+        radioValue.textContent = value >= 1000 ? (value / 1000).toFixed(1) + " km" : value + " m";
+        
+        // Actualizar círculo inmediatamente si existe
+        if (clickPosition && searchCircle) {
+            map.removeLayer(searchCircle);
+            searchCircle = L.circle(clickPosition, {
+                color: 'blue', fillColor: '#30f', fillOpacity: 0.15, radius: parseInt(value), weight: 2
+            }).addTo(map);
+            map.fitBounds(searchCircle.getBounds(), { padding: [30, 30], maxZoom: 17 });
+        }
+        
+        attemptAutoRefresh(); // Llama a la actualización si hay ubicación
+    });
+});
+
+            // Inputs de Fecha y Hora (evento 'change' para que se active al perder foco o seleccionar)
+            [fechaInicioInput, horaInicioInput, fechaFinInput, horaFinInput].forEach(input => {
+                input.addEventListener("change", attemptAutoRefresh);
             });
 
-            // Configurar los botones de radio preestablecidos
-            document.querySelectorAll(".radio-option").forEach(option => {
-                option.addEventListener("click", function() {
-                    document.querySelectorAll(".radio-option").forEach(opt => opt.classList.remove("active"));
-                    this.classList.add("active");
-                    radioSlider.value = this.dataset.value;
-                    radioValue.textContent = this.dataset.value >= 1000 ? (this.dataset.value / 1000).toFixed(1) + " km" : this.dataset.value + " m";
-                    updateSearchCircle();
-                });
-            });
 
-            // Configurar el botón de reset
+            // Botón de Reset
             document.getElementById("resetButton").addEventListener("click", resetMap);
 
-            // Configurar el buscador de ubicaciones
-            document.getElementById("searchButton").addEventListener("click", performSearch);
-            document.getElementById("searchInput").addEventListener("keypress", function(e) {
+            // Búsqueda de Ubicaciones
+            searchButton.addEventListener("click", performSearch);
+            searchInput.addEventListener("keypress", function(e) {
                 if (e.key === "Enter") performSearch();
             });
-            document.getElementById("searchAgainButton").addEventListener("click", function() {
-                document.getElementById("searchInput").value = "";
-                document.getElementById("searchAgainButton").style.display = "none";
-                document.getElementById("searchResults").style.display = "none"; // Ocultar resultados también
-                document.getElementById("searchInput").focus();
+            searchAgainButton.addEventListener("click", function() {
+                searchInput.value = "";
+                searchInput.disabled = false; // Habilitar input
+                searchResultsContainer.style.display = "none";
+                searchAgainButton.style.display = "none";
+                if (clickMarker) map.removeLayer(clickMarker);
+                if (searchCircle) map.removeLayer(searchCircle);
+                clearExactMarkers();
+                resultContainer.style.display = "none";
+                errorMessage.style.display = "none";
+                clickPosition = null; // Olvidar la posición anterior
+                clickMarker = null;
+                searchCircle = null;
+                searchInput.focus();
             });
-            // Cerrar los resultados de búsqueda al hacer clic fuera
+
+            // Cerrar resultados de búsqueda al hacer clic fuera
              document.addEventListener('click', function(event) {
-                 const searchResultsContainer = document.getElementById('searchResults');
-                 const searchInput = document.getElementById('searchInput');
-                 const searchButton = document.getElementById('searchButton');
-                 // Si el clic no fue dentro del input, botón o resultados
                  if (!searchInput.contains(event.target) && !searchButton.contains(event.target) && !searchResultsContainer.contains(event.target)) {
                      searchResultsContainer.style.display = 'none';
                  }
              });
+
              // Inicializar el mapa al final
              initializeMap();
         }
 
         function initializeMap() {
-            // Inicializar mapa con zoomControl desactivado
-            map = L.map('map', { zoomControl: false }).setView([0, 0], 13);
+            map = L.map('map', { zoomControl: false }).setView([10.9639, -74.7964], 13); // Centro inicial Barranquilla
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
 
-            // Cargar el último dato disponible y centrar allí
-            fetch('ultima_ubicacion.php') // Asegúrate que este endpoint exista y funcione
-                .then(response => response.ok ? response.json() : Promise.reject('Error fetching last location'))
-                .then(data => {
-                    if (data && data.lat && data.lon) {
-                         const lat = parseFloat(data.lat);
-                         const lon = parseFloat(data.lon);
-                         if (!isNaN(lat) && !isNaN(lon)) {
-                             map.setView([lat, lon], 13);
-                         } else {
-                              map.setView([10.9639, -74.7964], 13); // Fallback a Barranquilla
-                         }
-                    } else {
-                         map.setView([10.9639, -74.7964], 13); // Fallback a Barranquilla
-                    }
-                })
-                .catch(error => {
-                    console.error("Error al obtener último dato:", error);
-                     map.setView([10.9639, -74.7964], 13); // Fallback a Barranquilla en caso de error
-                });
+            // No centrar en última ubicación aquí, esperar interacción del usuario
+            // fetch('ultima_ubicacion.php')... (eliminado para empezar limpio)
 
             map.on('click', onMapClick);
+            // Forzar recalculo de tamaño por si acaso
+            setTimeout(() => { map.invalidateSize() }, 100);
         }
 
         function onMapClick(e) {
+            // Si ya se buscó una dirección, no permitir clic hasta limpiar
+            if (searchInput.disabled) {
+                 Swal.fire({
+                     icon: 'info',
+                     title: 'Ubicación Fijada',
+                     text: 'Ya has seleccionado una ubicación mediante la búsqueda. Usa "Buscar otra ubicación" o "Limpiar Mapa" para seleccionar un punto diferente.',
+                     timer: 4000,
+                     showConfirmButton: true // O false si prefieres que desaparezca sola
+                 });
+                 return;
+             }
             clickPosition = e.latlng;
             createMarkerAndCircle(clickPosition);
+            // Opcional: Rellenar input con coordenadas o mensaje
+            // searchInput.value = `Lat: ${clickPosition.lat.toFixed(5)}, Lng: ${clickPosition.lng.toFixed(5)}`;
+            // searchAgainButton.style.display = "block"; // Mostrar botón para limpiar/cambiar
         }
 
-        function createMarkerAndCircle(position) {
-            if (!map) return; // Asegurarse que el mapa esté inicializado
+        // Nueva función para intentar refrescar automáticamente
+        function attemptAutoRefresh() {
+            if (clickPosition) { // Solo si hay una ubicación seleccionada
+                const radio = parseInt(radioSlider.value);
+                // No es necesario limpiar marcadores aquí, consultarPasos lo hará
+                consultarPasosPorUbicacion(clickPosition, radio);
+            }
+        }
 
-            // Eliminar marcador y círculo si ya existen
+
+        function createMarkerAndCircle(position) {
+            if (!map) return;
+
+            // Eliminar marcador y círculo anteriores si existen
             if (clickMarker) map.removeLayer(clickMarker);
             if (searchCircle) map.removeLayer(searchCircle);
-            clearExactMarkers(); // Limpiar marcadores de resultados anteriores
+            clearExactMarkers(); // Limpiar resultados anteriores
 
-            // Crear nuevo marcador de clic
+            // Crear nuevo marcador de clic (azul estandar)
              const clickIcon = L.icon({
-                iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-                iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-                iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+                 iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+                 iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+                 shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                 iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
              });
             clickMarker = L.marker(position, {icon: clickIcon}).addTo(map);
 
             // Crear círculo de búsqueda
-            const radio = parseInt(document.getElementById("radioSlider").value);
+            const radio = parseInt(radioSlider.value);
             searchCircle = L.circle(position, {
                 color: 'blue', fillColor: '#30f', fillOpacity: 0.15, radius: radio, weight: 2
             }).addTo(map);
 
             errorMessage.style.display = "none";
-            document.getElementById("resultContainer").style.display = "none";
-            consultarPasosPorUbicacion(position, radio);
+            resultContainer.style.display = "none"; // Ocultar resultados mientras carga
+            consultarPasosPorUbicacion(position, radio); // Iniciar consulta
 
-             // Ajustar vista para incluir el círculo, pero no hacer zoom demasiado cerca
-             map.fitBounds(searchCircle.getBounds(), { padding: [20, 20], maxZoom: 16 });
+             // Ajustar vista
+             map.fitBounds(searchCircle.getBounds(), { padding: [30, 30], maxZoom: 17 });
 
-            if (document.getElementById("searchInput").value.trim() !== "") {
-                document.getElementById("searchAgainButton").style.display = "block";
-            }
+            // Mostrar botón "Buscar otra ubicación" solo si viene de una búsqueda de texto
+            // searchAgainButton.style.display = searchInput.disabled ? "block" : "none";
+             // ^^^ Se maneja mejor en performSearch y resetMap/searchAgain click
         }
 
-        function updateSearchCircle() {
-            if (clickPosition && searchCircle && map) {
-                const radio = parseInt(document.getElementById("radioSlider").value);
-                map.removeLayer(searchCircle); // Eliminar el círculo anterior
-                searchCircle = L.circle(clickPosition, {
-                     color: 'blue', fillColor: '#30f', fillOpacity: 0.15, radius: radio, weight: 2
-                }).addTo(map);
-
-                clearExactMarkers();
-                consultarPasosPorUbicacion(clickPosition, radio);
-                // Reajustar vista si es necesario
-                map.fitBounds(searchCircle.getBounds(), { padding: [20, 20], maxZoom: 16 });
-            }
-        }
+        // Ya no se necesita updateSearchCircle separado, attemptAutoRefresh hace el trabajo
+        /* function updateSearchCircle() { ... } */
 
         function clearExactMarkers() {
              if (!map) return;
@@ -605,145 +676,163 @@
             clearExactMarkers();
 
             errorMessage.style.display = "none";
-            document.getElementById("resultContainer").style.display = "none";
+            resultContainer.style.display = "none";
             clickPosition = null;
-            clickMarker = null; // Asegurar que se borre la referencia
-            searchCircle = null; // Asegurar que se borre la referencia
+            clickMarker = null;
+            searchCircle = null;
 
-            document.getElementById("searchInput").value = "";
-            document.getElementById("searchResults").style.display = "none";
-            document.getElementById("searchAgainButton").style.display = "none";
+            searchInput.value = "";
+            searchInput.disabled = false; // Habilitar input
+            searchResultsContainer.style.display = "none";
+            searchResultsContainer.innerHTML = ""; // Limpiar resultados
+            searchAgainButton.style.display = "none";
 
-            // Opcional: recentrar el mapa a la última ubicación conocida o a la vista por defecto
-             fetch('ultima_ubicacion.php')
-                 .then(response => response.ok ? response.json() : Promise.reject('Error fetching last location'))
-                 .then(data => {
-                     if (data && data.lat && data.lon) {
-                        const lat = parseFloat(data.lat);
-                        const lon = parseFloat(data.lon);
-                        if (!isNaN(lat) && !isNaN(lon)) {
-                            map.setView([lat, lon], 13);
-                        } else {
-                             map.setView([10.9639, -74.7964], 13);
-                        }
-                    } else {
-                        map.setView([10.9639, -74.7964], 13);
-                    }
-                 })
-                 .catch(error => map.setView([10.9639, -74.7964], 13));
+            // Recenter mapa a la vista inicial (Barranquilla)
+            map.setView([10.9639, -74.7964], 13);
+            // Opcional: recentrar a la última ubicación conocida si prefieres
+            // fetch('ultima_ubicacion.php')...
         }
 
         function consultarPasosPorUbicacion(position, radio) {
-            const fechaInicio = document.getElementById("fechaInicio").value;
-            const horaInicio = document.getElementById("horaInicio").value;
-            const fechaFin = document.getElementById("fechaFin").value;
-            const horaFin = document.getElementById("horaFin").value;
+            if (!position) {
+                console.warn("Intento de consulta sin posición válida.");
+                return; // Salir si no hay posición
+            }
 
-             // Validación simple de fechas
+            const fechaInicio = fechaInicioInput.value;
+            const horaInicio = horaInicioInput.value;
+            const fechaFin = fechaFinInput.value;
+            const horaFin = horaFinInput.value;
+
+             // Validación de fechas/horas
              if (!fechaInicio || !horaInicio || !fechaFin || !horaFin) {
-                 errorMessage.textContent = "Por favor, complete las fechas y horas de inicio y fin.";
+                 errorMessage.textContent = "Por favor, complete las fechas y horas.";
                  errorMessage.style.display = "block";
+                 resultContainer.style.display = "none"; // Ocultar resultados si hay error
                  return;
              }
              const inicioDT = new Date(`${fechaInicio}T${horaInicio}`);
              const finDT = new Date(`${fechaFin}T${horaFin}`);
+             if (isNaN(inicioDT.getTime()) || isNaN(finDT.getTime())) {
+                errorMessage.textContent = "Formato de fecha u hora inválido.";
+                errorMessage.style.display = "block";
+                resultContainer.style.display = "none";
+                return;
+             }
              if (inicioDT >= finDT) {
                  errorMessage.textContent = "La fecha/hora de inicio debe ser anterior a la de fin.";
                  errorMessage.style.display = "block";
+                 resultContainer.style.display = "none";
                  return;
              }
              errorMessage.style.display = "none"; // Ocultar si pasa validación
 
+            const inicio = `${fechaInicio} ${horaInicio}:00`;
+            const fin = `${fechaFin} ${horaFin}:00`;
 
-            const inicio = `${fechaInicio} ${horaInicio}:00`; // Formato YYYY-MM-DD HH:MM:SS
-            const fin = `${fechaFin} ${horaFin}:00`; // Formato YYYY-MM-DD HH:MM:SS
-
-            // Mostrar loader simple
-            const resultList = document.getElementById("resultList");
+            // Mostrar loader y limpiar resultados anteriores
+            clearExactMarkers(); // Limpia marcadores rojos del mapa
             resultList.innerHTML = '<div class="text-center p-2"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
-            document.getElementById("resultContainer").style.display = "block";
+            resultContainer.style.display = "block";
 
 
-            fetch(`cuando_paso.php?lat=${position.lat}&lon=${position.lng}&radio=${radio}&inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}`)
-                .then(response => response.ok ? response.json() : Promise.reject('Error en la consulta'))
+            // --- Llamada AJAX (Asegúrate que la URL y parámetros sean correctos) ---
+            const url = `cuando_paso.php?lat=${position.lat}&lon=${position.lng}&radio=${radio}&inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}`;
+            console.log("Consultando:", url); // Para depuración
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => { throw new Error(`Error ${response.status}: ${text || 'Error en la consulta'}`) });
+                    }
+                    return response.json();
+                })
                 .then(data => {
-                    const resultContainer = document.getElementById("resultContainer");
-                    const resultList = document.getElementById("resultList");
+                    console.log("Respuesta recibida:", data); // Para depuración
+                    resultList.innerHTML = ""; // Limpiar loader
 
-                    if (!Array.isArray(data) || data.length === 0) {
-                        errorMessage.textContent = "No se encontraron registros del vehículo pasando por esta ubicación en el período seleccionado.";
-                        errorMessage.style.display = "block";
-                        resultContainer.style.display = "none"; // Ocultar si no hay resultados
+                    if (!Array.isArray(data)) {
+                         throw new Error("La respuesta del servidor no es un array.");
+                    }
+
+                    if (data.length === 0) {
+                        resultList.innerHTML = '<div class="text-center text-muted p-2"><i>No se encontraron pasos en el área y período seleccionados.</i></div>';
+                        errorMessage.style.display = "none"; // Asegurar que no haya error viejo
                         return;
                     }
 
-                    errorMessage.style.display = "none";
-                    resultList.innerHTML = ""; // Limpiar loader o resultados anteriores
+                    errorMessage.style.display = "none"; // Ocultar si hubo éxito
 
                     data.forEach(item => {
+                         // Validación básica de datos recibidos
+                         const lat = parseFloat(item.lat);
+                         const lon = parseFloat(item.lon);
+                         if (isNaN(lat) || isNaN(lon) || !item.fecha || !item.hora) {
+                             console.warn("Registro inválido recibido:", item);
+                             return; // Saltar este item
+                         }
+
                         const resultItem = document.createElement("div");
                         resultItem.className = "result-item";
                         resultItem.innerHTML = `
-                            <div class="result-date"><strong>${item.fecha}</strong> ${item.hora}</div>
-                            <div class="result-action" data-lat="${item.lat}" data-lon="${item.lon}" data-fecha="${item.fecha}" data-hora="${item.hora}">
+                            <div class="result-date" title="${item.fecha} ${item.hora}"><strong>${item.fecha}</strong> ${item.hora}</div>
+                            <div class="result-action" data-lat="${lat}" data-lon="${lon}" data-fecha="${item.fecha}" data-hora="${item.hora}">
                                 <i class="fa-solid fa-map-pin"></i> Ver
                             </div>`;
 
                         resultItem.querySelector('.result-action').addEventListener("click", function() {
                             if(!map) return;
-                            const lat = parseFloat(this.dataset.lat);
-                            const lon = parseFloat(this.dataset.lon);
-                            const fecha = this.dataset.fecha;
-                            const hora = this.dataset.hora;
+                            const itemLat = parseFloat(this.dataset.lat);
+                            const itemLon = parseFloat(this.dataset.lon);
+                            const itemFecha = this.dataset.fecha;
+                            const itemHora = this.dataset.hora;
 
-                             // Limpiar marcadores rojos anteriores antes de crear uno nuevo
-                             clearExactMarkers();
+                            clearExactMarkers(); // Limpiar otros marcadores rojos
 
-                            const currentZoom = map.getZoom(); // Mantener zoom
-                            map.setView([lat, lon], Math.max(currentZoom, 15)); // Asegurar zoom mínimo para ver bien
+                            const currentZoom = map.getZoom();
+                            map.setView([itemLat, itemLon], Math.max(currentZoom, 16)); // Zoom más cercano
 
-                            const exactMarker = L.circleMarker([lat, lon], {
-                                 color: 'red', fillColor: '#f03', fillOpacity: 0.6, radius: 7, weight: 2
+                            // Marcador rojo para el punto exacto
+                            const exactMarker = L.circleMarker([itemLat, itemLon], {
+                                color: 'red', fillColor: '#f03', fillOpacity: 0.7, radius: 8, weight: 2
                             }).addTo(map);
 
                             exactMarkers.push(exactMarker); // Guardar referencia
 
-                            exactMarker.bindPopup(`<b>Detectado</b><br>Fecha: ${fecha}<br>Hora: ${hora}<br>Lat: ${lat.toFixed(5)}<br>Lon: ${lon.toFixed(5)}`).openPopup();
+                            exactMarker.bindPopup(`<b>Detectado</b><br>Fecha: ${itemFecha}<br>Hora: ${itemHora}<br><small>Lat: ${itemLat.toFixed(5)}, Lon: ${itemLon.toFixed(5)}</small>`).openPopup();
                         });
                         resultList.appendChild(resultItem);
                     });
 
-                    resultContainer.style.display = "block";
-                     // Opcional: Mostrar un mensaje de éxito breve con SweetAlert2
-                    // Swal.fire({
-                    //     icon: 'success', title: 'Consulta exitosa',
-                    //     text: `Se encontraron ${data.length} momentos en el área.`,
-                    //     timer: 1500, showConfirmButton: false
-                    // });
+                    // Opcional: Scroll al primer resultado
+                    // resultList.firstChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
                 })
                 .catch(error => {
-                    console.error("Error al consultar los datos:", error);
-                    errorMessage.textContent = "Ocurrió un error al consultar los datos. Verifique la conexión o inténtelo más tarde.";
+                    console.error("Error detallado al consultar los datos:", error);
+                    errorMessage.textContent = `Error al consultar: ${error.message}. Verifique la conexión o inténtelo más tarde.`;
                     errorMessage.style.display = "block";
-                    document.getElementById("resultContainer").style.display = "none"; // Ocultar si hay error
+                    resultContainer.style.display = "block"; // Mantener visible para mostrar error
+                    resultList.innerHTML = '<div class="text-center text-danger p-2"><i>Fallo la consulta.</i></div>'; // Mensaje dentro de la lista
                 });
         }
 
         function performSearch() {
-            const query = document.getElementById("searchInput").value.trim();
-            if (!query) return;
+            const query = searchInput.value.trim();
+            if (!query) {
+                 searchResultsContainer.style.display = "none";
+                 return;
+                 }
 
-            const searchResultsContainer = document.getElementById("searchResults");
             searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i>Buscando...</i></div>';
             searchResultsContainer.style.display = "block";
 
-            // API de Nominatim
-            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=co`; // Limitar a Colombia
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=co&addressdetails=1`; // Limitar a Colombia, pedir detalles
 
             fetch(url)
                 .then(response => response.ok ? response.json() : Promise.reject('Error en Nominatim'))
                 .then(data => {
-                    searchResultsContainer.innerHTML = ""; // Limpiar "Buscando..."
+                    searchResultsContainer.innerHTML = "";
 
                     if (data.length === 0) {
                         searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i>No se encontraron resultados</i></div>';
@@ -754,23 +843,28 @@
                         const resultItem = document.createElement("div");
                         resultItem.className = "search-result-item";
                         resultItem.textContent = result.display_name;
+                        resultItem.title = result.display_name; // Tooltip por si es largo
                         resultItem.addEventListener("click", function() {
                             const lat = parseFloat(result.lat);
                             const lon = parseFloat(result.lon);
                              if (!isNaN(lat) && !isNaN(lon)) {
                                 clickPosition = L.latLng(lat, lon);
-                                createMarkerAndCircle(clickPosition);
+                                searchInput.value = result.display_name; // Poner nombre en input
+                                searchInput.disabled = true; // Deshabilitar input tras seleccionar
+                                searchResultsContainer.style.display = "none"; // Ocultar resultados
+                                searchAgainButton.style.display = "block"; // Mostrar botón "buscar otra"
+                                createMarkerAndCircle(clickPosition); // Crear marcador/círculo y consultar
+                            } else {
+                                console.error("Resultado de Nominatim sin coordenadas válidas:", result);
+                                Swal.fire('Error', 'No se pudieron obtener coordenadas para esta ubicación.', 'error');
                             }
-                            searchResultsContainer.style.display = "none";
-                            document.getElementById("searchInput").value = result.display_name; // Poner nombre en input
-                            document.getElementById("searchAgainButton").style.display = "block";
                         });
                         searchResultsContainer.appendChild(resultItem);
                     });
                 })
                 .catch(error => {
                     console.error("Error en la búsqueda de Nominatim:", error);
-                    searchResultsContainer.innerHTML = '<div class="search-result-item text-danger"><i>Error en la búsqueda</i></div>';
+                    searchResultsContainer.innerHTML = `<div class="search-result-item text-danger"><i>Error en la búsqueda (${error.message})</i></div>`;
                 });
         }
 
