@@ -234,15 +234,16 @@
              margin-top: -2px;
          }
          #resultContainer {
-            margin-top: 15px;
-            flex-grow: 1; /* Ocupa espacio vertical en sidebar */
-            overflow-y: auto;
-            border: 1px solid #eee;
-            border-radius: 5px;
-            padding: 10px;
-            background-color: #fdfdfd;
-            display: none;
-            min-height: 150px;
+             margin-top: 15px;
+             /* max-height: 250px; */ /* Quitar max-height para que use espacio */
+             flex-grow: 1; /* Permite que el contenedor crezca */
+             overflow-y: auto;
+             border: 1px solid #eee;
+             border-radius: 5px;
+             padding: 10px;
+             background-color: #fdfdfd;
+             display: none; /* Oculto por defecto */
+             min-height: 50px; /* Altura mnima para que no colapse */
          }
          #resultContainer h3 {
              font-size: 0.95rem;
@@ -254,29 +255,21 @@
              border-bottom: 1px solid #eee;
              flex-shrink: 0;
          }
-         .result-item {
-             padding: 7px 5px;
-             background-color: transparent;
-             margin-bottom: 4px;
-             border-radius: 4px;
-             display: flex;
-             justify-content: space-between;
-             align-items: center;
-             font-size: 0.85rem;
-             border-bottom: 1px solid #f0f0f0;
-             transition: background-color 0.2s ease;
-             flex-shrink: 0;
-         }
-         .result-item:last-child {
-             border-bottom: none;
-         }
-         .result-item:hover {
-            background-color: #f5f5f5;
-         }
-         .result-date strong { color: #333; font-weight: 600; margin-right: 5px; }
-         .result-action { color: var(--primary-color); cursor: pointer; font-weight: 500; white-space: nowrap; margin-left: 10px;}
-         .result-action i { margin-right: 3px; }
-         .result-action:hover { text-decoration: underline; color: #2980b9; }
+        .result-item {
+            padding: 8px 10px;
+            background-color: #f0f0f0;
+            margin-bottom: 6px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+        .result-date strong { color: #333; }
+        .result-action { color: var(--primary-color); cursor: pointer; font-weight: 500; white-space: nowrap; margin-left: 10px; }
+        .result-action:hover { text-decoration: underline; color: #2980b9; }
+        .result-date { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* Evita que fecha larga desborde */
 
          .radio-options { display: flex; gap: 8px; margin-top: 8px; margin-bottom: 15px; flex-shrink: 0;}
          .radio-option {
@@ -373,33 +366,14 @@
          }
 
         @media (max-width: 768px) {
-            .main-layout { flex-direction: column; height: 100%;}
-            .sidebar {
-                width: 100%;
-                height: auto;
-                max-height: 55vh; /* Ajustar altura para móvil */
-                order: 1;
-                box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-                overflow-y: auto; /* Asegurar scroll */
-            }
-            .map-container {
-                 height: calc(100% - 55vh); /* Ajustar altura mapa */
-                 min-height: 45vh;
-                 order: 2;
-            }
-            .top-buttons { top: 10px; right: 10px; gap: 5px;}
-            .top-buttons .btn { padding: 6px 8px; font-size: 0.8rem;}
-            .zoom-controls { top: 10px; left: 10px;}
-            #resultContainer {
-                min-height: 100px;
-            }
-             /* Ajustar posición botón reset en móvil */
-             #resetButton {
-                 bottom: 10px;
-                 right: 10px;
-                 padding: 6px 10px; /* Más pequeño en móvil */
-                 font-size: 0.85rem;
-             }
+             .main-layout { flex-direction: column; height: auto;} /* Ajustar altura en mvil */
+             .sidebar { width: 100%; height: auto; max-height: 50vh; /* Ajustar segn necesidad */ box-shadow: 0 2px 15px rgba(0,0,0,0.1); } /* Sombra abajo */
+             .map-container { height: 50vh; /* Altura fija o restante */ }
+             .top-buttons { top: 10px; right: 10px; gap: 5px;}
+             .top-buttons .btn { padding: 8px 10px; font-size: 0.85rem;}
+             .zoom-controls { top: 10px; left: 10px;}
+             /* Asegurar que el contenedor de resultados tambin tenga scroll */
+             #resultContainer { max-height: 150px; }
         }
 
     </style>
@@ -542,20 +516,42 @@
             fechaInicioInput.value = formatDate(yesterday);
             horaInicioInput.value = "00:00";
             fechaFinInput.value = formatDate(now);
-            horaFinInput.value = "23:59";
+            horaFinInput.value = "23:59"; // O usar formatTime(now) para la hora actual
 
-            updateRadioDisplay(radioSlider.value);
-        }
+            // --- Event Listeners ---
 
-        function setupEventListeners() {
-            radioSlider.addEventListener("input", handleRadioChange);
-            document.querySelectorAll(".radio-option").forEach(option => {
-                option.addEventListener("click", handleRadioOptionClick);
+            // Slider de Radio
+            radioSlider.addEventListener("input", function() {
+                const value = this.value;
+                radioValue.textContent = value >= 1000 ? (value / 1000).toFixed(1) + " km" : value + " m";
+                // Actualizar botones de radio visualmente si coincide el valor (opcional)
+                document.querySelectorAll(".radio-option").forEach(opt => {
+                     opt.classList.toggle("active", opt.dataset.value === value);
+                });
+                attemptAutoRefresh(); // Llama a la actualización si hay ubicación
             });
-             [fechaInicioInput, horaInicioInput, fechaFinInput, horaFinInput].forEach(input => {
-                 input.addEventListener("change", attemptAutoRefresh);
-             });
-            resetButton.addEventListener("click", resetMap); // El botón sigue funcionando igual
+
+            // Botones de Radio
+            document.querySelectorAll(".radio-option").forEach(option => {
+                option.addEventListener("click", function() {
+                    document.querySelectorAll(".radio-option").forEach(opt => opt.classList.remove("active"));
+                    this.classList.add("active");
+                    radioSlider.value = this.dataset.value; // Sincronizar slider
+                    radioValue.textContent = this.dataset.value >= 1000 ? (this.dataset.value / 1000).toFixed(1) + " km" : this.dataset.value + " m";
+                    attemptAutoRefresh(); // Llama a la actualización si hay ubicación
+                });
+            });
+
+            // Inputs de Fecha y Hora (evento 'change' para que se active al perder foco o seleccionar)
+            [fechaInicioInput, horaInicioInput, fechaFinInput, horaFinInput].forEach(input => {
+                input.addEventListener("change", attemptAutoRefresh);
+            });
+
+
+            // Botón de Reset
+            document.getElementById("resetButton").addEventListener("click", resetMap);
+
+            // Búsqueda de Ubicaciones
             searchButton.addEventListener("click", performSearch);
             searchInput.addEventListener("keypress", function(e) { if (e.key === "Enter") performSearch(); });
             searchAgainButton.addEventListener("click", resetSearchAndMapState);
