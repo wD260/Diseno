@@ -1108,51 +1108,42 @@ if (data.length >= 2) {
     searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
     searchResultsContainer.style.display = "block";
 
-    // Alternativa: usar la API de Nominatim con más parámetros y encabezados
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=co&addressdetails=1&dedupe=1`;
-
-    // Añadir un tiempo de espera y encabezados adecuados
-    const fetchOptions = {
-        method: 'GET',
-        headers: {
-            'User-Agent': 'LocalizadorPorArea/1.0',
-            'Accept-Language': 'es'
-        },
-        timeout: 8000 // 8 segundos de tiempo de espera
+    // Función de respaldo cuando no hay resultados
+    const showNoResults = () => {
+        searchResultsContainer.innerHTML = '<div class="search-result-item text-warning">' +
+            '<i class="fas fa-exclamation-triangle"></i> ' +
+            'No se encontraron resultados o el servicio no está disponible.<br>' +
+            '<small>Intenta hacer clic directamente en el mapa para seleccionar la ubicación.</small>' +
+            '</div>';
     };
 
-    // Usar Promise.race para manejar timeout
-    const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Tiempo de espera agotado')), 8000)
-    );
-
-    Promise.race([
-        fetch(url, fetchOptions),
-        timeoutPromise
-    ])
+    // Intentar consulta con un timeout más bajo
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=co&dedupe=1`, {
+        headers: {'User-Agent': 'LocalizadorPorArea/1.0'},
+        cache: 'no-cache',
+        mode: 'cors'
+    })
     .then(response => {
-        if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
+        if (!response.ok) throw new Error("Respuesta no válida");
         return response.json();
     })
     .then(data => {
-        // Limpiar contenedor
         searchResultsContainer.innerHTML = "";
-
+        
         if (!data || data.length === 0) {
-            searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i>No se encontraron resultados</i></div>';
+            showNoResults();
             return;
         }
-
-        // Construir resultados
+        
         data.forEach(result => {
             const resultItem = document.createElement("div");
             resultItem.className = "search-result-item";
             
-            // Formatear el nombre para mostrar (más corto y legible)
+            // Mostrar nombre simplificado
             const displayName = result.display_name.split(',').slice(0, 3).join(',');
             
             resultItem.innerHTML = `<strong>${displayName}</strong>`;
-            resultItem.title = result.display_name; // Tooltip con nombre completo
+            resultItem.title = result.display_name;
             
             resultItem.addEventListener("click", function() {
                 const lat = parseFloat(result.lat);
@@ -1160,31 +1151,20 @@ if (data.length >= 2) {
                 
                 if (!isNaN(lat) && !isNaN(lon)) {
                     clickPosition = L.latLng(lat, lon);
-                    // Usar nombre más corto en el input
                     searchInput.value = displayName;
-                    searchInput.disabled = true; // Deshabilitar input tras seleccionar
-                    searchResultsContainer.style.display = "none"; // Ocultar resultados
-                    searchAgainButton.style.display = "block"; // Mostrar botón "buscar otra"
-                    createMarkerAndCircle(clickPosition); // Crear marcador/círculo y consultar
-                } else {
-                    console.error("Resultado sin coordenadas válidas:", result);
-                    Swal.fire('Error', 'No se pudieron obtener coordenadas para esta ubicación.', 'error');
+                    searchInput.disabled = true;
+                    searchResultsContainer.style.display = "none";
+                    searchAgainButton.style.display = "block";
+                    createMarkerAndCircle(clickPosition);
                 }
             });
             
             searchResultsContainer.appendChild(resultItem);
         });
-
-        // Mantener visible el contenedor de resultados
-        searchResultsContainer.style.display = "block";
     })
     .catch(error => {
-        console.error("Error en la búsqueda:", error);
-        searchResultsContainer.innerHTML = `
-            <div class="search-result-item text-danger">
-                <i class="fas fa-exclamation-circle"></i> 
-                Error: ${error.message || 'Servicio no disponible'}
-            </div>`;
+        console.error("Error en búsqueda:", error);
+        showNoResults();
     });
 }
 
