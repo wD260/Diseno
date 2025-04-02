@@ -380,22 +380,24 @@
                      <button id="searchButton" class="btn-primary"><i class="fa-solid fa-search"></i></button>
                      <div id="searchResults"></div>
                  </div>
-                  <button id="searchAgainButton" class="btn btn-info btn-sm w-100" style="display: none;">
+                  <button id="searchAgainButton" class="btn btn-info btn-sm w-100">
                      <i class="fa-solid fa-search"></i> Buscar otra ubicación
                   </button>
              </div>
 
              <div class="form-group">
-                  <label class="form-label">Fecha y Hora de Inicio:</label>
+                  <label class="form-label">Fecha de Inicio:</label>
                   <div class="datetime-container">
-                       <input type="datetime-local" id="fechaHoraInicio" class="form-control">
+                       <input type="date" id="fechaInicio" class="form-control">
+                       <input type="time" id="horaInicio" class="form-control">
                   </div>
              </div>
 
              <div class="form-group">
-                  <label class="form-label">Fecha y Hora de Fin:</label>
+                  <label class="form-label">Fecha de Fin:</label>
                   <div class="datetime-container">
-                       <input type="datetime-local" id="fechaHoraFin" class="form-control">
+                       <input type="date" id="fechaFin" class="form-control">
+                       <input type="time" id="horaFin" class="form-control">
                   </div>
              </div>
 
@@ -415,9 +417,9 @@
                    </div>
              </div>
 
-             <div id="errorMessage" class="alert alert-danger" style="display: none;"></div>
+             <div id="errorMessage"></div>
 
-             <div id="resultContainer" style="display: none;">
+             <div id="resultContainer">
                   <h3>Momentos en el área:</h3>
                   <div id="resultList"></div>
              </div>
@@ -468,90 +470,81 @@
         const searchAgainButton = document.getElementById("searchAgainButton");
         const radioSlider = document.getElementById("radioSlider");
         const radioValue = document.getElementById("radioValue");
-        const fechaHoraInicioInput = document.getElementById("fechaHoraInicio");
-        const fechaHoraFinInput = document.getElementById("fechaHoraFin");
+        const fechaInicioInput = document.getElementById("fechaInicio");
+        const horaInicioInput = document.getElementById("horaInicio");
+        const fechaFinInput = document.getElementById("fechaFin");
+        const horaFinInput = document.getElementById("horaFin");
+
 
         // Funciones de Navegación y Zoom
-        function abrirTiempoReal() { window.location.href = "/index.html"; }
-        function abrirHistorial() { window.location.href = "/historico.html"; }
-        function zoomIn() { if(map) map.zoomIn(); }
-        function zoomOut() { if(map) map.zoomOut(); }
+         function abrirTiempoReal() { window.location.href = "/index.html"; }
+         function abrirHistorial() { window.location.href = "/historico.html"; }
+         function zoomIn() { if(map) map.zoomIn(); }
+         function zoomOut() { if(map) map.zoomOut(); }
+
 
         function initializeDatetimes() {
-    // Configurar fechas y horas por defecto
-    const now = new Date();
-    
-    // Establecer fecha/hora de inicio (hoy a las 00:00)
-    const today = new Date(now);
-    today.setHours(0, 0, 0, 0);
-    fechaHoraInicioInput.value = formatDateTime(today);
-    
-    // Establecer fecha/hora de fin (hoy a las 23:59)
-    const endOfDay = new Date(now);
-    endOfDay.setHours(23, 59, 0, 0);
-    fechaHoraFinInput.value = formatDateTime(endOfDay);
+            // Configurar fechas y horas por defecto
+            const now = new Date();
+            const yesterday = new Date(now);
+            yesterday.setDate(now.getDate() - 1);
+            const formatDate = (date) => date.toISOString().split('T')[0];
+            const formatTime = (date) => date.toTimeString().split(' ')[0].substring(0,5); // HH:MM
 
-    // Función para formatear fecha/hora para los inputs datetime-local
-    function formatDateTime(date) {
-        return date.getFullYear() + '-' + 
-               String(date.getMonth() + 1).padStart(2, '0') + '-' + 
-               String(date.getDate()).padStart(2, '0') + 'T' + 
-               String(date.getHours()).padStart(2, '0') + ':' + 
-               String(date.getMinutes()).padStart(2, '0');
-    }
+            fechaInicioInput.value = formatDate(yesterday);
+            horaInicioInput.value = "00:00";
+            fechaFinInput.value = formatDate(now);
+            horaFinInput.value = "23:59"; // O usar formatTime(now) para la hora actual
 
             // --- Event Listeners ---
 
-            // Slider de Radio
-            radioSlider.addEventListener("input", function() {
-                const value = this.value;
-                radioValue.textContent = value >= 1000 ? (value / 1000).toFixed(1) + " km" : value + " m";
-                // Actualizar botones de radio visualmente si coincide el valor
-                document.querySelectorAll(".radio-option").forEach(opt => {
-                     opt.classList.toggle("active", opt.dataset.value === value);
-                });
-                
-                // Actualizar círculo inmediatamente si existe
-                if (clickPosition && searchCircle) {
-                    map.removeLayer(searchCircle);
-                    searchCircle = L.circle(clickPosition, {
-                        color: 'blue', fillColor: '#30f', fillOpacity: 0.15, radius: parseInt(value), weight: 2
-                    }).addTo(map);
-                    map.fitBounds(searchCircle.getBounds(), { padding: [30, 30], maxZoom: 17 });
-                }
-                
-                attemptAutoRefresh(); // Llama a la actualización si hay ubicación
-            });
-            
-            // Botones de Radio
-            document.querySelectorAll(".radio-option").forEach(option => {
-                option.addEventListener("click", function() {
-                    document.querySelectorAll(".radio-option").forEach(opt => opt.classList.remove("active"));
-                    this.classList.add("active");
-                    const value = this.dataset.value;
-                    radioSlider.value = value; // Sincronizar slider
-                    radioValue.textContent = value >= 1000 ? (value / 1000).toFixed(1) + " km" : value + " m";
-                    
-                    // Actualizar círculo inmediatamente si existe
-                    if (clickPosition && searchCircle) {
-                        map.removeLayer(searchCircle);
-                        searchCircle = L.circle(clickPosition, {
-                            color: 'blue', fillColor: '#30f', fillOpacity: 0.15, radius: parseInt(value), weight: 2
-                        }).addTo(map);
-                        map.fitBounds(searchCircle.getBounds(), { padding: [30, 30], maxZoom: 17 });
-                    }
-                    
-                    attemptAutoRefresh(); // Llama a la actualización si hay ubicación
-                });
+// Slider de Radio
+radioSlider.addEventListener("input", function() {
+    const value = this.value;
+    radioValue.textContent = value >= 1000 ? (value / 1000).toFixed(1) + " km" : value + " m";
+    // Actualizar botones de radio visualmente si coincide el valor (opcional)
+    document.querySelectorAll(".radio-option").forEach(opt => {
+         opt.classList.toggle("active", opt.dataset.value === value);
+    });
+    
+    // Actualizar círculo inmediatamente si existe
+    if (clickPosition && searchCircle) {
+        map.removeLayer(searchCircle);
+        searchCircle = L.circle(clickPosition, {
+            color: 'blue', fillColor: '#30f', fillOpacity: 0.15, radius: parseInt(value), weight: 2
+        }).addTo(map);
+        map.fitBounds(searchCircle.getBounds(), { padding: [30, 30], maxZoom: 17 });
+    }
+    
+    attemptAutoRefresh(); // Llama a la actualización si hay ubicación
+});
+// Botones de Radio
+document.querySelectorAll(".radio-option").forEach(option => {
+    option.addEventListener("click", function() {
+        document.querySelectorAll(".radio-option").forEach(opt => opt.classList.remove("active"));
+        this.classList.add("active");
+        const value = this.dataset.value;
+        radioSlider.value = value; // Sincronizar slider
+        radioValue.textContent = value >= 1000 ? (value / 1000).toFixed(1) + " km" : value + " m";
+        
+        // Actualizar círculo inmediatamente si existe
+        if (clickPosition && searchCircle) {
+            map.removeLayer(searchCircle);
+            searchCircle = L.circle(clickPosition, {
+                color: 'blue', fillColor: '#30f', fillOpacity: 0.15, radius: parseInt(value), weight: 2
+            }).addTo(map);
+            map.fitBounds(searchCircle.getBounds(), { padding: [30, 30], maxZoom: 17 });
+        }
+        
+        attemptAutoRefresh(); // Llama a la actualización si hay ubicación
+    });
+});
+
+            // Inputs de Fecha y Hora (evento 'change' para que se active al perder foco o seleccionar)
+            [fechaInicioInput, horaInicioInput, fechaFinInput, horaFinInput].forEach(input => {
+                input.addEventListener("change", attemptAutoRefresh);
             });
 
-            // Inputs de Fecha y Hora
-            [fechaHoraInicioInput, fechaHoraFinInput].forEach(input => {
-                input.addEventListener("change", function() {
-                    validateDateRange();
-                    attemptAutoRefresh();
-                });
-            });
 
             // Botón de Reset
             document.getElementById("resetButton").addEventListener("click", resetMap);
@@ -578,55 +571,14 @@
             });
 
             // Cerrar resultados de búsqueda al hacer clic fuera
-            document.addEventListener('click', function(event) {
-                if (!searchInput.contains(event.target) && !searchButton.contains(event.target) && !searchResultsContainer.contains(event.target)) {
-                    searchResultsContainer.style.display = 'none';
-                }
-            });
+             document.addEventListener('click', function(event) {
+                 if (!searchInput.contains(event.target) && !searchButton.contains(event.target) && !searchResultsContainer.contains(event.target)) {
+                     searchResultsContainer.style.display = 'none';
+                 }
+             });
 
-            // Inicializar el mapa al final
-            initializeMap();
-        }
-
-        function validateDateRange() {
-            if (!fechaHoraInicioInput.value || !fechaHoraFinInput.value) {
-                showError("Por favor, complete las fechas y horas.");
-                return false;
-            }
-            
-            const inicioDT = new Date(fechaHoraInicioInput.value);
-            const finDT = new Date(fechaHoraFinInput.value);
-            
-            if (isNaN(inicioDT.getTime()) || isNaN(finDT.getTime())) {
-                showError("Formato de fecha u hora inválido.");
-                return false;
-            }
-            
-            if (inicioDT >= finDT) {
-                showError("La fecha/hora de inicio debe ser anterior a la de fin.");
-                return false;
-            }
-            
-            // Validar que el rango no sea mayor a 30 días (opcional)
-            const diffTime = Math.abs(finDT - inicioDT);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            if (diffDays > 30) {
-                showError("El rango de fechas no debe superar los 30 días.");
-                return false;
-            }
-            
-            hideError();
-            return true;
-        }
-
-        function showError(message) {
-            errorMessage.textContent = message;
-            errorMessage.style.display = "block";
-            resultContainer.style.display = "none";
-        }
-
-        function hideError() {
-            errorMessage.style.display = "none";
+             // Inicializar el mapa al final
+             initializeMap();
         }
 
         function initializeMap() {
@@ -636,8 +588,10 @@
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
 
+            // No centrar en última ubicación aquí, esperar interacción del usuario
+            // fetch('ultima_ubicacion.php')... (eliminado para empezar limpio)
+
             map.on('click', onMapClick);
-            
             // Forzar recalculo de tamaño por si acaso
             setTimeout(() => { map.invalidateSize() }, 100);
         }
@@ -645,26 +599,31 @@
         function onMapClick(e) {
             // Si ya se buscó una dirección, no permitir clic hasta limpiar
             if (searchInput.disabled) {
-                Swal.fire({
-                    icon: 'info',
-                    title: 'Ubicación Fijada',
-                    text: 'Ya has seleccionado una ubicación mediante la búsqueda. Usa "Buscar otra ubicación" o "Limpiar Mapa" para seleccionar un punto diferente.',
-                    timer: 4000,
-                    showConfirmButton: true
-                });
-                return;
-            }
+                 Swal.fire({
+                     icon: 'info',
+                     title: 'Ubicación Fijada',
+                     text: 'Ya has seleccionado una ubicación mediante la búsqueda. Usa "Buscar otra ubicación" o "Limpiar Mapa" para seleccionar un punto diferente.',
+                     timer: 4000,
+                     showConfirmButton: true // O false si prefieres que desaparezca sola
+                 });
+                 return;
+             }
             clickPosition = e.latlng;
             createMarkerAndCircle(clickPosition);
+            // Opcional: Rellenar input con coordenadas o mensaje
+            // searchInput.value = `Lat: ${clickPosition.lat.toFixed(5)}, Lng: ${clickPosition.lng.toFixed(5)}`;
+            // searchAgainButton.style.display = "block"; // Mostrar botón para limpiar/cambiar
         }
 
-        // Función para intentar refrescar automáticamente
+        // Nueva función para intentar refrescar automáticamente
         function attemptAutoRefresh() {
-            if (clickPosition && validateDateRange()) { // Solo si hay ubicación y fechas válidas
+            if (clickPosition) { // Solo si hay una ubicación seleccionada
                 const radio = parseInt(radioSlider.value);
+                // No es necesario limpiar marcadores aquí, consultarPasos lo hará
                 consultarPasosPorUbicacion(clickPosition, radio);
             }
         }
+
 
         function createMarkerAndCircle(position) {
             if (!map) return;
@@ -675,12 +634,12 @@
             clearExactMarkers(); // Limpiar resultados anteriores
 
             // Crear nuevo marcador de clic (azul estandar)
-            const clickIcon = L.icon({
-                iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-                iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-                iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-            });
+             const clickIcon = L.icon({
+                 iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+                 iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+                 shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                 iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+             });
             clickMarker = L.marker(position, {icon: clickIcon}).addTo(map);
 
             // Crear círculo de búsqueda
@@ -689,30 +648,34 @@
                 color: 'blue', fillColor: '#30f', fillOpacity: 0.15, radius: radio, weight: 2
             }).addTo(map);
 
-            hideError();
+            errorMessage.style.display = "none";
             resultContainer.style.display = "none"; // Ocultar resultados mientras carga
-            
-            if (validateDateRange()) {
-                consultarPasosPorUbicacion(position, radio); // Iniciar consulta
-            }
+            consultarPasosPorUbicacion(position, radio); // Iniciar consulta
 
-            // Ajustar vista
-            map.fitBounds(searchCircle.getBounds(), { padding: [30, 30], maxZoom: 17 });
+             // Ajustar vista
+             map.fitBounds(searchCircle.getBounds(), { padding: [30, 30], maxZoom: 17 });
+
+            // Mostrar botón "Buscar otra ubicación" solo si viene de una búsqueda de texto
+            // searchAgainButton.style.display = searchInput.disabled ? "block" : "none";
+             // ^^^ Se maneja mejor en performSearch y resetMap/searchAgain click
         }
 
+        // Ya no se necesita updateSearchCircle separado, attemptAutoRefresh hace el trabajo
+        /* function updateSearchCircle() { ... } */
+
         function clearExactMarkers() {
-            if (!map) return;
+             if (!map) return;
             exactMarkers.forEach(marker => map.removeLayer(marker));
             exactMarkers = [];
         }
 
         function resetMap() {
-            if (!map) return;
+             if (!map) return;
             if (clickMarker) map.removeLayer(clickMarker);
             if (searchCircle) map.removeLayer(searchCircle);
             clearExactMarkers();
 
-            hideError();
+            errorMessage.style.display = "none";
             resultContainer.style.display = "none";
             clickPosition = null;
             clickMarker = null;
@@ -726,6 +689,8 @@
 
             // Recenter mapa a la vista inicial (Barranquilla)
             map.setView([10.9639, -74.7964], 13);
+            // Opcional: recentrar a la última ubicación conocida si prefieres
+            // fetch('ultima_ubicacion.php')...
         }
 
         function consultarPasosPorUbicacion(position, radio) {
@@ -734,33 +699,44 @@
                 return; // Salir si no hay posición
             }
 
-            // Validar nuevamente antes de consultar
-            if (!validateDateRange()) {
-                return;
-            }
+            const fechaInicio = fechaInicioInput.value;
+            const horaInicio = horaInicioInput.value;
+            const fechaFin = fechaFinInput.value;
+            const horaFin = horaFinInput.value;
 
-            // Obtener fechas y horas
-            const inicioDT = new Date(fechaHoraInicioInput.value);
-            const finDT = new Date(fechaHoraFinInput.value);
-            
-            // Formatear para la API (YYYY-MM-DD HH:MM:SS)
-            const formatDateForAPI = (date) => {
-                return date.getFullYear() + '-' + 
-                       String(date.getMonth() + 1).padStart(2, '0') + '-' + 
-                       String(date.getDate()).padStart(2, '0') + ' ' + 
-                       String(date.getHours()).padStart(2, '0') + ':' + 
-                       String(date.getMinutes()).padStart(2, '0') + ':00';
-            };
-            
-            const inicio = formatDateForAPI(inicioDT);
-            const fin = formatDateForAPI(finDT);
+             // Validación de fechas/horas
+             if (!fechaInicio || !horaInicio || !fechaFin || !horaFin) {
+                 errorMessage.textContent = "Por favor, complete las fechas y horas.";
+                 errorMessage.style.display = "block";
+                 resultContainer.style.display = "none"; // Ocultar resultados si hay error
+                 return;
+             }
+             const inicioDT = new Date(`${fechaInicio}T${horaInicio}`);
+             const finDT = new Date(`${fechaFin}T${horaFin}`);
+             if (isNaN(inicioDT.getTime()) || isNaN(finDT.getTime())) {
+                errorMessage.textContent = "Formato de fecha u hora inválido.";
+                errorMessage.style.display = "block";
+                resultContainer.style.display = "none";
+                return;
+             }
+             if (inicioDT >= finDT) {
+                 errorMessage.textContent = "La fecha/hora de inicio debe ser anterior a la de fin.";
+                 errorMessage.style.display = "block";
+                 resultContainer.style.display = "none";
+                 return;
+             }
+             errorMessage.style.display = "none"; // Ocultar si pasa validación
+
+            const inicio = `${fechaInicio} ${horaInicio}:00`;
+            const fin = `${fechaFin} ${horaFin}:00`;
 
             // Mostrar loader y limpiar resultados anteriores
             clearExactMarkers(); // Limpia marcadores rojos del mapa
             resultList.innerHTML = '<div class="text-center p-2"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
             resultContainer.style.display = "block";
 
-            // Llamada AJAX
+
+            // --- Llamada AJAX (Asegúrate que la URL y parámetros sean correctos) ---
             const url = `cuando_paso.php?lat=${position.lat}&lon=${position.lng}&radio=${radio}&inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}`;
             console.log("Consultando:", url); // Para depuración
 
@@ -776,49 +752,30 @@
                     resultList.innerHTML = ""; // Limpiar loader
 
                     if (!Array.isArray(data)) {
-                        throw new Error("La respuesta del servidor no es un array.");
+                         throw new Error("La respuesta del servidor no es un array.");
                     }
 
                     if (data.length === 0) {
                         resultList.innerHTML = '<div class="text-center text-muted p-2"><i>No se encontraron pasos en el área y período seleccionados.</i></div>';
-                        hideError(); // Asegurar que no haya error viejo
+                        errorMessage.style.display = "none"; // Asegurar que no haya error viejo
                         return;
                     }
 
-                    hideError(); // Ocultar si hubo éxito
-
-                    // Ordenar por fecha y hora (más reciente primero)
-                    data.sort((a, b) => {
-                        const dateA = new Date(`${a.fecha} ${a.hora}`);
-                        const dateB = new Date(`${b.fecha} ${b.hora}`);
-                        return dateB - dateA;
-                    });
+                    errorMessage.style.display = "none"; // Ocultar si hubo éxito
 
                     data.forEach(item => {
-                        // Validación básica de datos recibidos
-                        const lat = parseFloat(item.lat);
-                        const lon = parseFloat(item.lon);
-                        if (isNaN(lat) || isNaN(lon) || !item.fecha || !item.hora) {
-                            console.warn("Registro inválido recibido:", item);
-                            return; // Saltar este item
-                        }
-
-                        // Formatear mejor la fecha/hora
-                        const itemDate = new Date(`${item.fecha} ${item.hora}`);
-                        const formattedDate = itemDate.toLocaleDateString('es-ES', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric'
-                        });
-                        const formattedTime = itemDate.toLocaleTimeString('es-ES', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
+                         // Validación básica de datos recibidos
+                         const lat = parseFloat(item.lat);
+                         const lon = parseFloat(item.lon);
+                         if (isNaN(lat) || isNaN(lon) || !item.fecha || !item.hora) {
+                             console.warn("Registro inválido recibido:", item);
+                             return; // Saltar este item
+                         }
 
                         const resultItem = document.createElement("div");
                         resultItem.className = "result-item";
                         resultItem.innerHTML = `
-                            <div class="result-date" title="${item.fecha} ${item.hora}"><strong>${formattedDate}</strong> ${formattedTime}</div>
+                            <div class="result-date" title="${item.fecha} ${item.hora}"><strong>${item.fecha}</strong> ${item.hora}</div>
                             <div class="result-action" data-lat="${lat}" data-lon="${lon}" data-fecha="${item.fecha}" data-hora="${item.hora}">
                                 <i class="fa-solid fa-map-pin"></i> Ver
                             </div>`;
@@ -846,32 +803,34 @@
                         });
                         resultList.appendChild(resultItem);
                     });
+
+                    // Opcional: Scroll al primer resultado
+                    // resultList.firstChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
                 })
                 .catch(error => {
                     console.error("Error detallado al consultar los datos:", error);
-                    showError(`Error al consultar: ${error.message}. Verifique la conexión o inténtelo más tarde.`);
+                    errorMessage.textContent = `Error al consultar: ${error.message}. Verifique la conexión o inténtelo más tarde.`;
+                    errorMessage.style.display = "block";
                     resultContainer.style.display = "block"; // Mantener visible para mostrar error
-                    resultList.innerHTML = '<div class="text-center text-danger p-2"><i>Falló la consulta.</i></div>'; // Mensaje dentro de la lista
+                    resultList.innerHTML = '<div class="text-center text-danger p-2"><i>Fallo la consulta.</i></div>'; // Mensaje dentro de la lista
                 });
         }
 
         function performSearch() {
             const query = searchInput.value.trim();
             if (!query) {
-                searchResultsContainer.style.display = "none";
-                return;
-            }
+                 searchResultsContainer.style.display = "none";
+                 return;
+                 }
 
-            searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
+            searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i>Buscando...</i></div>';
             searchResultsContainer.style.display = "block";
 
             const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=co&addressdetails=1`; // Limitar a Colombia, pedir detalles
 
             fetch(url)
-                .then(response => {
-                    if (!response.ok) throw new Error('Error en la búsqueda');
-                    return response.json();
-                })
+                .then(response => response.ok ? response.json() : Promise.reject('Error en Nominatim'))
                 .then(data => {
                     searchResultsContainer.innerHTML = "";
 
@@ -888,7 +847,7 @@
                         resultItem.addEventListener("click", function() {
                             const lat = parseFloat(result.lat);
                             const lon = parseFloat(result.lon);
-                            if (!isNaN(lat) && !isNaN(lon)) {
+                             if (!isNaN(lat) && !isNaN(lon)) {
                                 clickPosition = L.latLng(lat, lon);
                                 searchInput.value = result.display_name; // Poner nombre en input
                                 searchInput.disabled = true; // Deshabilitar input tras seleccionar
@@ -905,15 +864,14 @@
                 })
                 .catch(error => {
                     console.error("Error en la búsqueda de Nominatim:", error);
-                    searchResultsContainer.innerHTML = `<div class="search-result-item text-danger"><i>Error en la búsqueda: ${error.message}</i></div>`;
-                    setTimeout(() => {
-                        searchResultsContainer.style.display = "none";
-                    }, 3000);
+                    searchResultsContainer.innerHTML = `<div class="search-result-item text-danger"><i>Error en la búsqueda (${error.message})</i></div>`;
                 });
         }
 
         // Inicializar todo cuando se carga la página
         document.addEventListener("DOMContentLoaded", initializeDatetimes);
+
     </script>
 </body>
+</html>
 </html>
