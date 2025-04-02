@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Localizador de Vehículos por Área (Corregido)</title>
+    <title>Localizador por Área (Botón Movido)</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -21,39 +21,50 @@
         }
 
         html, body {
-            height: 100%; /* Asegura que html y body ocupen toda la altura */
+            height: 100%;
             margin: 0;
             padding: 0;
-            overflow: hidden; /* Evita scroll general */
+            overflow: hidden;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f8f9fa;
         }
 
         .main-layout {
             display: flex;
-            height: 100%; /* Ocupa toda la altura disponible */
-            width: 100%; /* Ocupa todo el ancho disponible */
+            height: 100%;
+            width: 100%;
         }
 
         .sidebar {
-            width: 320px; /* Ancho fijo para la barra lateral */
-            flex-shrink: 0; /* Evita que la barra lateral se encoja */
+            width: 320px;
+            flex-shrink: 0;
             background-color: #ffffff;
-            box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1); /* Sombra a la derecha */
+            box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1);
             z-index: 1000;
             padding: 20px;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto; /* Scroll si el contenido excede */
-            height: 100%; /* Asegura que ocupe la altura completa */
-            box-sizing: border-box; /* Incluye padding en el height/width */
+            display: flex; /* Changed */
+            flex-direction: column; /* Changed */
+            height: 100%;
+            box-sizing: border-box;
+            /* Removed overflow-y: auto; - will be handled by inner container */
         }
 
+        /* --- NUEVO CONTENEDOR INTERNO --- */
+        .sidebar-content {
+            flex-grow: 1; /* Ocupa todo el espacio vertical disponible */
+            overflow-y: auto; /* Permite scroll SOLO para el contenido */
+            display: flex;
+            flex-direction: column;
+            min-height: 0; /* Importante para que flex-grow funcione bien con overflow */
+            margin-bottom: 15px; /* Espacio antes del botón de limpiar */
+        }
+        /* --- FIN NUEVO CONTENEDOR --- */
+
         .map-container {
-            flex-grow: 1; /* Ocupa el espacio restante */
+            flex-grow: 1;
             position: relative;
             overflow: hidden;
-            height: 100%; /* Asegura que ocupe la altura completa */
+            height: 100%;
         }
 
         #map {
@@ -65,35 +76,36 @@
             color: #2c3e50;
             font-weight: 800;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 25px; /* Ajustado */
             letter-spacing: 1px;
             padding-bottom: 15px;
             border-bottom: 2px solid var(--primary-color);
             text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-            flex-shrink: 0; /* Evita que el título se encoja */
+            flex-shrink: 0;
         }
 
         .form-label {
             font-weight: 600;
             color: #2c3e50;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             font-size: 14px;
         }
 
         .form-control, .datetime-container input, .search-container input {
-            padding: 10px;
-            border-radius: 8px;
+            padding: 9px 12px;
+            border-radius: 6px;
             border: 1px solid #dee2e6;
             background-color: #f8f9fa;
             transition: all 0.3s ease;
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.08);
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.07);
             width: 100%;
             box-sizing: border-box;
+            font-size: 14px;
         }
-         .datetime-container input {
+        .datetime-container input {
              flex: 1;
-         }
-
+             min-width: 80px;
+        }
 
         .form-control:focus, .form-control:hover,
         .datetime-container input:focus, .datetime-container input:hover,
@@ -104,31 +116,33 @@
         }
 
         .form-group {
-            margin-bottom: 18px;
-            flex-shrink: 0; /* Evita que los grupos se encojan */
+            margin-bottom: 15px;
+            flex-shrink: 0;
         }
 
         .btn {
-            padding: 10px 18px;
-            border-radius: 8px;
+            padding: 9px 15px;
+            border-radius: 6px;
             font-weight: 600;
             transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
             cursor: pointer;
             border: none;
+            font-size: 14px;
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 8px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 7px rgba(0,0,0,0.12);
         }
 
         .btn:active {
             transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
         }
 
         .btn-primary { background-color: var(--primary-color); border-color: var(--primary-color); color: white;}
@@ -145,83 +159,74 @@
 
         .top-buttons {
             position: absolute;
-            top: 15px;
-            right: 15px;
-            z-index: 1000; /* Encima del mapa pero debajo del sidebar si se superpone */
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
-        .error-message {
+        #errorMessage {
             color: var(--danger-color);
             background-color: rgba(231, 76, 60, 0.1);
             border-left: 4px solid var(--danger-color);
-            padding: 10px;
+            padding: 10px 12px;
             margin-top: 15px;
             border-radius: 5px;
             font-weight: 500;
-            display: none; /* Oculto por defecto */
+            font-size: 13px;
+            display: none;
             flex-shrink: 0;
         }
-         #errorMessage { /* Aplicar a ID específico */
-             color: var(--danger-color);
-             background-color: rgba(231, 76, 60, 0.1);
-             border-left: 4px solid var(--danger-color);
-             padding: 10px;
-             margin-top: 15px;
-             border-radius: 5px;
-             font-weight: 500;
-             display: none; /* Oculto por defecto */
-             flex-shrink: 0;
-         }
 
 
         .zoom-controls {
             position: absolute;
-            top: 15px;
-            left: 15px;
+            top: 10px;
+            left: 10px;
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
 
         .zoom-btn {
-            width: 36px;
-            height: 36px;
+            width: 34px;
+            height: 34px;
             background-color: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 16px;
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0,0,0,0.15);
             transition: all 0.2s ease;
             border: 1px solid #ddd;
+            color: #333;
         }
 
         .zoom-btn:hover {
             background-color: #f8f9fa;
             transform: scale(1.05);
+            color: #000;
         }
 
-        .map-attribution { /* Estilo para atribucin */
+        .map-attribution {
             position: absolute;
-            bottom: 5px;
+            bottom: 2px;
             right: 5px;
-            background-color: rgba(255, 255, 255, 0.7);
+            background-color: rgba(255, 255, 255, 0.75);
             padding: 2px 5px;
             border-radius: 3px;
-            font-size: 11px;
+            font-size: 10px;
             z-index: 1000;
         }
 
-         /* Estilos especficos del Localizador adaptados */
          .datetime-container {
              display: flex;
              align-items: center;
-             gap: 10px;
+             gap: 8px;
          }
          .range-container {
              margin-top: 5px;
@@ -229,225 +234,264 @@
          .range-container input[type=range] {
              width: 100%;
              cursor: pointer;
+             height: 6px;
          }
-         .range-value {
-             text-align: right;
-             font-size: 12px;
-             color: #666;
-             margin-top: 3px;
-             display: flex; /* Usar flex para alinear */
-             justify-content: space-between; /* Espacio entre min y max */
+         .range-labels {
+             display: flex;
+             justify-content: space-between;
+             font-size: 11px;
+             color: #888;
+             margin-top: -2px;
          }
-          /* Quitar float: right; de span */
-         /* .range-value span:last-child { float: right; } */
-
          #resultContainer {
-    margin-top: 15px;
-    flex-grow: 1; /* Permite que el contenedor crezca */
-    overflow-y: auto;
-    border: 1px solid #eee;
-    border-radius: 5px;
-    padding: 10px;
-    background-color: #fdfdfd;
-    display: none; /* Oculto por defecto */
-    min-height: 220px; /* Aumentado de 150px a 220px */
-    max-height: 40vh; /* Añadido para asegurar que no sea demasiado grande en pantallas altas */
-}
+            margin-top: 15px;
+            flex-grow: 1; /* Hace que este div crezca para llenar el espacio en .sidebar-content */
+            overflow-y: auto; /* Scroll interno si los resultados exceden */
+            border: 1px solid #eee;
+            border-radius: 5px;
+            padding: 10px; /* Padding interior */
+            background-color: #fdfdfd;
+            display: none; /* Oculto por defecto */
+            min-height: 150px; /* Altura mínima para que no colapse si no hay resultados */
+         }
          #resultContainer h3 {
-             font-size: 1rem;
+             font-size: 0.95rem;
              font-weight: 600;
-             margin-bottom: 10px;
+             margin-top: 5px;
+             margin-bottom: 8px;
              color: #333;
-             flex-shrink: 0;
+             padding-bottom: 5px;
+             border-bottom: 1px solid #eee;
+             flex-shrink: 0; /* Evita que el título se encoja */
          }
          .result-item {
-    padding: 12px 14px; /* Padding aumentado */
-    background-color: #f8f9fa; /* Fondo más claro */
-    margin-bottom: 10px; /* Más espacio entre elementos */
-    border-radius: 6px; /* Borde más redondeado */
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 1rem; /* Texto más grande */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.08); /* Sombra más visible */
-    border: 1px solid #e0e0e0; /* Borde más visible */
-    flex-shrink: 0;
-    transition: all 0.2s ease; /* Transición suave */
-}
+             padding: 7px 5px;
+             background-color: transparent;
+             margin-bottom: 4px;
+             border-radius: 4px;
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+             font-size: 0.85rem;
+             border-bottom: 1px solid #f0f0f0;
+             transition: background-color 0.2s ease;
+             flex-shrink: 0; /* Evita que los items se encojan */
+         }
+         .result-item:last-child {
+             border-bottom: none;
+         }
+         .result-item:hover {
+            background-color: #f5f5f5;
+         }
+         .result-date strong { color: #333; font-weight: 600; margin-right: 5px; }
+         .result-action { color: var(--primary-color); cursor: pointer; font-weight: 500; white-space: nowrap; margin-left: 10px;}
+         .result-action i { margin-right: 3px; }
+         .result-action:hover { text-decoration: underline; color: #2980b9; }
 
-/* Añadir efecto hover */
-.result-item:hover {
-    background-color: #f1f5fd;
-    transform: translateY(-1px);
-    box-shadow: 0 3px 6px rgba(0,0,0,0.12);
-}
-        .result-date strong { color: #333; }
-        .result-action { color: var(--primary-color); cursor: pointer; font-weight: 500; white-space: nowrap; margin-left: 10px; }
-        .result-action:hover { text-decoration: underline; color: #2980b9; }
-        .result-date { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* Evita que fecha larga desborde */
+         .radio-options { display: flex; gap: 8px; margin-top: 8px; margin-bottom: 15px; flex-shrink: 0;}
+         .radio-option {
+             flex: 1;
+             text-align: center;
+             padding: 5px;
+             background-color: #e9ecef;
+             border-radius: 5px;
+             font-size: 11px;
+             cursor: pointer;
+             border: 1px solid #dee2e6;
+             transition: all 0.2s ease;
+             font-weight: 500;
+             color: #495057;
+         }
+         .radio-option.active {
+             background-color: var(--primary-color);
+             color: white;
+             border-color: var(--primary-color);
+             font-weight: 600;
+         }
+         #resetButton {
+            /* --- CAMBIOS BOTÓN --- */
+            /* width: 100%; quitado */
+            align-self: flex-end; /* Alinea a la derecha en columna flex */
+            margin-top: 0; /* El espacio lo da el margin-bottom de .sidebar-content */
+            flex-shrink: 0; /* Evita que el botón se encoja */
+         }
 
+         .search-container {
+             margin-bottom: 10px;
+             position: relative;
+             flex-shrink: 0;
+         }
+         .search-container button {
+             position: absolute;
+             right: 0;
+             top: 0;
+             height: 100%;
+             padding: 0 12px;
+             background: var(--primary-color);
+             color: white;
+             border: none;
+             border-radius: 0 6px 6px 0;
+             cursor: pointer;
+             transition: background-color 0.2s ease;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+         }
+         .search-container button i { font-size: 14px; }
+         .search-container button:hover { background: #2980b9; }
 
-        .radio-options { display: flex; gap: 10px; margin-top: 5px; margin-bottom: 15px; }
-        .radio-option {
-            flex: 1;
-            text-align: center;
-            padding: 6px;
-            background-color: #e9ecef;
-            border-radius: 6px;
-            font-size: 12px;
-            cursor: pointer;
-            border: 1px solid #dee2e6;
-            transition: all 0.2s ease;
-        }
-        .radio-option.active {
-            background-color: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-            font-weight: 600;
-        }
-        #resetButton {
-            width: 100%;
-            margin-top: 15px; /* Empuja hacia abajo */
-            flex-shrink: 0; /* Evita que el botn se encoja */
-        }
+         #searchResults {
+             position: absolute;
+             width: 100%;
+             max-height: 160px;
+             overflow-y: auto;
+             background: white;
+             border: 1px solid #dee2e6;
+             border-top: none;
+             z-index: 1010;
+             display: none;
+             border-radius: 0 0 5px 5px;
+             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+         }
+         .search-result-item { padding: 8px 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-size: 0.85rem; }
+         .search-result-item:last-child { border-bottom: none; }
+         .search-result-item:hover { background-color: #f8f9fa; }
 
-        /* Estilo para el buscador de ubicaciones */
-        .search-container {
-            margin-bottom: 15px;
-            position: relative;
-        }
-        .search-container button {
-            position: absolute;
-            right: 0;
-            top: 0;
-            height: 100%;
-            padding: 0 12px;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 0 8px 8px 0;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-        .search-container button:hover { background: #2980b9; }
+         #searchAgainButton {
+             display: none;
+             width: 100%;
+             margin-bottom: 10px;
+             font-size: 13px;
+             padding: 6px 10px;
+             flex-shrink: 0;
+         }
 
-        #searchResults {
-            position: absolute;
-            width: 100%;
-            max-height: 180px;
-            overflow-y: auto;
-            background: white;
-            border: 1px solid #dee2e6;
-            border-top: none;
-            z-index: 1010; /* Encima del mapa y sidebar */
-            display: none;
-            border-radius: 0 0 5px 5px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            box-sizing: border-box;
-        }
-        .search-result-item { padding: 8px 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
-        .search-result-item:last-child { border-bottom: none; }
-        .search-result-item:hover { background-color: #f8f9fa; }
-
-        #searchAgainButton {
-            display: none; /* Oculto por defecto */
-            width: 100%;
-            margin-bottom: 15px; /* Era margin-top, cambiado a bottom */
-        }
+         .loader-container {
+             text-align: center;
+             padding: 20px;
+             color: #6c757d;
+         }
+         .loader-container i {
+             margin-right: 8px;
+         }
 
         @media (max-width: 768px) {
-    .main-layout { flex-direction: column; height: auto;} /* Ajustar altura en móvil */
-    .sidebar { width: 100%; height: auto; max-height: 60vh; /* Aumentar altura en móvil */ box-shadow: 0 2px 15px rgba(0,0,0,0.1); } /* Sombra abajo */
-    .map-container { height: 40vh; /* Reducir mapa para dar más espacio a sidebar */ }
-    .top-buttons { top: 10px; right: 10px; gap: 5px;}
-    .top-buttons .btn { padding: 8px 10px; font-size: 0.85rem;}
-    .zoom-controls { top: 10px; left: 10px;}
-    /* Asegurar que el contenedor de resultados también tenga scroll */
-    #resultContainer { min-height: 180px; max-height: 250px; }
-}
+            .main-layout { flex-direction: column; height: 100%; /* Asegurar altura en móvil */}
+            .sidebar {
+                width: 100%;
+                height: auto; /* Altura automática basada en contenido */
+                max-height: 60vh; /* Limitar altura máxima */
+                order: 1;
+                box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+                /* padding-bottom: 70px; /* Espacio extra abajo para el botón si se superpone */
+            }
+             .sidebar-content {
+                /* No necesita ajustes específicos aquí normalmente */
+                 margin-bottom: 10px; /* Reducir espacio antes del botón en móvil */
+            }
+            .map-container {
+                 /* Calcular altura restante */
+                 height: calc(100% - 60vh); /* Asumiendo que sidebar usa max-height */
+                 min-height: 40vh; /* Altura mínima para el mapa */
+                 order: 2;
+            }
+            .top-buttons { top: 10px; right: 10px; gap: 5px;}
+            .top-buttons .btn { padding: 6px 8px; font-size: 0.8rem;}
+            .zoom-controls { top: 10px; left: 10px;}
+            #resultContainer {
+                min-height: 100px; /* Reducir altura mínima en móvil */
+            }
+             #resetButton {
+                 /* Asegurar que el botón sea visible */
+                 margin-right: 0; /* Resetear margen por si acaso */
+                 /* position: relative; /* Quitar absolute si lo tuviera */
+                 /* align-self: flex-end; /* Mantener alineación */
+                 margin-top: 10px; /* Ajustar margen superior si es necesario */
+             }
+        }
 
     </style>
 </head>
 <body>
     <div class="main-layout">
         <div class="sidebar">
-             <h2 class="app-title animate__animated animate__fadeInDown">LOCALIZADOR POR ÁREA</h2>
+            <div class="sidebar-content">
+                 <h2 class="app-title animate__animated animate__fadeInDown">LOCALIZADOR POR ÁREA</h2>
 
-             <div class="form-group">
-                 <label class="form-label" for="searchInput">Buscar Ubicación:</label>
-                 <div class="search-container">
-                     <input type="text" id="searchInput" class="form-control" placeholder="Ej: Calle 72 con 54, Barranquilla">
-                     <button id="searchButton" class="btn-primary"><i class="fa-solid fa-search"></i></button>
-                     <div id="searchResults"></div>
+                 <div class="form-group">
+                     <label class="form-label" for="searchInput">Buscar Ubicación:</label>
+                     <div class="search-container">
+                         <input type="text" id="searchInput" class="form-control" placeholder="Ej: Calle 72 con 54, Barranquilla">
+                         <button id="searchButton" class="btn-primary"><i class="fa-solid fa-search"></i></button>
+                         <div id="searchResults"></div>
+                     </div>
+                      <button id="searchAgainButton" class="btn btn-info btn-sm w-100">
+                         <i class="fa-solid fa-magnifying-glass-location"></i> Buscar otra ubicación
+                      </button>
                  </div>
-                  <button id="searchAgainButton" class="btn btn-info btn-sm w-100">
-                     <i class="fa-solid fa-search"></i> Buscar otra ubicación
-                  </button>
-             </div>
 
-             <div class="form-group">
-                  <label class="form-label">Fecha de Inicio:</label>
-                  <div class="datetime-container">
-                       <input type="date" id="fechaInicio" class="form-control">
-                       <input type="time" id="horaInicio" class="form-control">
-                  </div>
-             </div>
+                 <div class="form-group">
+                     <label class="form-label">Fecha de Inicio:</label>
+                     <div class="datetime-container">
+                         <input type="date" id="fechaInicio" class="form-control">
+                         <input type="time" id="horaInicio" class="form-control">
+                     </div>
+                 </div>
 
-             <div class="form-group">
-                  <label class="form-label">Fecha de Fin:</label>
-                  <div class="datetime-container">
-                       <input type="date" id="fechaFin" class="form-control">
-                       <input type="time" id="horaFin" class="form-control">
-                  </div>
-             </div>
+                 <div class="form-group">
+                     <label class="form-label">Fecha de Fin:</label>
+                     <div class="datetime-container">
+                         <input type="date" id="fechaFin" class="form-control">
+                         <input type="time" id="horaFin" class="form-control">
+                     </div>
+                 </div>
 
-             <div class="form-group">
-                  <label class="form-label">Radio de búsqueda: <span id="radioValue">100 m</span></label>
-                  <div class="range-container">
-                       <input type="range" id="radioSlider" min="50" max="1000" step="50" value="100">
-                       <div class="range-value">
+                 <div class="form-group">
+                    <label class="form-label">Radio de búsqueda: <span id="radioValueDisplay">100 m</span></label>
+                    <div class="range-container">
+                        <input type="range" id="radioSlider" min="50" max="1000" step="50" value="100">
+                        <div class="range-labels">
                             <span>50m</span>
                             <span>1km</span>
-                       </div>
-                  </div>
-                   <div class="radio-options">
-                       <div class="radio-option active" data-value="100">100m</div>
-                       <div class="radio-option" data-value="250">250m</div>
-                       <div class="radio-option" data-value="500">500m</div>
-                   </div>
-             </div>
+                        </div>
+                    </div>
+                     <div class="radio-options">
+                        <div class="radio-option active" data-value="100">100m</div>
+                        <div class="radio-option" data-value="250">250m</div>
+                        <div class="radio-option" data-value="500">500m</div>
+                        <div class="radio-option" data-value="1000">1km</div>
+                     </div>
+                 </div>
 
-             <div id="errorMessage"></div>
+                 <div id="errorMessage"></div>
 
-             <div id="resultContainer">
-                  <h3>Momentos en el área:</h3>
-                  <div id="resultList"></div>
-             </div>
-
-             <button id="resetButton" class="btn btn-danger w-100">
-                  <i class="fa-solid fa-broom"></i> Limpiar Mapa y Selección
+                 <div id="resultContainer">
+                     <h3>Momentos en el área:</h3>
+                     <div id="resultList">
+                        </div>
+                 </div>
+            </div> <button id="resetButton" class="btn btn-danger">
+                 <i class="fa-solid fa-broom"></i> Limpiar Mapa y Selección
              </button>
-        </div>
+        </div> <div class="map-container">
+            <div class="top-buttons">
+                <button class="btn btn-info" onclick="abrirTiempoReal()">
+                    <i class="fas fa-clock"></i> Tiempo Real
+                </button>
+                <button class="btn btn-warning" onclick="abrirHistorial()"> <i class="fas fa-history"></i> Consulta Histórica
+                </button>
+                </div>
 
-        <div class="map-container">
-             <div class="top-buttons">
-                  <button class="btn btn-info" onclick="abrirTiempoReal()">
-                      <i class="fas fa-clock"></i> Tiempo Real
-                  </button>
-                  <button class="btn btn-warning" onclick="abrirHistorial()"> <i class="fas fa-history"></i> Consulta Histórica
-                  </button>
-                  </div>
+            <div class="zoom-controls">
+                <div class="zoom-btn" onclick="zoomIn()"><i class="fas fa-plus"></i></div>
+                <div class="zoom-btn" onclick="zoomOut()"><i class="fas fa-minus"></i></div>
+            </div>
 
-             <div class="zoom-controls">
-                  <div class="zoom-btn" onclick="zoomIn()"><i class="fas fa-plus"></i></div>
-                  <div class="zoom-btn" onclick="zoomOut()"><i class="fas fa-minus"></i></div>
-             </div>
+            <div id="map"></div>
 
-             <div id="map"></div>
-
-              <div class="map-attribution">
-                   © Leaflet | © OpenStreetMap contributors
-              </div>
+            <div class="map-attribution">
+                © Leaflet | © OpenStreetMap contributors
+            </div>
         </div>
     </div>
 
@@ -456,227 +500,236 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
 
     <script>
+        // --- Variables Globales ---
         let map;
         let searchCircle;
         let clickMarker;
-        let clickPosition = null; // Inicializar como null
+        let clickPosition = null;
         let exactMarkers = [];
+
+        // --- Referencias a Elementos DOM ---
         const errorMessage = document.getElementById("errorMessage");
-        const resultContainer = document.getElementById("resultContainer");
-        const resultList = document.getElementById("resultList");
-        const searchResultsContainer = document.getElementById("searchResults");
-        const searchInput = document.getElementById("searchInput");
-        const searchButton = document.getElementById("searchButton");
-        const searchAgainButton = document.getElementById("searchAgainButton");
         const radioSlider = document.getElementById("radioSlider");
-        const radioValue = document.getElementById("radioValue");
+        const radioValueDisplay = document.getElementById("radioValueDisplay"); // Corregido: usar el span correcto
+        const resultList = document.getElementById("resultList");
+        const resultContainer = document.getElementById("resultContainer");
+        const searchInput = document.getElementById('searchInput');
+        const searchResultsContainer = document.getElementById('searchResults');
+        const searchAgainButton = document.getElementById('searchAgainButton');
         const fechaInicioInput = document.getElementById("fechaInicio");
         const horaInicioInput = document.getElementById("horaInicio");
         const fechaFinInput = document.getElementById("fechaFin");
         const horaFinInput = document.getElementById("horaFin");
+        const resetButton = document.getElementById("resetButton");
+        const searchButton = document.getElementById("searchButton");
 
 
-        // Funciones de Navegación y Zoom
-         function abrirTiempoReal() { window.location.href = "/index.html"; }
-         function abrirHistorial() { window.location.href = "/historico.html"; }
-         function zoomIn() { if(map) map.zoomIn(); }
-         function zoomOut() { if(map) map.zoomOut(); }
+        // --- Constantes ---
+        const DEFAULT_CENTER = [10.9639, -74.7964]; // Barranquilla
+        const DEFAULT_ZOOM = 13;
+        const URL_ULTIMA_UBICACION = 'ultima_ubicacion.php'; // Reemplaza si es necesario
+        const URL_CUANDO_PASO = 'cuando_paso.php'; // Reemplaza si es necesario
+        const URL_NOMINATIM = 'https://nominatim.openstreetmap.org/search';
 
+        // --- Funciones de Navegación y Zoom ---
+        function abrirTiempoReal() {
+             Swal.fire('Navegación', 'Ir a Tiempo Real (simulado)', 'info');
+        }
+        function abrirHistorial() {
+             Swal.fire('Navegación', 'Ir a Consulta Histórica (simulado)', 'info');
+        }
+        function zoomIn() { if(map) map.zoomIn(); }
+        function zoomOut() { if(map) map.zoomOut(); }
+
+        // --- Inicialización ---
+        function initializeApp() {
+            initializeDatetimes();
+            setupEventListeners();
+            initializeMap();
+        }
 
         function initializeDatetimes() {
-            // Configurar fechas y horas por defecto
             const now = new Date();
             const yesterday = new Date(now);
             yesterday.setDate(now.getDate() - 1);
             const formatDate = (date) => date.toISOString().split('T')[0];
-            const formatTime = (date) => date.toTimeString().split(' ')[0].substring(0,5); // HH:MM
 
             fechaInicioInput.value = formatDate(yesterday);
             horaInicioInput.value = "00:00";
             fechaFinInput.value = formatDate(now);
-            horaFinInput.value = "23:59"; // O usar formatTime(now) para la hora actual
+            horaFinInput.value = "23:59";
 
-            // --- Event Listeners ---
-
-// Slider de Radio
-radioSlider.addEventListener("input", function() {
-    const value = this.value;
-    radioValue.textContent = value >= 1000 ? (value / 1000).toFixed(1) + " km" : value + " m";
-    // Actualizar botones de radio visualmente si coincide el valor (opcional)
-    document.querySelectorAll(".radio-option").forEach(opt => {
-         opt.classList.toggle("active", opt.dataset.value === value);
-    });
-    
-    // Actualizar círculo inmediatamente si existe
-    if (clickPosition && searchCircle) {
-        map.removeLayer(searchCircle);
-        searchCircle = L.circle(clickPosition, {
-            color: 'blue', fillColor: '#30f', fillOpacity: 0.15, radius: parseInt(value), weight: 2
-        }).addTo(map);
-        map.fitBounds(searchCircle.getBounds(), { padding: [30, 30], maxZoom: 17 });
-    }
-    
-    attemptAutoRefresh(); // Llama a la actualización si hay ubicación
-});
-// Botones de Radio
-document.querySelectorAll(".radio-option").forEach(option => {
-    option.addEventListener("click", function() {
-        document.querySelectorAll(".radio-option").forEach(opt => opt.classList.remove("active"));
-        this.classList.add("active");
-        const value = this.dataset.value;
-        radioSlider.value = value; // Sincronizar slider
-        radioValue.textContent = value >= 1000 ? (value / 1000).toFixed(1) + " km" : value + " m";
-        
-        // Actualizar círculo inmediatamente si existe
-        if (clickPosition && searchCircle) {
-            map.removeLayer(searchCircle);
-            searchCircle = L.circle(clickPosition, {
-                color: 'blue', fillColor: '#30f', fillOpacity: 0.15, radius: parseInt(value), weight: 2
-            }).addTo(map);
-            map.fitBounds(searchCircle.getBounds(), { padding: [30, 30], maxZoom: 17 });
+            updateRadioDisplay(radioSlider.value); // Muestra valor inicial del radio
         }
-        
-        attemptAutoRefresh(); // Llama a la actualización si hay ubicación
-    });
-});
 
-            // Inputs de Fecha y Hora (evento 'change' para que se active al perder foco o seleccionar)
-            [fechaInicioInput, horaInicioInput, fechaFinInput, horaFinInput].forEach(input => {
-                input.addEventListener("change", attemptAutoRefresh);
+        function setupEventListeners() {
+            // Slider de radio
+            radioSlider.addEventListener("input", handleRadioChange);
+
+            // Botones de radio preestablecidos
+            document.querySelectorAll(".radio-option").forEach(option => {
+                option.addEventListener("click", handleRadioOptionClick);
             });
 
+            // Inputs de Fecha y Hora
+             [fechaInicioInput, horaInicioInput, fechaFinInput, horaFinInput].forEach(input => {
+                 input.addEventListener("change", attemptAutoRefresh); // Actualiza al cambiar fecha/hora si hay punto
+             });
 
-            // Botón de Reset
-            document.getElementById("resetButton").addEventListener("click", resetMap);
+            // Botón de reset
+            resetButton.addEventListener("click", resetMap);
 
-            // Búsqueda de Ubicaciones
+            // Buscador de ubicaciones
             searchButton.addEventListener("click", performSearch);
             searchInput.addEventListener("keypress", function(e) {
                 if (e.key === "Enter") performSearch();
             });
-            searchAgainButton.addEventListener("click", function() {
-                searchInput.value = "";
-                searchInput.disabled = false; // Habilitar input
-                searchResultsContainer.style.display = "none";
-                searchAgainButton.style.display = "none";
-                if (clickMarker) map.removeLayer(clickMarker);
-                if (searchCircle) map.removeLayer(searchCircle);
-                clearExactMarkers();
-                resultContainer.style.display = "none";
-                errorMessage.style.display = "none";
-                clickPosition = null; // Olvidar la posición anterior
-                clickMarker = null;
-                searchCircle = null;
-                searchInput.focus();
-            });
+            searchAgainButton.addEventListener("click", resetSearchAndMapState); // Acción de 'buscar otra'
 
             // Cerrar resultados de búsqueda al hacer clic fuera
-             document.addEventListener('click', function(event) {
-                 if (!searchInput.contains(event.target) && !searchButton.contains(event.target) && !searchResultsContainer.contains(event.target)) {
-                     searchResultsContainer.style.display = 'none';
-                 }
-             });
-
-             // Inicializar el mapa al final
-             initializeMap();
+            document.addEventListener('click', function(event) {
+                if (!searchInput.contains(event.target) && !searchButton.contains(event.target) && !searchResultsContainer.contains(event.target)) {
+                    searchResultsContainer.style.display = 'none';
+                }
+            });
         }
 
+
         function initializeMap() {
-            map = L.map('map', { zoomControl: false }).setView([10.9639, -74.7964], 13); // Centro inicial Barranquilla
+            map = L.map('map', { zoomControl: false }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
 
-            // No centrar en última ubicación aquí, esperar interacción del usuario
-            // fetch('ultima_ubicacion.php')... (eliminado para empezar limpio)
+             // Intenta cargar última ubicación para centrar mapa inicialmente
+             fetch(URL_ULTIMA_UBICACION)
+                 .then(response => response.ok ? response.json() : Promise.resolve(null)) // Resuelve a null si falla
+                 .then(data => {
+                     if (data && data.lat && data.lon) {
+                         const lat = parseFloat(data.lat);
+                         const lon = parseFloat(data.lon);
+                         if (!isNaN(lat) && !isNaN(lon)) {
+                             map.setView([lat, lon], DEFAULT_ZOOM);
+                             console.log("Mapa centrado en última ubicación:", [lat, lon]);
+                             return; // Salir si se centró bien
+                         }
+                     }
+                     console.log("No se encontró/cargó última ubicación, usando centro por defecto.");
+                     map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+                 })
+                 .catch(error => {
+                     console.error("Error al obtener último dato:", error);
+                     map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+                 });
 
             map.on('click', onMapClick);
-            // Forzar recalculo de tamaño por si acaso
-            setTimeout(() => { map.invalidateSize() }, 100);
+
+            // Invalida el tamaño después de un breve retraso para asegurar renderizado correcto
+             setTimeout(() => { map.invalidateSize() }, 200);
         }
+
+        // --- Manejo de Eventos ---
 
         function onMapClick(e) {
-            // Si ya se buscó una dirección, no permitir clic hasta limpiar
-            if (searchInput.disabled) {
-                 Swal.fire({
-                     icon: 'info',
-                     title: 'Ubicación Fijada',
-                     text: 'Ya has seleccionado una ubicación mediante la búsqueda. Usa "Buscar otra ubicación" o "Limpiar Mapa" para seleccionar un punto diferente.',
-                     timer: 4000,
-                     showConfirmButton: true // O false si prefieres que desaparezca sola
-                 });
-                 return;
+             // Permitir click solo si no se ha fijado una ubicación por búsqueda
+             if (searchInput.disabled) {
+                showInfoMessage('Ya has seleccionado una ubicación mediante búsqueda. Usa "Buscar otra ubicación" o "Limpiar Mapa" para seleccionar un punto diferente.');
+                return;
              }
-            clickPosition = e.latlng;
-            createMarkerAndCircle(clickPosition);
-            // Opcional: Rellenar input con coordenadas o mensaje
-            // searchInput.value = `Lat: ${clickPosition.lat.toFixed(5)}, Lng: ${clickPosition.lng.toFixed(5)}`;
-            // searchAgainButton.style.display = "block"; // Mostrar botón para limpiar/cambiar
+             clickPosition = e.latlng;
+             // searchInput.value = ''; // Limpiar input si se hace click en mapa
+             createMarkerAndCircle(clickPosition);
         }
 
-        // Nueva función para intentar refrescar automáticamente
+        function handleRadioChange() {
+            const value = radioSlider.value;
+            updateRadioDisplay(value);
+
+            // Sincronizar botones visualmente
+             document.querySelectorAll(".radio-option").forEach(opt => {
+                opt.classList.toggle("active", opt.dataset.value === value);
+             });
+
+             updateCircleRadius(); // Actualiza el círculo si existe
+             attemptAutoRefresh(); // Intenta re-consultar si hay ubicación
+        }
+
+        function handleRadioOptionClick(event) {
+            document.querySelectorAll(".radio-option").forEach(opt => opt.classList.remove("active"));
+            event.target.classList.add("active");
+            const value = event.target.dataset.value;
+            radioSlider.value = value; // Sincronizar slider
+            updateRadioDisplay(value);
+            updateCircleRadius(); // Actualiza el círculo si existe
+            attemptAutoRefresh(); // Intenta re-consultar si hay ubicación
+        }
+
+        function updateCircleRadius() {
+             if (clickPosition && searchCircle) {
+                 const radio = parseInt(radioSlider.value);
+                 searchCircle.setRadius(radio);
+                 // Reajustar vista suavemente
+                 map.fitBounds(searchCircle.getBounds(), { padding: [30, 30], maxZoom: 17, animate: true, duration: 0.5 });
+             }
+        }
+
         function attemptAutoRefresh() {
-            if (clickPosition) { // Solo si hay una ubicación seleccionada
+            // Solo refresca si hay una posición definida (por click o búsqueda)
+            if (clickPosition) {
                 const radio = parseInt(radioSlider.value);
-                // No es necesario limpiar marcadores aquí, consultarPasos lo hará
                 consultarPasosPorUbicacion(clickPosition, radio);
             }
         }
 
+        // --- Lógica de Marcadores y Consulta ---
 
         function createMarkerAndCircle(position) {
-            if (!map) return;
+            if (!map || !position) return;
 
-            // Eliminar marcador y círculo anteriores si existen
+            // Limpiar marcadores anteriores
             if (clickMarker) map.removeLayer(clickMarker);
             if (searchCircle) map.removeLayer(searchCircle);
-            clearExactMarkers(); // Limpiar resultados anteriores
+            clearExactMarkers();
 
-            // Crear nuevo marcador de clic (azul estandar)
-             const clickIcon = L.icon({
-                 iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-                 iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-                 shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-                 iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-             });
-            clickMarker = L.marker(position, {icon: clickIcon}).addTo(map);
+            // Crear marcador azul (estándar)
+            const clickIcon = L.icon({
+                iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+                iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+            });
+            clickMarker = L.marker(position, {icon: clickIcon}).addTo(map)
+                           .bindPopup("Ubicación de búsqueda").openPopup();
 
-            // Crear círculo de búsqueda
+            // Crear círculo y consultar
             const radio = parseInt(radioSlider.value);
             searchCircle = L.circle(position, {
                 color: 'blue', fillColor: '#30f', fillOpacity: 0.15, radius: radio, weight: 2
             }).addTo(map);
 
-            errorMessage.style.display = "none";
+            hideError(); // Ocultar errores previos
             resultContainer.style.display = "none"; // Ocultar resultados mientras carga
+
             consultarPasosPorUbicacion(position, radio); // Iniciar consulta
 
-             // Ajustar vista
-             map.fitBounds(searchCircle.getBounds(), { padding: [30, 30], maxZoom: 17 });
-
-            // Mostrar botón "Buscar otra ubicación" solo si viene de una búsqueda de texto
-            // searchAgainButton.style.display = searchInput.disabled ? "block" : "none";
-             // ^^^ Se maneja mejor en performSearch y resetMap/searchAgain click
+            map.fitBounds(searchCircle.getBounds(), { padding: [40, 40], maxZoom: 17 }); // Más padding
         }
 
-        // Ya no se necesita updateSearchCircle separado, attemptAutoRefresh hace el trabajo
-        /* function updateSearchCircle() { ... } */
-
         function clearExactMarkers() {
-             if (!map) return;
             exactMarkers.forEach(marker => map.removeLayer(marker));
             exactMarkers = [];
         }
 
         function resetMap() {
-             if (!map) return;
             if (clickMarker) map.removeLayer(clickMarker);
             if (searchCircle) map.removeLayer(searchCircle);
             clearExactMarkers();
 
-            errorMessage.style.display = "none";
+            hideError();
             resultContainer.style.display = "none";
+            resultList.innerHTML = ""; // Limpiar lista
+
             clickPosition = null;
             clickMarker = null;
             searchCircle = null;
@@ -684,193 +737,227 @@ document.querySelectorAll(".radio-option").forEach(option => {
             searchInput.value = "";
             searchInput.disabled = false; // Habilitar input
             searchResultsContainer.style.display = "none";
-            searchResultsContainer.innerHTML = ""; // Limpiar resultados
+            searchResultsContainer.innerHTML = "";
             searchAgainButton.style.display = "none";
 
-            // Recenter mapa a la vista inicial (Barranquilla)
-            map.setView([10.9639, -74.7964], 13);
-            // Opcional: recentrar a la última ubicación conocida si prefieres
-            // fetch('ultima_ubicacion.php')...
+            // Recenter mapa (ej. Barranquilla)
+            map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+             // Opcional: intentar recentrar en última ubicación
+             // fetch(URL_ULTIMA_UBICACION)...
         }
 
+        // Función específica para 'Buscar otra ubicación'
+        function resetSearchAndMapState() {
+             resetMap(); // Llama a la función general de reseteo
+             searchInput.focus(); // Pone el foco en el input
+        }
+
+
         function consultarPasosPorUbicacion(position, radio) {
-            if (!position) {
-                console.warn("Intento de consulta sin posición válida.");
-                return; // Salir si no hay posición
-            }
-
-            const fechaInicio = fechaInicioInput.value;
-            const horaInicio = horaInicioInput.value;
-            const fechaFin = fechaFinInput.value;
-            const horaFin = horaFinInput.value;
-
-             // Validación de fechas/horas
-             if (!fechaInicio || !horaInicio || !fechaFin || !horaFin) {
-                 errorMessage.textContent = "Por favor, complete las fechas y horas.";
-                 errorMessage.style.display = "block";
-                 resultContainer.style.display = "none"; // Ocultar resultados si hay error
+             if (!position) {
+                 console.warn("Intento de consulta sin posición válida.");
                  return;
              }
-             const inicioDT = new Date(`${fechaInicio}T${horaInicio}`);
-             const finDT = new Date(`${fechaFin}T${horaFin}`);
-             if (isNaN(inicioDT.getTime()) || isNaN(finDT.getTime())) {
-                errorMessage.textContent = "Formato de fecha u hora inválido.";
-                errorMessage.style.display = "block";
-                resultContainer.style.display = "none";
-                return;
-             }
-             if (inicioDT >= finDT) {
-                 errorMessage.textContent = "La fecha/hora de inicio debe ser anterior a la de fin.";
-                 errorMessage.style.display = "block";
+
+             const fechaInicio = fechaInicioInput.value;
+             const horaInicio = horaInicioInput.value;
+             const fechaFin = fechaFinInput.value;
+             const horaFin = horaFinInput.value;
+
+             // Validación robusta de fechas/horas
+             if (!fechaInicio || !horaInicio || !fechaFin || !horaFin) {
+                 showError("Por favor, complete las fechas y horas.");
                  resultContainer.style.display = "none";
                  return;
              }
-             errorMessage.style.display = "none"; // Ocultar si pasa validación
+             const inicioDT = new Date(`<span class="math-inline">\{fechaInicio\}T</span>{horaInicio}`);
+             const finDT = new Date(`<span class="math-inline">\{fechaFin\}T</span>{horaFin}`);
+             if (isNaN(inicioDT.getTime()) || isNaN(finDT.getTime())) {
+                 showError("Formato de fecha u hora inválido.");
+                 resultContainer.style.display = "none";
+                 return;
+             }
+             if (inicioDT >= finDT) {
+                 showError("La fecha/hora de inicio debe ser anterior a la de fin.");
+                 resultContainer.style.display = "none";
+                 return;
+             }
+             hideError(); // Ocultar errores si pasa validación
 
-            const inicio = `${fechaInicio} ${horaInicio}:00`;
-            const fin = `${fechaFin} ${horaFin}:00`;
+             const inicio = `${fechaInicio} ${horaInicio}:00`;
+             const fin = `${fechaFin} ${horaFin}:00`;
 
-            // Mostrar loader y limpiar resultados anteriores
-            clearExactMarkers(); // Limpia marcadores rojos del mapa
-            resultList.innerHTML = '<div class="text-center p-2"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
-            resultContainer.style.display = "block";
+             showLoader();
+             clearExactMarkers(); // Limpiar marcadores rojos antes de nueva consulta
 
+             // --- Llamada AJAX ---
+             const params = new URLSearchParams({
+                 lat: position.lat,
+                 lon: position.lng,
+                 radio: radio,
+                 inicio: inicio,
+                 fin: fin
+             });
+             const url = `<span class="math-inline">\{URL\_CUANDO\_PASO\}?</span>{params.toString()}`;
+             console.log("Consultando:", url); // Para depuración
 
-            // --- Llamada AJAX (Asegúrate que la URL y parámetros sean correctos) ---
-            const url = `cuando_paso.php?lat=${position.lat}&lon=${position.lng}&radio=${radio}&inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}`;
-            console.log("Consultando:", url); // Para depuración
+             fetch(url)
+                 .then(response => {
+                     if (!response.ok) {
+                         return response.text().then(text => { throw new Error(` ${response.status}: ${text || 'Error en servidor'}`) });
+                     }
+                     return response.json();
+                 })
+                 .then(data => {
+                     console.log("Respuesta recibida:", data);
+                     resultList.innerHTML = ""; // Limpiar loader
 
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) {
-                        return response.text().then(text => { throw new Error(`Error ${response.status}: ${text || 'Error en la consulta'}`) });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log("Respuesta recibida:", data); // Para depuración
-                    resultList.innerHTML = ""; // Limpiar loader
+                     if (!Array.isArray(data)) {
+                         throw new Error("Respuesta inesperada del servidor.");
+                     }
+                     if (data.length === 0) {
+                         resultList.innerHTML = '<div class="text-center text-muted p-3"><i>Sin resultados para este período/área.</i></div>';
+                         return;
+                     }
 
-                    if (!Array.isArray(data)) {
-                         throw new Error("La respuesta del servidor no es un array.");
-                    }
-
-                    if (data.length === 0) {
-                        resultList.innerHTML = '<div class="text-center text-muted p-2"><i>No se encontraron pasos en el área y período seleccionados.</i></div>';
-                        errorMessage.style.display = "none"; // Asegurar que no haya error viejo
-                        return;
-                    }
-
-                    errorMessage.style.display = "none"; // Ocultar si hubo éxito
-
-                    data.forEach(item => {
-                         // Validación básica de datos recibidos
+                     data.forEach(item => {
                          const lat = parseFloat(item.lat);
                          const lon = parseFloat(item.lon);
                          if (isNaN(lat) || isNaN(lon) || !item.fecha || !item.hora) {
-                             console.warn("Registro inválido recibido:", item);
-                             return; // Saltar este item
+                             console.warn("Registro inválido:", item); return;
                          }
+                         const resultItem = document.createElement("div");
+                         resultItem.className = "result-item animate__animated animate__fadeIn animate__faster";
+                         resultItem.innerHTML = `
+                             <div class="result-date" title="${item.fecha} <span class="math-inline">\{item\.hora\}"\><strong\></span>{item.fecha}</strong> <span class="math-inline">\{item\.hora\}</div\>
+<div class\="result\-action" data\-lat\="</span>{lat}" data-lon="<span class="math-inline">\{lon\}" data\-fecha\="</span>{item.fecha}" data-hora="${item.hora}">
+                                 <i class="fa-solid fa-map-pin"></i> Ver
+                             </div>`;
+                         resultItem.querySelector('.result-action').addEventListener("click", handleResultClick);
+                         resultList.appendChild(resultItem);
+                     });
+                 })
+                 .catch(error => {
+                     console.error("Error detallado en fetch:", error);
+                     showError(`Error consulta: ${error.message}.`);
+                     resultList.innerHTML = '<div class="text-center text-danger p-3"><i>Fallo la consulta.</i></div>';
+                 })
+                 .finally(() => {
+                      resultContainer.style.display = "block"; // Mostrar contenedor (con resultados o mensaje)
+                 });
+        }
 
-                        const resultItem = document.createElement("div");
-                        resultItem.className = "result-item";
-                        resultItem.innerHTML = `
-                            <div class="result-date" title="${item.fecha} ${item.hora}"><strong>${item.fecha}</strong> ${item.hora}</div>
-                            <div class="result-action" data-lat="${lat}" data-lon="${lon}" data-fecha="${item.fecha}" data-hora="${item.hora}">
-                                <i class="fa-solid fa-map-pin"></i> Ver
-                            </div>`;
+        function handleResultClick(event) {
+            const target = event.currentTarget;
+            const lat = parseFloat(target.dataset.lat);
+            const lon = parseFloat(target.dataset.lon);
+            const fecha = target.dataset.fecha;
+            const hora = target.dataset.hora;
 
-                        resultItem.querySelector('.result-action').addEventListener("click", function() {
-                            if(!map) return;
-                            const itemLat = parseFloat(this.dataset.lat);
-                            const itemLon = parseFloat(this.dataset.lon);
-                            const itemFecha = this.dataset.fecha;
-                            const itemHora = this.dataset.hora;
+            clearExactMarkers(); // Limpiar marcadores rojos anteriores
 
-                            clearExactMarkers(); // Limpiar otros marcadores rojos
+            const exactMarker = L.circleMarker([lat, lon], {
+                color: 'red', fillColor: '#f03', fillOpacity: 0.7, radius: 8, weight: 2
+            }).addTo(map);
+            exactMarkers.push(exactMarker);
 
-                            const currentZoom = map.getZoom();
-                            map.setView([itemLat, itemLon], Math.max(currentZoom, 16)); // Zoom más cercano
+            exactMarker.bindPopup(`<b>Detectado</b><br>${fecha} ${hora}<br><small>Lat: ${lat.toFixed(5)}, Lon: ${lon.toFixed(5)}</small>`).openPopup();
 
-                            // Marcador rojo para el punto exacto
-                            const exactMarker = L.circleMarker([itemLat, itemLon], {
-                                color: 'red', fillColor: '#f03', fillOpacity: 0.7, radius: 8, weight: 2
-                            }).addTo(map);
-
-                            exactMarkers.push(exactMarker); // Guardar referencia
-
-                            exactMarker.bindPopup(`<b>Detectado</b><br>Fecha: ${itemFecha}<br>Hora: ${itemHora}<br><small>Lat: ${itemLat.toFixed(5)}, Lon: ${itemLon.toFixed(5)}</small>`).openPopup();
-                        });
-                        resultList.appendChild(resultItem);
-                    });
-
-                    // Opcional: Scroll al primer resultado
-                    // resultList.firstChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-                })
-                .catch(error => {
-                    console.error("Error detallado al consultar los datos:", error);
-                    errorMessage.textContent = `Error al consultar: ${error.message}. Verifique la conexión o inténtelo más tarde.`;
-                    errorMessage.style.display = "block";
-                    resultContainer.style.display = "block"; // Mantener visible para mostrar error
-                    resultList.innerHTML = '<div class="text-center text-danger p-2"><i>Fallo la consulta.</i></div>'; // Mensaje dentro de la lista
-                });
+            // Centrar suavemente en el marcador
+            map.flyTo([lat, lon], Math.max(map.getZoom(), 16)); // flyTo para animación
         }
 
         function performSearch() {
             const query = searchInput.value.trim();
             if (!query) {
-                 searchResultsContainer.style.display = "none";
-                 return;
-                 }
+                searchResultsContainer.style.display = "none";
+                return;
+            }
 
             searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i>Buscando...</i></div>';
             searchResultsContainer.style.display = "block";
+            searchAgainButton.style.display = 'none'; // Ocultar mientras busca
 
-            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=co&addressdetails=1`; // Limitar a Colombia, pedir detalles
+            // --- Llamada Nominatim ---
+            const params = new URLSearchParams({
+                 format: 'json', q: query, limit: 5, countrycodes: 'co', addressdetails: 1
+             });
+            const url = `<span class="math-inline">\{URL\_NOMINATIM\}?</span>{params.toString()}`;
 
-            fetch(url)
-                .then(response => response.ok ? response.json() : Promise.reject('Error en Nominatim'))
+            fetch(url, { headers: { 'Accept-Language': 'es' } })
+                .then(response => response.ok ? response.json() : Promise.reject('Error en servicio de búsqueda'))
                 .then(data => {
-                    searchResultsContainer.innerHTML = "";
-
-                    if (data.length === 0) {
-                        searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i>No se encontraron resultados</i></div>';
-                        return;
-                    }
-
-                    data.forEach(result => {
-                        const resultItem = document.createElement("div");
-                        resultItem.className = "search-result-item";
-                        resultItem.textContent = result.display_name;
-                        resultItem.title = result.display_name; // Tooltip por si es largo
-                        resultItem.addEventListener("click", function() {
-                            const lat = parseFloat(result.lat);
-                            const lon = parseFloat(result.lon);
-                             if (!isNaN(lat) && !isNaN(lon)) {
-                                clickPosition = L.latLng(lat, lon);
-                                searchInput.value = result.display_name; // Poner nombre en input
-                                searchInput.disabled = true; // Deshabilitar input tras seleccionar
-                                searchResultsContainer.style.display = "none"; // Ocultar resultados
-                                searchAgainButton.style.display = "block"; // Mostrar botón "buscar otra"
-                                createMarkerAndCircle(clickPosition); // Crear marcador/círculo y consultar
-                            } else {
-                                console.error("Resultado de Nominatim sin coordenadas válidas:", result);
-                                Swal.fire('Error', 'No se pudieron obtener coordenadas para esta ubicación.', 'error');
-                            }
-                        });
-                        searchResultsContainer.appendChild(resultItem);
-                    });
+                    processSearchResults(data);
                 })
                 .catch(error => {
-                    console.error("Error en la búsqueda de Nominatim:", error);
-                    searchResultsContainer.innerHTML = `<div class="search-result-item text-danger"><i>Error en la búsqueda (${error.message})</i></div>`;
+                    console.error("Error en Nominatim:", error);
+                    processSearchResults(null, "Error al buscar ubicación.");
                 });
         }
 
-        // Inicializar todo cuando se carga la página
-        document.addEventListener("DOMContentLoaded", initializeDatetimes);
+        function processSearchResults(data, errorMsg = null) {
+            searchResultsContainer.innerHTML = ""; // Limpiar
+
+            if (errorMsg) {
+                searchResultsContainer.innerHTML = `<div class="search-result-item text-danger"><i>${errorMsg}</i></div>`;
+                searchResultsContainer.style.display = "block"; // Mostrar error
+                return;
+            }
+            if (!Array.isArray(data) || data.length === 0) {
+                searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i>No se encontraron resultados</i></div>';
+                return; // Mostrar mensaje 'no resultados'
+            }
+
+            data.forEach(result => {
+                const resultItem = document.createElement("div");
+                resultItem.className = "search-result-item";
+                resultItem.textContent = result.display_name;
+                resultItem.title = result.display_name;
+                resultItem.addEventListener("click", function() {
+                    const lat = parseFloat(result.lat);
+                    const lon = parseFloat(result.lon);
+                    if (!isNaN(lat) && !isNaN(lon)) {
+                        clickPosition = L.latLng(lat, lon);
+                        searchInput.value = result.display_name;
+                        searchInput.disabled = true; // Deshabilitar input tras seleccionar
+                        searchResultsContainer.style.display = "none";
+                        searchAgainButton.style.display = "block";
+                        createMarkerAndCircle(clickPosition);
+                    } else {
+                        showError("Coordenadas inválidas para esta ubicación.");
+                    }
+                });
+                searchResultsContainer.appendChild(resultItem);
+            });
+        }
+
+        // --- Funciones de Utilidad ---
+        function updateRadioDisplay(value) {
+             radioValueDisplay.textContent = value >= 1000 ? (value / 1000).toFixed(1).replace('.', ',') + " km" : value + " m";
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = "block";
+        }
+        function hideError() {
+             errorMessage.style.display = "none";
+             errorMessage.textContent = "";
+        }
+
+        function showInfoMessage(message) {
+             Swal.fire({ icon: 'info', title: 'Información', text: message });
+        }
+
+        function showLoader() {
+             resultList.innerHTML = '<div class="loader-container"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
+             resultContainer.style.display = "block"; // Mostrar contenedor para ver loader
+             hideError(); // Ocultar errores previos
+        }
+
+        // --- Inicializar la aplicación ---
+        document.addEventListener("DOMContentLoaded", initializeApp);
 
     </script>
 </body>
-</html>
+</html> 
