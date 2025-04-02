@@ -478,22 +478,27 @@
         function zoomOut() { if(map) map.zoomOut(); }
 
         function initializeDatetimes() {
-// Configurar fechas y horas por defecto
-const now = new Date();
-const today = new Date(now);
+    // Configurar fechas y horas por defecto
+    const now = new Date();
+    
+    // Establecer fecha/hora de inicio (hoy a las 00:00)
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+    fechaHoraInicioInput.value = formatDateTime(today);
+    
+    // Establecer fecha/hora de fin (hoy a las 23:59)
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 0, 0);
+    fechaHoraFinInput.value = formatDateTime(endOfDay);
 
-// Establecer fecha/hora de inicio (hoy a las 00:00)
-today.setHours(0, 0, 0, 0);
-fechaHoraInicioInput.value = formatDateTime(today);
-
-// Establecer fecha/hora de fin (hoy a las 23:59)
-const endOfDay = new Date(now);
-endOfDay.setHours(23, 59, 0, 0);
-fechaHoraFinInput.value = formatDateTime(endOfDay);
-            
-            // Establecer fecha/hora de fin (hoy a las 23:59)
-            now.setHours(23, 59, 0, 0);
-            fechaHoraFinInput.value = formatDateTime(now);
+    // Función para formatear fecha/hora para los inputs datetime-local
+    function formatDateTime(date) {
+        return date.getFullYear() + '-' + 
+               String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+               String(date.getDate()).padStart(2, '0') + 'T' + 
+               String(date.getHours()).padStart(2, '0') + ':' + 
+               String(date.getMinutes()).padStart(2, '0');
+    }
 
             // --- Event Listeners ---
 
