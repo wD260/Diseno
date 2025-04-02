@@ -575,13 +575,8 @@ function createRoutePolyline(data) {
         createRouteSlider();
         
         // Mostrar mensaje informativo
-        Swal.fire({
-            icon: 'info',
-            title: 'Ruta detectada',
-            text: `Se ha detectado una ruta con ${routePoints.length} puntos. Use el slider para navegar por la ruta.`,
-            timer: 5000,
-            showConfirmButton: true
-        });
+        // No mostrar popup de ruta detectada - solo crear el slider
+        console.log(`Ruta detectada con ${routePoints.length} puntos`);
     }
 }
 // AGREGAR - Nueva función
@@ -772,35 +767,57 @@ document.querySelectorAll(".radio-option").forEach(option => {
             // Botón de Reset
             document.getElementById("resetButton").addEventListener("click", resetMap);
 
-// DESPUÉS
-searchButton.addEventListener("click", performSearch);
-searchInput.addEventListener("keypress", function(e) {
-    if (e.key === "Enter") performSearch();
-});
-// Agregar búsqueda automática mientras se escribe
-searchInput.addEventListener("input", function() {
-    const query = this.value.trim();
-    if (query.length >= 3) { // Iniciar búsqueda después de 3 caracteres
+// Evento para búsqueda con botón
+searchButton.addEventListener("click", function() {
+    if (searchInput.value.trim().length > 0) {
         performSearch();
-    } else {
-        searchResultsContainer.style.display = "none";
     }
 });
-            searchAgainButton.addEventListener("click", function() {
-                searchInput.value = "";
-                searchInput.disabled = false; // Habilitar input
-                searchResultsContainer.style.display = "none";
-                searchAgainButton.style.display = "none";
-                if (clickMarker) map.removeLayer(clickMarker);
-                if (searchCircle) map.removeLayer(searchCircle);
-                clearExactMarkers();
-                resultContainer.style.display = "none";
-                errorMessage.style.display = "none";
-                clickPosition = null; // Olvidar la posición anterior
-                clickMarker = null;
-                searchCircle = null;
-                searchInput.focus();
-            });
+
+// Evento para búsqueda con Enter
+searchInput.addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        if (this.value.trim().length > 0) {
+            performSearch();
+        }
+    }
+});
+
+// Suspender búsqueda automática mientras se escribe (era problemática)
+// Implementar un debounce para manejar la entrada del usuario
+let searchTimeout = null;
+searchInput.addEventListener("input", function() {
+    // Limpiar timeout anterior
+    if (searchTimeout) clearTimeout(searchTimeout);
+    
+    const query = this.value.trim();
+    if (query.length < 3) {
+        searchResultsContainer.style.display = "none";
+        return;
+    }
+    
+    // Configurar un nuevo timeout de 500ms
+    searchTimeout = setTimeout(() => {
+        performSearch();
+    }, 500); // Esperar 500ms después de que el usuario deja de escribir
+});
+
+searchAgainButton.addEventListener("click", function() {
+    searchInput.value = "";
+    searchInput.disabled = false; // Habilitar input
+    searchResultsContainer.style.display = "none";
+    searchAgainButton.style.display = "none";
+    if (clickMarker) map.removeLayer(clickMarker);
+    if (searchCircle) map.removeLayer(searchCircle);
+    clearExactMarkers();
+    resultContainer.style.display = "none";
+    errorMessage.style.display = "none";
+    clickPosition = null; // Olvidar la posición anterior
+    clickMarker = null;
+    searchCircle = null;
+    searchInput.focus();
+});
 
             // Cerrar resultados de búsqueda al hacer clic fuera
              document.addEventListener('click', function(event) {
@@ -1081,55 +1098,95 @@ if (data.length >= 2) {
         }
 
         function performSearch() {
-            const query = searchInput.value.trim();
-            if (!query) {
-                 searchResultsContainer.style.display = "none";
-                 return;
-                 }
+    const query = searchInput.value.trim();
+    if (!query) {
+        searchResultsContainer.style.display = "none";
+        return;
+    }
 
-            searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i>Buscando...</i></div>';
-            searchResultsContainer.style.display = "block";
+    // Mostrar indicador de carga
+    searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
+    searchResultsContainer.style.display = "block";
 
-            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=co&addressdetails=1`; // Limitar a Colombia, pedir detalles
+    // Alternativa: usar la API de Nominatim con más parámetros y encabezados
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=co&addressdetails=1&dedupe=1`;
 
-            fetch(url)
-                .then(response => response.ok ? response.json() : Promise.reject('Error en Nominatim'))
-                .then(data => {
-                    searchResultsContainer.innerHTML = "";
+    // Añadir un tiempo de espera y encabezados adecuados
+    const fetchOptions = {
+        method: 'GET',
+        headers: {
+            'User-Agent': 'LocalizadorPorArea/1.0',
+            'Accept-Language': 'es'
+        },
+        timeout: 8000 // 8 segundos de tiempo de espera
+    };
 
-                    if (data.length === 0) {
-                        searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i>No se encontraron resultados</i></div>';
-                        return;
-                    }
+    // Usar Promise.race para manejar timeout
+    const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Tiempo de espera agotado')), 8000)
+    );
 
-                    data.forEach(result => {
-                        const resultItem = document.createElement("div");
-                        resultItem.className = "search-result-item";
-                        resultItem.textContent = result.display_name;
-                        resultItem.title = result.display_name; // Tooltip por si es largo
-                        resultItem.addEventListener("click", function() {
-                            const lat = parseFloat(result.lat);
-                            const lon = parseFloat(result.lon);
-                             if (!isNaN(lat) && !isNaN(lon)) {
-                                clickPosition = L.latLng(lat, lon);
-                                searchInput.value = result.display_name; // Poner nombre en input
-                                searchInput.disabled = true; // Deshabilitar input tras seleccionar
-                                searchResultsContainer.style.display = "none"; // Ocultar resultados
-                                searchAgainButton.style.display = "block"; // Mostrar botón "buscar otra"
-                                createMarkerAndCircle(clickPosition); // Crear marcador/círculo y consultar
-                            } else {
-                                console.error("Resultado de Nominatim sin coordenadas válidas:", result);
-                                Swal.fire('Error', 'No se pudieron obtener coordenadas para esta ubicación.', 'error');
-                            }
-                        });
-                        searchResultsContainer.appendChild(resultItem);
-                    });
-                })
-                .catch(error => {
-                    console.error("Error en la búsqueda de Nominatim:", error);
-                    searchResultsContainer.innerHTML = `<div class="search-result-item text-danger"><i>Error en la búsqueda (${error.message})</i></div>`;
-                });
+    Promise.race([
+        fetch(url, fetchOptions),
+        timeoutPromise
+    ])
+    .then(response => {
+        if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
+        return response.json();
+    })
+    .then(data => {
+        // Limpiar contenedor
+        searchResultsContainer.innerHTML = "";
+
+        if (!data || data.length === 0) {
+            searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i>No se encontraron resultados</i></div>';
+            return;
         }
+
+        // Construir resultados
+        data.forEach(result => {
+            const resultItem = document.createElement("div");
+            resultItem.className = "search-result-item";
+            
+            // Formatear el nombre para mostrar (más corto y legible)
+            const displayName = result.display_name.split(',').slice(0, 3).join(',');
+            
+            resultItem.innerHTML = `<strong>${displayName}</strong>`;
+            resultItem.title = result.display_name; // Tooltip con nombre completo
+            
+            resultItem.addEventListener("click", function() {
+                const lat = parseFloat(result.lat);
+                const lon = parseFloat(result.lon);
+                
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    clickPosition = L.latLng(lat, lon);
+                    // Usar nombre más corto en el input
+                    searchInput.value = displayName;
+                    searchInput.disabled = true; // Deshabilitar input tras seleccionar
+                    searchResultsContainer.style.display = "none"; // Ocultar resultados
+                    searchAgainButton.style.display = "block"; // Mostrar botón "buscar otra"
+                    createMarkerAndCircle(clickPosition); // Crear marcador/círculo y consultar
+                } else {
+                    console.error("Resultado sin coordenadas válidas:", result);
+                    Swal.fire('Error', 'No se pudieron obtener coordenadas para esta ubicación.', 'error');
+                }
+            });
+            
+            searchResultsContainer.appendChild(resultItem);
+        });
+
+        // Mantener visible el contenedor de resultados
+        searchResultsContainer.style.display = "block";
+    })
+    .catch(error => {
+        console.error("Error en la búsqueda:", error);
+        searchResultsContainer.innerHTML = `
+            <div class="search-result-item text-danger">
+                <i class="fas fa-exclamation-circle"></i> 
+                Error: ${error.message || 'Servicio no disponible'}
+            </div>`;
+    });
+}
 
         // Inicializar todo cuando se carga la página
         document.addEventListener("DOMContentLoaded", initializeDatetimes);
