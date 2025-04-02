@@ -478,17 +478,30 @@
         function zoomOut() { if(map) map.zoomOut(); }
 
         function initializeDatetimes() {
-// Configurar fechas y horas por defecto
+// Seleccionar los inputs
+const fechaHoraInicioInput = document.getElementById("fechaHoraInicio");
+const fechaHoraFinInput = document.getElementById("fechaHoraFin");
+
+// Función para formatear fecha y hora en el formato "YYYY-MM-DDTHH:MM"
+function formatDateTime(date) {
+    return date.toISOString().slice(0, 16); // Formato compatible con datetime-local
+}
+
+// Obtener la fecha actual
 const now = new Date();
-const today = new Date(now);
 
 // Establecer fecha/hora de inicio (hoy a las 00:00)
-today.setHours(0, 0, 0, 0);
-fechaHoraInicioInput.value = formatDateTime(today);
+const startOfDay = new Date(now);
+startOfDay.setHours(0, 0, 0, 0);
 
 // Establecer fecha/hora de fin (hoy a las 23:59)
-now.setHours(23, 59, 0, 0);
-fechaHoraFinInput.value = formatDateTime(now);
+const endOfDay = new Date(now);
+endOfDay.setHours(23, 59, 0, 0);
+
+// Asignar los valores a los inputs (asegurando que existen)
+if (fechaHoraInicioInput) fechaHoraInicioInput.value = formatDateTime(startOfDay);
+if (fechaHoraFinInput) fechaHoraFinInput.value = formatDateTime(endOfDay);
+
             
             // Establecer fecha/hora de fin (hoy a las 23:59)
             now.setHours(23, 59, 0, 0);
