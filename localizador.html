@@ -805,7 +805,7 @@ searchInput.addEventListener("input", function() {
 
 searchAgainButton.addEventListener("click", function() {
     searchInput.value = "";
-    // Se eliminó la línea: searchInput.disabled = false;
+    searchInput.disabled = false; // Habilitar input
     searchResultsContainer.style.display = "none";
     searchAgainButton.style.display = "none";
     if (clickMarker) map.removeLayer(clickMarker);
@@ -865,10 +865,23 @@ setTimeout(() => {
         }
 
         function onMapClick(e) {
+            // Si ya se buscó una dirección, no permitir clic hasta limpiar
+            if (searchInput.disabled) {
+                 Swal.fire({
+                     icon: 'info',
+                     title: 'Ubicación Fijada',
+                     text: 'Ya has seleccionado una ubicación mediante la búsqueda. Usa "Buscar otra ubicación" o "Limpiar Mapa" para seleccionar un punto diferente.',
+                     timer: 4000,
+                     showConfirmButton: true // O false si prefieres que desaparezca sola
+                 });
+                 return;
+             }
             clickPosition = e.latlng;
             createMarkerAndCircle(clickPosition);
+            // Opcional: Rellenar input con coordenadas o mensaje
+            // searchInput.value = `Lat: ${clickPosition.lat.toFixed(5)}, Lng: ${clickPosition.lng.toFixed(5)}`;
+            // searchAgainButton.style.display = "block"; // Mostrar botón para limpiar/cambiar
         }
-
 
         // Nueva función para intentar refrescar automáticamente
         function attemptAutoRefresh() {
@@ -937,7 +950,7 @@ setTimeout(() => {
             searchCircle = null;
 
             searchInput.value = "";
-            //searchInput.disabled = false; // Habilitar input
+            searchInput.disabled = false; // Habilitar input
             searchResultsContainer.style.display = "none";
             searchResultsContainer.innerHTML = ""; // Limpiar resultados
             searchAgainButton.style.display = "none";
@@ -1112,16 +1125,16 @@ if (data.length >= 2) {
                         resultItem.textContent = result.display_name;
                         resultItem.title = result.display_name; // Tooltip por si es largo
                         resultItem.addEventListener("click", function() {
-                        const lat = parseFloat(result.lat);
-                        const lon = parseFloat(result.lon);
-                        if (!isNaN(lat) && !isNaN(lon)) {
-                            clickPosition = L.latLng(lat, lon);
-                            searchInput.value = result.display_name; // Poner nombre en input
-                            // Se eliminó la línea: searchInput.disabled = true;
-                            searchResultsContainer.style.display = "none"; // Ocultar resultados
-                            searchAgainButton.style.display = "block"; // Mostrar botón "buscar otra"
-                            createMarkerAndCircle(clickPosition); // Crear marcador/círculo y consultar
-                        } else {
+                            const lat = parseFloat(result.lat);
+                            const lon = parseFloat(result.lon);
+                             if (!isNaN(lat) && !isNaN(lon)) {
+                                clickPosition = L.latLng(lat, lon);
+                                searchInput.value = result.display_name; // Poner nombre en input
+                                searchInput.disabled = true; // Deshabilitar input tras seleccionar
+                                searchResultsContainer.style.display = "none"; // Ocultar resultados
+                                searchAgainButton.style.display = "block"; // Mostrar botón "buscar otra"
+                                createMarkerAndCircle(clickPosition); // Crear marcador/círculo y consultar
+                            } else {
                                 console.error("Resultado de Nominatim sin coordenadas válidas:", result);
                                 Swal.fire('Error', 'No se pudieron obtener coordenadas para esta ubicación.', 'error');
                             }
