@@ -524,6 +524,7 @@ const MAX_TIME_GAP = 30; // Segundos máximos entre puntos para considerarlos de
          function zoomIn() { if(map) map.zoomIn(); }
          function zoomOut() { if(map) map.zoomOut(); }
 // AGREGAR - Nueva función
+// AGREGAR - Nueva función
 function createRoutePolyline(data) {
     // Limpiar rutas anteriores
     if (routePolyline) map.removeLayer(routePolyline);
@@ -537,26 +538,59 @@ function createRoutePolyline(data) {
         return timeA - timeB;
     });
     
+    // Modificar MAX_TIME_GAP a un valor más razonable (30 minutos en segundos)
+    const MAX_TIME_GAP = 30 * 60; // 30 minutos en segundos
+    
     routePoints = [];
     routeTimestamps = [];
     
-    // Filtrar puntos que estén cercanos en tiempo (máximo 30 segundos entre puntos)
+    // Crear grupos de puntos basados en la cercanía temporal
+    let currentGroup = [];
+    let currentTimestamps = [];
     let lastTime = null;
+    
     for (let i = 0; i < data.length; i++) {
         const currentPoint = [parseFloat(data[i].lat), parseFloat(data[i].lon)];
         const currentTime = new Date(`${data[i].fecha} ${data[i].hora}`);
         
+        // Si es el primer punto o está dentro del tiempo máximo, agregar al grupo actual
         if (lastTime === null || (currentTime - lastTime) / 1000 <= MAX_TIME_GAP) {
-            routePoints.push(currentPoint);
-            routeTimestamps.push({
+            currentGroup.push(currentPoint);
+            currentTimestamps.push({
                 time: currentTime,
                 fecha: data[i].fecha,
                 hora: data[i].hora,
-                lat: currentPoint[0], 
+                lat: currentPoint[0],
                 lon: currentPoint[1]
             });
+        } else {
+            // Si el grupo actual tiene al menos 2 puntos, guardarlo como ruta
+            if (currentGroup.length >= 2) {
+                // Solo tomamos el grupo más grande para mostrar
+                if (currentGroup.length > routePoints.length) {
+                    routePoints = [...currentGroup];
+                    routeTimestamps = [...currentTimestamps];
+                }
+            }
+            
+            // Iniciar un nuevo grupo
+            currentGroup = [currentPoint];
+            currentTimestamps = [{
+                time: currentTime,
+                fecha: data[i].fecha,
+                hora: data[i].hora,
+                lat: currentPoint[0],
+                lon: currentPoint[1]
+            }];
         }
+        
         lastTime = currentTime;
+    }
+    
+    // Verificar el último grupo si tiene al menos 2 puntos
+    if (currentGroup.length >= 2 && currentGroup.length > routePoints.length) {
+        routePoints = [...currentGroup];
+        routeTimestamps = [...currentTimestamps];
     }
     
     // Si hay al menos 2 puntos, crear polilínea
@@ -575,14 +609,22 @@ function createRoutePolyline(data) {
         createRouteSlider();
         
         // Mostrar mensaje informativo
-        // No mostrar popup de ruta detectada - solo crear el slider
+        Swal.fire({
+            icon: 'info',
+            title: 'Ruta detectada',
+            text: `Se ha detectado una ruta continua con ${routePoints.length} puntos. Use el slider para explorarla.`,
+            timer: 3000,
+            position: 'top-end',
+            showConfirmButton: false
+        });
+        
         console.log(`Ruta detectada con ${routePoints.length} puntos`);
     }
 }
 // AGREGAR - Nueva función
 function createRouteSlider() {
     // Eliminar slider anterior si existe
-    const existingSlider = document.getElementById('routeSlider');
+    const existingSlider = document.querySelector('.route-slider-container');
     if (existingSlider) existingSlider.remove();
     
     // Crear contenedor para el slider
@@ -666,6 +708,9 @@ function createRouteSlider() {
                 exactMarkers.push(highlightSegment);
             }
         }
+        
+        // Actualizar el valor del slider para que coincida con el índice
+        routeSlider.value = index;
     }
     
     // Eventos del slider y botones
@@ -673,16 +718,15 @@ function createRouteSlider() {
         updateRoutePosition(parseInt(this.value));
     });
     
+    // Corregir eventos para los botones
     prevBtn.addEventListener('click', function() {
         if (currentRouteIndex > 0) {
-            routeSlider.value = currentRouteIndex - 1;
             updateRoutePosition(currentRouteIndex - 1);
         }
     });
     
     nextBtn.addEventListener('click', function() {
         if (currentRouteIndex < routePoints.length - 1) {
-            routeSlider.value = currentRouteIndex + 1;
             updateRoutePosition(currentRouteIndex + 1);
         }
     });
