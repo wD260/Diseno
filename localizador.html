@@ -1098,108 +1098,55 @@ if (data.length >= 2) {
         }
 
         function performSearch() {
-    const query = searchInput.value.trim();
-    if (!query) {
-        searchResultsContainer.style.display = "none";
-        return;
-    }
+            const query = searchInput.value.trim();
+            if (!query) {
+                 searchResultsContainer.style.display = "none";
+                 return;
+                 }
 
-    // Mostrar indicador de carga
-    searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
-    searchResultsContainer.style.display = "block";
+            searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i>Buscando...</i></div>';
+            searchResultsContainer.style.display = "block";
 
-    // Función de respaldo cuando no hay resultados
-    const showNoResults = () => {
-        searchResultsContainer.innerHTML = '<div class="search-result-item text-warning">' +
-            '<i class="fas fa-exclamation-triangle"></i> ' +
-            'No se encontraron resultados o el servicio no está disponible.<br>' +
-            '<small>Intenta hacer clic directamente en el mapa para seleccionar la ubicación.</small>' +
-            '</div>';
-    };
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=co&addressdetails=1`; // Limitar a Colombia, pedir detalles
 
-    // Intentar consulta con un timeout más bajo
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=co&dedupe=1`, {
-        headers: {'User-Agent': 'LocalizadorPorArea/1.0'},
-        cache: 'no-cache',
-        mode: 'cors'
-    })
-    .then(response => {
-        if (!response.ok) throw new Error("Respuesta no válida");
-        return response.json();
-    })
-    .then(data => {
-        searchResultsContainer.innerHTML = "";
-        
-        if (!data || data.length === 0) {
-            showNoResults();
-            return;
-        }
-        
-        data.forEach(result => {
-            const resultItem = document.createElement("div");
-            resultItem.className = "search-result-item";
-            
-            // Extraer partes importantes del nombre
-            const nameParts = result.display_name.split(',').map(part => part.trim());
-            // Obtener el nombre principal del lugar
-            const placeName = nameParts[0];
-            
-            // Identificar ciudad y departamento (normalmente en las últimas posiciones)
-            let cityIndex = -1;
-            let departmentIndex = -1;
-            
-            // Buscar ciudad y departamento en los datos
-            for (let i = 1; i < nameParts.length; i++) {
-                if (nameParts[i].includes("Colombia")) {
-                    departmentIndex = i-1;
-                    cityIndex = i-2;
-                    break;
-                }
-            }
-            
-            // Formatear resultado
-            let formattedResult = `<strong>${placeName}</strong>`;
-            
-            // Agregar ubicación específica si está disponible (barrio, zona)
-            if (nameParts.length > 2 && nameParts[1] !== placeName) {
-                formattedResult += `<br><span class="text-secondary">${nameParts[1]}</span>`;
-            }
-            
-            // Agregar ciudad y departamento
-            if (cityIndex >= 0 && departmentIndex >= 0) {
-                formattedResult += `<br><small>${nameParts[cityIndex]}, ${nameParts[departmentIndex]}</small>`;
-            }
-            
-            resultItem.innerHTML = formattedResult;
-            resultItem.title = result.display_name;
-            
-            resultItem.addEventListener("click", function() {
-                const lat = parseFloat(result.lat);
-                const lon = parseFloat(result.lon);
-                
-                if (!isNaN(lat) && !isNaN(lon)) {
-                    clickPosition = L.latLng(lat, lon);
-                    // Usar un formato más completo para el input cuando se selecciona
-                    if (cityIndex >= 0) {
-                        searchInput.value = `${placeName}, ${nameParts[cityIndex]}`;
-                    } else {
-                        searchInput.value = placeName;
+            fetch(url)
+                .then(response => response.ok ? response.json() : Promise.reject('Error en Nominatim'))
+                .then(data => {
+                    searchResultsContainer.innerHTML = "";
+
+                    if (data.length === 0) {
+                        searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i>No se encontraron resultados</i></div>';
+                        return;
                     }
-                    searchInput.disabled = true;
-                    searchResultsContainer.style.display = "none";
-                    searchAgainButton.style.display = "block";
-                    createMarkerAndCircle(clickPosition);
-                }
-            });
-            
-            searchResultsContainer.appendChild(resultItem);
-        });
-    })
-    .catch(error => {
-        console.error("Error en búsqueda:", error);
-        showNoResults();
-    });
-}
+
+                    data.forEach(result => {
+                        const resultItem = document.createElement("div");
+                        resultItem.className = "search-result-item";
+                        resultItem.textContent = result.display_name;
+                        resultItem.title = result.display_name; // Tooltip por si es largo
+                        resultItem.addEventListener("click", function() {
+                            const lat = parseFloat(result.lat);
+                            const lon = parseFloat(result.lon);
+                             if (!isNaN(lat) && !isNaN(lon)) {
+                                clickPosition = L.latLng(lat, lon);
+                                searchInput.value = result.display_name; // Poner nombre en input
+                                searchInput.disabled = true; // Deshabilitar input tras seleccionar
+                                searchResultsContainer.style.display = "none"; // Ocultar resultados
+                                searchAgainButton.style.display = "block"; // Mostrar botón "buscar otra"
+                                createMarkerAndCircle(clickPosition); // Crear marcador/círculo y consultar
+                            } else {
+                                console.error("Resultado de Nominatim sin coordenadas válidas:", result);
+                                Swal.fire('Error', 'No se pudieron obtener coordenadas para esta ubicación.', 'error');
+                            }
+                        });
+                        searchResultsContainer.appendChild(resultItem);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error en la búsqueda de Nominatim:", error);
+                    searchResultsContainer.innerHTML = `<div class="search-result-item text-danger"><i>Error en la búsqueda (${error.message})</i></div>`;
+                });
+        }
 
         // Inicializar todo cuando se carga la página
         document.addEventListener("DOMContentLoaded", initializeDatetimes);
