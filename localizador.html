@@ -1098,86 +1098,55 @@ if (data.length >= 2) {
         }
 
         function performSearch() {
-    const query = searchInput.value.trim();
-    if (!query) {
-        searchResultsContainer.style.display = "none";
-        return;
-    }
+            const query = searchInput.value.trim();
+            if (!query) {
+                 searchResultsContainer.style.display = "none";
+                 return;
+                 }
 
-    // Mostrar indicador de carga
-    searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
-    searchResultsContainer.style.display = "block";
+            searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i>Buscando...</i></div>';
+            searchResultsContainer.style.display = "block";
 
-    const showNoResults = () => {
-        searchResultsContainer.innerHTML = `
-            <div class="search-result-item text-warning">
-                <i class="fas fa-exclamation-triangle"></i>
-                No se encontraron resultados o el servicio no está disponible.<br>
-                <small>Intenta hacer clic directamente en el mapa para seleccionar la ubicación.</small>
-            </div>`;
-    };
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=co&addressdetails=1`; // Limitar a Colombia, pedir detalles
 
-    // Realizar consulta a Nominatim (OpenStreetMap)
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=co&dedupe=1`, {
-        headers: { 'User-Agent': 'LocalizadorPorArea/1.0' },
-        cache: 'no-cache',
-        mode: 'cors'
-    })
-    .then(response => {
-        if (!response.ok) throw new Error("Respuesta no válida");
-        return response.json();
-    })
-    .then(data => {
-        searchResultsContainer.innerHTML = "";
+            fetch(url)
+                .then(response => response.ok ? response.json() : Promise.reject('Error en Nominatim'))
+                .then(data => {
+                    searchResultsContainer.innerHTML = "";
 
-        if (!data || data.length === 0) {
-            showNoResults();
-            return;
+                    if (data.length === 0) {
+                        searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i>No se encontraron resultados</i></div>';
+                        return;
+                    }
+
+                    data.forEach(result => {
+                        const resultItem = document.createElement("div");
+                        resultItem.className = "search-result-item";
+                        resultItem.textContent = result.display_name;
+                        resultItem.title = result.display_name; // Tooltip por si es largo
+                        resultItem.addEventListener("click", function() {
+                            const lat = parseFloat(result.lat);
+                            const lon = parseFloat(result.lon);
+                             if (!isNaN(lat) && !isNaN(lon)) {
+                                clickPosition = L.latLng(lat, lon);
+                                searchInput.value = result.display_name; // Poner nombre en input
+                                searchInput.disabled = true; // Deshabilitar input tras seleccionar
+                                searchResultsContainer.style.display = "none"; // Ocultar resultados
+                                searchAgainButton.style.display = "block"; // Mostrar botón "buscar otra"
+                                createMarkerAndCircle(clickPosition); // Crear marcador/círculo y consultar
+                            } else {
+                                console.error("Resultado de Nominatim sin coordenadas válidas:", result);
+                                Swal.fire('Error', 'No se pudieron obtener coordenadas para esta ubicación.', 'error');
+                            }
+                        });
+                        searchResultsContainer.appendChild(resultItem);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error en la búsqueda de Nominatim:", error);
+                    searchResultsContainer.innerHTML = `<div class="search-result-item text-danger"><i>Error en la búsqueda (${error.message})</i></div>`;
+                });
         }
-
-        // Ordenar por importancia y limitar a 3 resultados relevantes
-        data.sort((a, b) => (b.importance || 0) - (a.importance || 0));
-        const topResults = data.slice(0, 3);
-
-        topResults.forEach(result => {
-            const resultItem = document.createElement("div");
-            resultItem.className = "search-result-item";
-
-            // Extraer datos útiles de la ubicación
-            const parts = result.display_name.split(",");
-            const name = parts[0]?.trim() || "Ubicación desconocida";
-            const city = parts[1]?.trim() || "";
-            const state = parts[2]?.trim() || "";
-
-            // Construir nombre mejorado para mostrar
-            const formattedName = `${name}${city ? `, ${city}` : ""}${state ? `, ${state}` : ""}`;
-
-            resultItem.innerHTML = `<strong>${formattedName}</strong>`;
-            resultItem.title = result.display_name;
-
-            resultItem.addEventListener("click", function () {
-                const lat = parseFloat(result.lat);
-                const lon = parseFloat(result.lon);
-
-                if (!isNaN(lat) && !isNaN(lon)) {
-                    clickPosition = L.latLng(lat, lon);
-                    searchInput.value = formattedName;
-                    searchInput.disabled = true;
-                    searchResultsContainer.style.display = "none";
-                    searchAgainButton.style.display = "block";
-                    createMarkerAndCircle(clickPosition);
-                }
-            });
-
-            searchResultsContainer.appendChild(resultItem);
-        });
-    })
-    .catch(error => {
-        console.error("Error en búsqueda:", error);
-        showNoResults();
-    });
-}
-
 
         // Inicializar todo cuando se carga la página
         document.addEventListener("DOMContentLoaded", initializeDatetimes);
