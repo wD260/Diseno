@@ -48,8 +48,8 @@ jobs:
           sudo cp -r ~/repo_backup/* /var/www/html/
           sudo systemctl restart apache2          
           
-  deploy_juan:
-    runs-on: juan
+  deploy_Juan:
+    runs-on: Juan
 
     steps:
       - name: Checkout code

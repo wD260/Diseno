@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Localizador de Vehículos por Área</title>
+    <title>Localizador de Vehículos</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -151,7 +151,42 @@
             display: flex;
             gap: 10px;
         }
+/* AGREGAR AL CSS */
+.route-slider-container {
+    position: absolute;
+    bottom: 35px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 500px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    padding: 10px 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+}
 
+.route-slider-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.route-slider-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.route-slider-controls input {
+    flex-grow: 1;
+}
+
+#currentTimeDisplay {
+    font-size: 0.9em;
+    color: #333;
+}
         .error-message {
             color: var(--danger-color);
             background-color: rgba(231, 76, 60, 0.1);
@@ -260,7 +295,7 @@
              color: #333;
              flex-shrink: 0;
          }
-         .result-item {
+.result-item {
     padding: 12px 14px; /* Padding aumentado */
     background-color: #f8f9fa; /* Fondo más claro */
     margin-bottom: 10px; /* Más espacio entre elementos */
@@ -330,7 +365,111 @@
             transition: background-color 0.2s ease;
         }
         .search-container button:hover { background: #2980b9; }
+/* Estilos para el selector de rutas */
+.route-selector-container {
+    position: absolute;
+    top: 70px;
+    right: 10px;
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    padding: 10px;
+    z-index: 1000;
+    max-width: 300px;
+}
 
+.route-selector-title {
+    font-weight: bold;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.route-selector-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.route-selector-button {
+    border: none;
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: white;
+    text-align: left;
+}
+
+.route-selector-button.active {
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.8), 0 0 0 4px currentColor;
+}
+
+.route-button-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.route-button-number {
+    font-size: 16px;
+    font-weight: bold;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+}
+
+.route-button-info {
+    font-size: 12px;
+}
+
+/* Mejorar estilos del slider de ruta */
+.route-slider-container {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    padding: 10px;
+    z-index: 1000;
+    width: 90%;
+    max-width: 400px;
+}
+
+.route-slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    border-radius: 3px;
+    padding: 5px 10px;
+    font-weight: bold;
+}
+
+.route-slider-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.route-slider-controls input[type="range"] {
+    flex-grow: 1;
+}
+
+.route-position-info {
+    text-align: center;
+    margin-top: 5px;
+    font-size: 12px;
+}
         #searchResults {
             position: absolute;
             width: 100%;
@@ -474,6 +613,13 @@
         const horaInicioInput = document.getElementById("horaInicio");
         const fechaFinInput = document.getElementById("fechaFin");
         const horaFinInput = document.getElementById("horaFin");
+// AGREGAR - Después de otras variables globales
+let routePolyline = null;
+let routePoints = [];
+let routeTimestamps = [];
+let routeSlider = null;
+let currentRouteIndex = 0;
+const MAX_TIME_GAP = 30; // Segundos máximos entre puntos para considerarlos de la misma ruta                
 
 
         // Funciones de Navegación y Zoom
@@ -482,6 +628,360 @@
          function zoomIn() { if(map) map.zoomIn(); }
          function zoomOut() { if(map) map.zoomOut(); }
 
+// DESPUÉS
+function createRoutePolyline(data) {
+    // Limpiar rutas anteriores
+    clearAllRoutes();
+    
+    if (!data || data.length < 2) return;
+    
+    // Ordenar por fecha y hora
+    data.sort((a, b) => {
+        const timeA = new Date(`${a.fecha} ${a.hora}`);
+        const timeB = new Date(`${b.fecha} ${b.hora}`);
+        return timeA - timeB;
+    });
+    
+    // Definir un gap máximo para considerar rutas separadas (en minutos)
+    const MAX_ROUTE_GAP_MINUTES = 30;
+    
+    // Arrays para almacenar múltiples rutas
+    let routes = [];
+    let currentRoute = {
+        points: [],
+        timestamps: []
+    };
+    
+    let lastTime = null;
+    
+    // Recorrer todos los puntos y separarlos en rutas distintas
+    for (let i = 0; i < data.length; i++) {
+        const currentPoint = [parseFloat(data[i].lat), parseFloat(data[i].lon)];
+        const currentTime = new Date(`${data[i].fecha} ${data[i].hora}`);
+        
+        // Si hay un gap temporal significativo, comenzar una nueva ruta
+        if (lastTime !== null && ((currentTime - lastTime) / (1000 * 60) > MAX_ROUTE_GAP_MINUTES)) {
+            if (currentRoute.points.length >= 2) {
+                routes.push(currentRoute);
+            }
+            currentRoute = {
+                points: [],
+                timestamps: []
+            };
+        }
+        
+        // Agregar punto a la ruta actual
+        currentRoute.points.push(currentPoint);
+        currentRoute.timestamps.push({
+            time: currentTime,
+            fecha: data[i].fecha,
+            hora: data[i].hora,
+            lat: currentPoint[0], 
+            lon: currentPoint[1]
+        });
+        
+        lastTime = currentTime;
+    }
+    
+    // Agregar la última ruta si tiene suficientes puntos
+    if (currentRoute.points.length >= 2) {
+        routes.push(currentRoute);
+    }
+    
+    // Si no hay rutas válidas, salir
+    if (routes.length === 0) return;
+    
+    // Colores para las diferentes rutas
+    const routeColors = ['#1E88E5', '#D81B60', '#8E24AA', '#43A047', '#FB8C00', '#E53935'];
+    
+    // Crear las polilíneas para cada ruta
+    let allRouteBounds = [];
+    routes.forEach((route, index) => {
+        const color = routeColors[index % routeColors.length];
+        
+        const polyline = L.polyline(route.points, {
+            color: color,
+            weight: 3,
+            opacity: 0.7
+        }).addTo(map);
+        
+        // Guardar la ruta
+        route.polyline = polyline;
+        route.color = color;
+        route.index = index;
+        
+        // Acumular bounds para ajustar la vista
+        allRouteBounds.push(polyline.getBounds());
+    });
+    
+    // Almacenar todas las rutas
+    window.detectedRoutes = routes;
+    
+    // Ajustar vista para ver todas las rutas
+    if (allRouteBounds.length > 0) {
+        const bounds = L.latLngBounds(allRouteBounds);
+        map.fitBounds(bounds, { padding: [30, 30] });
+    }
+    
+    // Crear selector de rutas
+    createRouteSelector(routes);
+    
+    // Seleccionar la primera ruta por defecto
+    if (routes.length > 0) {
+        selectRoute(0);
+    }
+}
+
+// Nueva función para limpiar todas las rutas
+function clearAllRoutes() {
+    if (routePolyline) map.removeLayer(routePolyline);
+    routePolyline = null;
+    
+    // Limpiar múltiples rutas si existen
+    if (window.detectedRoutes) {
+        window.detectedRoutes.forEach(route => {
+            if (route.polyline) map.removeLayer(route.polyline);
+        });
+    }
+    
+    window.detectedRoutes = [];
+    routePoints = [];
+    routeTimestamps = [];
+    
+    // Eliminar selector de rutas y slider si existen
+    const existingSelector = document.querySelector('.route-selector-container');
+    if (existingSelector) existingSelector.remove();
+    
+    const existingSlider = document.querySelector('.route-slider-container');
+    if (existingSlider) existingSlider.remove();
+}
+
+// Nueva función para crear selector de rutas
+function createRouteSelector(routes) {
+    // Eliminar selector anterior si existe
+    const existingSelector = document.querySelector('.route-selector-container');
+    if (existingSelector) existingSelector.remove();
+    
+    // Crear contenedor para el selector
+    const selectorContainer = document.createElement('div');
+    selectorContainer.className = 'route-selector-container';
+    
+    // Crear título
+    const title = document.createElement('div');
+    title.className = 'route-selector-title';
+    title.textContent = `${routes.length} ${routes.length === 1 ? 'ruta detectada' : 'rutas detectadas'}`;
+    selectorContainer.appendChild(title);
+    
+    // Crear botones para cada ruta
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.className = 'route-selector-buttons';
+    
+    routes.forEach((route, index) => {
+        const button = document.createElement('button');
+        button.className = 'route-selector-button';
+        button.style.backgroundColor = route.color;
+        button.dataset.routeIndex = index;
+        
+        // Calcular fecha de inicio y fin de la ruta
+        const startTime = route.timestamps[0];
+        const endTime = route.timestamps[route.timestamps.length - 1];
+        
+        button.innerHTML = `
+            <div class="route-button-content">
+                <div class="route-button-number">${index + 1}</div>
+                <div class="route-button-info">
+                    <div>${startTime.fecha}</div>
+                    <div>${startTime.hora} - ${endTime.hora}</div>
+                </div>
+            </div>
+        `;
+        
+        button.addEventListener('click', () => selectRoute(index));
+        buttonsContainer.appendChild(button);
+    });
+    
+    selectorContainer.appendChild(buttonsContainer);
+    document.querySelector('.map-container').appendChild(selectorContainer);
+}
+
+// Nueva función para seleccionar una ruta
+function selectRoute(index) {
+    if (!window.detectedRoutes || index >= window.detectedRoutes.length) return;
+    
+    const selectedRoute = window.detectedRoutes[index];
+    
+    // Resaltar la ruta seleccionada y atenuar las demás
+    window.detectedRoutes.forEach((route, i) => {
+        if (i === index) {
+            route.polyline.setStyle({
+                opacity: 1.0,
+                weight: 5
+            });
+        } else {
+            route.polyline.setStyle({
+                opacity: 0.3,
+                weight: 2
+            });
+        }
+    });
+    
+    // Asignar la ruta seleccionada a las variables globales para el slider
+    routePoints = selectedRoute.points;
+    routeTimestamps = selectedRoute.timestamps;
+    routePolyline = selectedRoute.polyline;
+    
+    // Crear slider para esta ruta
+    createRouteSlider(selectedRoute.color);
+    
+    // Seleccionar visualmente el botón
+    document.querySelectorAll('.route-selector-button').forEach((btn, i) => {
+        if (i === index) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+// DESPUÉS
+function createRouteSlider(routeColor = '#1E88E5') {
+    // Eliminar slider anterior si existe
+    const existingSlider = document.querySelector('.route-slider-container');
+    if (existingSlider) existingSlider.remove();
+    
+    // Si no hay puntos, no crear slider
+    if (!routePoints || routePoints.length < 2) return;
+    
+    // Crear contenedor para el slider
+    const sliderContainer = document.createElement('div');
+    sliderContainer.className = 'route-slider-container';
+    sliderContainer.innerHTML = `
+        <div class="route-slider-header" style="background-color: ${routeColor}; color: white;">
+            <span>Navegación de Ruta</span>
+            <span id="currentTimeDisplay"></span>
+        </div>
+        <div class="route-slider-controls">
+            <button id="prevPointBtn" class="btn btn-sm" style="background-color: ${routeColor}; color: white;">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <input type="range" id="routeSlider" min="0" max="${routePoints.length - 1}" value="0" step="1">
+            <button id="nextPointBtn" class="btn btn-sm" style="background-color: ${routeColor}; color: white;">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+        <div class="route-position-info">
+            <span id="pointCounter">Punto 1/${routePoints.length}</span>
+        </div>
+    `;
+    
+    // Agregar al DOM
+    document.querySelector('.map-container').appendChild(sliderContainer);
+    
+    // Obtener referencias
+    routeSlider = document.getElementById('routeSlider');
+    const prevBtn = document.getElementById('prevPointBtn');
+    const nextBtn = document.getElementById('nextPointBtn');
+    const timeDisplay = document.getElementById('currentTimeDisplay');
+    const pointCounter = document.getElementById('pointCounter');
+    
+    // Variable para rastrear el índice actual
+    currentRouteIndex = 0;
+    
+    // Función para actualizar la vista según la posición en la ruta
+    function updateRoutePosition(index) {
+        clearExactMarkers();
+        
+        if (index < 0 || index >= routePoints.length) return;
+        
+        currentRouteIndex = index;
+        const point = routePoints[index];
+        const timestamp = routeTimestamps[index];
+        
+        // Centrar mapa en el punto
+        map.setView(point, Math.max(map.getZoom(), 16));
+        
+        // Crear marcador en la posición actual
+        const exactMarker = L.circleMarker(point, {
+            color: routeColor,
+            fillColor: routeColor,
+            fillOpacity: 0.7,
+            radius: 8,
+            weight: 2
+        }).addTo(map);
+        
+        exactMarkers.push(exactMarker);
+        
+        // Mostrar popup con información
+        exactMarker.bindPopup(`
+            <div style="text-align: center; font-weight: bold;">Punto ${index + 1} de ${routePoints.length}</div>
+            <div><b>Fecha:</b> ${timestamp.fecha}</div>
+            <div><b>Hora:</b> ${timestamp.hora}</div>
+            <div><small>Lat: ${timestamp.lat.toFixed(5)}, Lon: ${timestamp.lon.toFixed(5)}</small></div>
+        `).openPopup();
+        
+        // Actualizar displays
+        timeDisplay.textContent = `${timestamp.fecha} ${timestamp.hora}`;
+        pointCounter.textContent = `Punto ${index + 1}/${routePoints.length}`;
+        
+        // Si la ruta original aún existe en el mapa, mantenerla y solo resaltar el segmento
+        if (routePolyline) {
+            // Resaltar el segmento actual si hay un siguiente punto
+            if (index < routePoints.length - 1) {
+                const highlightSegment = L.polyline([routePoints[index], routePoints[index + 1]], {
+                    color: '#FF3D00',
+                    weight: 5,
+                    opacity: 1
+                }).addTo(map);
+                exactMarkers.push(highlightSegment);
+            }
+            
+            // Opcional: mostrar un segmento previo en un color diferente
+            if (index > 0) {
+                const prevSegment = L.polyline([routePoints[index-1], routePoints[index]], {
+                    color: '#FFAB00',
+                    weight: 3,
+                    opacity: 0.7
+                }).addTo(map);
+                exactMarkers.push(prevSegment);
+            }
+        }
+    }
+    
+    // Eventos del slider y botones
+    routeSlider.addEventListener('input', function() {
+        updateRoutePosition(parseInt(this.value));
+    });
+    
+    // Corregir los eventos de los botones
+    prevBtn.addEventListener('click', function() {
+        if (currentRouteIndex > 0) {
+            currentRouteIndex--;
+            routeSlider.value = currentRouteIndex;
+            updateRoutePosition(currentRouteIndex);
+        }
+    });
+    
+    nextBtn.addEventListener('click', function() {
+        if (currentRouteIndex < routePoints.length - 1) {
+            currentRouteIndex++;
+            routeSlider.value = currentRouteIndex;
+            updateRoutePosition(currentRouteIndex);
+        }
+    });
+    
+    // Inicializar en el primer punto
+    updateRoutePosition(0);
+}
 
         function initializeDatetimes() {
             // Configurar fechas y horas por defecto
@@ -541,34 +1041,75 @@ document.querySelectorAll(".radio-option").forEach(option => {
 });
 
             // Inputs de Fecha y Hora (evento 'change' para que se active al perder foco o seleccionar)
-            [fechaInicioInput, horaInicioInput, fechaFinInput, horaFinInput].forEach(input => {
-                input.addEventListener("change", attemptAutoRefresh);
-            });
+// DESPUÉS
+// Inputs de Fecha y Hora con cierre automático
+[fechaInicioInput, fechaFinInput].forEach(input => {
+    input.addEventListener("change", function(event) {
+        // Cerrar el calendario automáticamente al seleccionar fecha
+        input.blur();
+        attemptAutoRefresh();
+    });
+});
+
+[horaInicioInput, horaFinInput].forEach(input => {
+    input.addEventListener("change", attemptAutoRefresh);
+});
 
 
             // Botón de Reset
             document.getElementById("resetButton").addEventListener("click", resetMap);
 
-            // Búsqueda de Ubicaciones
-            searchButton.addEventListener("click", performSearch);
-            searchInput.addEventListener("keypress", function(e) {
-                if (e.key === "Enter") performSearch();
-            });
-            searchAgainButton.addEventListener("click", function() {
-                searchInput.value = "";
-                searchInput.disabled = false; // Habilitar input
-                searchResultsContainer.style.display = "none";
-                searchAgainButton.style.display = "none";
-                if (clickMarker) map.removeLayer(clickMarker);
-                if (searchCircle) map.removeLayer(searchCircle);
-                clearExactMarkers();
-                resultContainer.style.display = "none";
-                errorMessage.style.display = "none";
-                clickPosition = null; // Olvidar la posición anterior
-                clickMarker = null;
-                searchCircle = null;
-                searchInput.focus();
-            });
+// Evento para búsqueda con botón
+searchButton.addEventListener("click", function() {
+    if (searchInput.value.trim().length > 0) {
+        performSearch();
+    }
+});
+
+// Evento para búsqueda con Enter
+searchInput.addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        if (this.value.trim().length > 0) {
+            performSearch();
+        }
+    }
+});
+
+// Suspender búsqueda automática mientras se escribe (era problemática)
+// Implementar un debounce para manejar la entrada del usuario
+let searchTimeout = null;
+searchInput.addEventListener("input", function() {
+    // Limpiar timeout anterior
+    if (searchTimeout) clearTimeout(searchTimeout);
+    
+    const query = this.value.trim();
+    if (query.length < 3) {
+        searchResultsContainer.style.display = "none";
+        return;
+    }
+    
+    // Configurar un nuevo timeout de 500ms
+    searchTimeout = setTimeout(() => {
+        performSearch();
+    }, 500); // Esperar 500ms después de que el usuario deja de escribir
+});
+
+searchAgainButton.addEventListener("click", function() {
+    searchInput.value = "";
+    searchInput.disabled = false; // Habilitar input
+    searchResultsContainer.style.display = "none";
+    searchAgainButton.style.display = "none";
+    if (clickMarker) map.removeLayer(clickMarker);
+    if (searchCircle) map.removeLayer(searchCircle);
+    clearExactMarkers();
+    resultContainer.style.display = "none";
+    errorMessage.style.display = "none";
+    clickPosition = null; // Olvidar la posición anterior
+    clickMarker = null;
+    searchCircle = null;
+    searchInput.focus();
+});
 
             // Cerrar resultados de búsqueda al hacer clic fuera
              document.addEventListener('click', function(event) {
@@ -594,6 +1135,25 @@ document.querySelectorAll(".radio-option").forEach(option => {
             map.on('click', onMapClick);
             // Forzar recalculo de tamaño por si acaso
             setTimeout(() => { map.invalidateSize() }, 100);
+            // AGREGAR al final de initializeMap()
+// Mostrar instrucciones al cargar
+setTimeout(() => {
+    Swal.fire({
+        title: 'Bienvenido al Localizador por Área',
+        html: `
+            <p><b>¿Cómo usar esta herramienta?</b></p>
+            <ol class="text-left">
+                <li>Busca una ubicación escribiendo en la barra de búsqueda</li>
+                <li>O haz clic directamente sobre el mapa para seleccionar un punto</li>
+                <li>Ajusta el rango de fechas/horas y el radio de búsqueda</li>
+                <li>Explora los momentos detectados en la lista de resultados</li>
+                <li>Si se detecta una ruta, usa el slider para navegar por ella</li>
+            </ol>
+        `,
+        icon: 'info',
+        confirmButtonText: 'Entendido'
+    });
+}, 1000);
         }
 
         function onMapClick(e) {
@@ -688,7 +1248,11 @@ document.querySelectorAll(".radio-option").forEach(option => {
             searchAgainButton.style.display = "none";
 
             // Recenter mapa a la vista inicial (Barranquilla)
-            map.setView([10.9639, -74.7964], 13);
+// Limpiar todas las rutas y controles relacionados
+clearAllRoutes();
+
+// Recenter mapa a la vista inicial (Barranquilla)
+map.setView([10.9639, -74.7964], 13);
             // Opcional: recentrar a la última ubicación conocida si prefieres
             // fetch('ultima_ubicacion.php')...
         }
@@ -803,7 +1367,10 @@ document.querySelectorAll(".radio-option").forEach(option => {
                         });
                         resultList.appendChild(resultItem);
                     });
-
+// Agregar llamada a función de creación de ruta después de procesar los datos
+if (data.length >= 2) {
+    createRoutePolyline(data);
+}
                     // Opcional: Scroll al primer resultado
                     // resultList.firstChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
