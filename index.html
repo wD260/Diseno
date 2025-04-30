@@ -222,15 +222,7 @@
                     const nuevaLatLng = [data.lat, data.lon];
 
                     if (!ref.marker) {
-                        const iconUrl = color === 'blue' ? 'img/marcador1.png' : 'img/marcador2.png';
-                        ref.marker = L.marker(nuevaLatLng, {
-                            icon: L.icon({
-                                iconUrl: iconUrl,
-                                iconSize: [32, 32],
-                                iconAnchor: [16, 32],
-                                popupAnchor: [0, -32]
-                            })
-                        }).addTo(map);
+                        ref.marker = L.marker(nuevaLatLng).addTo(map);
                     } else {
                         ref.marker.setLatLng(nuevaLatLng);
                     }
