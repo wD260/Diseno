@@ -162,16 +162,15 @@
 </head>
 <body>
     <div class="background-pattern"></div>
-
     <div class="container-fluid">
         <div class="content-wrapper">
             <h2 class="fw-bold text-uppercase text-center animate__animated animate__fadeInDown">SEGUIMIENTO GPS EN TIEMPO REAL</h2>
             <div class="header-container animate__animated animate__fadeIn">
                 <div class="info-container">
-                    <p><strong>Latitud:</strong> <span id="lat">10.908</span></p>
-                    <p><strong>Longitud:</strong> <span id="lon">-74.7895</span></p>
-                    <p><strong>Fecha:</strong> <span id="fecha">2025-03-26</span></p>
-                    <p><strong>Hora:</strong> <span id="hora">16:26:44</span></p>
+                    <p><strong>Latitud:</strong> <span id="lat">---</span></p>
+                    <p><strong>Longitud:</strong> <span id="lon">---</span></p>
+                    <p><strong>Fecha:</strong> <span id="fecha">---</span></p>
+                    <p><strong>Hora:</strong> <span id="hora">---</span></p>
                     <p id="rpmInfo" style="display:none;"><strong>RPM:</strong> <span id="rpm">---</span></p>
                 </div>
                 <div class="button-group">
@@ -184,16 +183,14 @@
                 </div>
             </div>
         </div>
-
         <div class="map-container">
             <div id="map"></div>
         </div>
-
         <div class="button-container text-center">
-            <button class="btn btn-lg btn-secondary me-2" onclick="centrarEn(1)">
+            <button class="btn btn-lg btn-secondary me-2" onclick="seguirVehiculo(1)">
                 <i class="fa-solid fa-location-crosshairs"></i> Centrar Vehículo 1
             </button>
-            <button class="btn btn-lg btn-secondary" onclick="centrarEn(2)">
+            <button class="btn btn-lg btn-secondary" onclick="seguirVehiculo(2)">
                 <i class="fa-solid fa-location-crosshairs"></i> Centrar Vehículo 2
             </button>
         </div>
@@ -216,28 +213,33 @@
 
         const marker1Ref = { marker: null, lastPos: null, initialized: false, route: [], polyline: null };
         const marker2Ref = { marker: null, lastPos: null, initialized: false, route: [], polyline: null };
+        let vehiculoCentrado = 1;
 
         function actualizarVehiculo(vehiculo, ref, color) {
             fetch(`datos.php?vehiculo=${vehiculo}`)
                 .then(res => res.json())
                 .then(data => {
                     const nuevaLatLng = [data.lat, data.lon];
+
                     if (!ref.marker) {
-                        ref.marker = L.marker(nuevaLatLng, {
-                            icon: L.icon({
-                                iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
-                                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png'
-                            })
+                        ref.marker = L.circle(nuevaLatLng, {
+                            radius: 8, // metros
+                            color: color,
+                            fillColor: color,
+                            fillOpacity: 1,
+                            weight: 1
                         }).addTo(map);
                     } else {
                         ref.marker.setLatLng(nuevaLatLng);
                     }
+
                     ref.route.push(nuevaLatLng);
                     if (!ref.polyline) {
                         ref.polyline = L.polyline(ref.route, { color: color, weight: 4 }).addTo(map);
                     } else {
                         ref.polyline.setLatLngs(ref.route);
                     }
+
                     ref.lastPos = nuevaLatLng;
 
                     if (vehiculo === 1) {
@@ -252,9 +254,8 @@
                         document.getElementById("rpmInfo").style.display = "inline-block";
                     }
 
-                    if (!ref.initialized) {
-                        map.setView(nuevaLatLng, currentZoom);
-                        ref.initialized = true;
+                    if (vehiculo === vehiculoCentrado) {
+                        map.setView(nuevaLatLng, map.getZoom());
                     }
                 })
                 .catch(err => console.error(`Error al obtener datos del vehículo ${vehiculo}:`, err));
@@ -265,18 +266,12 @@
             actualizarVehiculo(2, marker2Ref, 'red');
         }
 
-        function centrarEn(vehiculo) {
-            const ref = vehiculo === 1 ? marker1Ref : marker2Ref;
-            if (ref.lastPos) {
-                map.setView(ref.lastPos, map.getZoom());
-            }
+        function seguirVehiculo(vehiculo) {
+            vehiculoCentrado = vehiculo;
         }
 
         window.onload = () => {
             actualizarAmbos();
-            setTimeout(() => {
-                if (marker1Ref.lastPos) map.setView(marker1Ref.lastPos, 15);
-            }, 1000);
         };
 
         setInterval(actualizarAmbos, 2000);
