@@ -183,11 +183,9 @@
                 </div>
             </div>
         </div>
-
         <div class="map-container">
             <div id="map"></div>
         </div>
-
         <div class="button-container text-center">
             <button class="btn btn-lg btn-secondary me-2" onclick="seguirVehiculo(1)">
                 <i class="fa-solid fa-location-crosshairs"></i> Centrar Vehículo 1
@@ -224,18 +222,13 @@
                     const nuevaLatLng = [data.lat, data.lon];
 
                     if (!ref.marker) {
-                        const iconUrl = color === 'blue'
-                            ? 'https://cdn.jsdelivr.net/npm/leaflet-color-markers@1.1.1/img/marker-icon-blue.png'
-                            : 'https://cdn.jsdelivr.net/npm/leaflet-color-markers@1.1.1/img/marker-icon-red.png';
-
+                        const iconUrl = color === 'blue' ? 'img/marcador1.png' : 'img/marcador2.png';
                         ref.marker = L.marker(nuevaLatLng, {
                             icon: L.icon({
                                 iconUrl: iconUrl,
-                                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-                                iconSize: [25, 41],
-                                iconAnchor: [12, 41],
-                                popupAnchor: [1, -34],
-                                shadowSize: [41, 41]
+                                iconSize: [32, 32],
+                                iconAnchor: [16, 32],
+                                popupAnchor: [0, -32]
                             })
                         }).addTo(map);
                     } else {
