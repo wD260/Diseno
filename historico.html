@@ -292,6 +292,14 @@
         <!-- Sidebar con controles -->
         <div class="sidebar">
             <h2 class="app-title animate__animated animate__fadeInDown">CONSULTA HISTÓRICA GPS</h2>
+
+            <div class="form-group">
+                <label class="form-label">Vehículo:</label>
+                <select id="vehiculoSeleccionado" class="form-control">
+                    <option value="1">Vehículo 1</option>
+                    <option value="2">Vehículo 2</option>
+                </select>
+            </div>
             
             <div class="form-group">
                 <label class="form-label">Fecha y Hora de Inicio:</label>
@@ -350,7 +358,7 @@
     
     <script>
         let map = L.map("map", {
-            zoomControl: false  // Desactivamos los controles de zoom por defecto
+            zoomControl: false
         }).setView([0, 0], 2);
         
         let polyline = L.polyline([], { 
@@ -367,106 +375,74 @@
         }).addTo(map);
 
         function initializeDatetimes() {
-            // Obtener fecha local correcta
             const hoy = new Date();
-            
-            // Establecer fecha y hora de inicio (hoy a las 00:00)
-            const inicioDate = new Date(hoy);
-            inicioDate.setHours(0, 0, 0, 0);
-            
-            // Establecer fecha y hora de fin (hoy a las 23:59)
-            const finDate = new Date(hoy);
-            finDate.setHours(23, 59, 0, 0);
-            
-            // Formatear para datetime-local en zona horaria local
+            const inicioDate = new Date(hoy); inicioDate.setHours(0, 0, 0, 0);
+            const finDate = new Date(hoy); finDate.setHours(23, 59, 0, 0);
+
             const formatDateTimeLocal = (date) => {
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                return `${year}-${month}-${day}T${hours}:${minutes}`;
+                const y = date.getFullYear(), m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                const h = String(date.getHours()).padStart(2, '0'), min = String(date.getMinutes()).padStart(2, '0');
+                return `${y}-${m}-${d}T${h}:${min}`;
             };
-            
+
             document.getElementById("fechaHoraInicio").value = formatDateTimeLocal(inicioDate);
             document.getElementById("fechaHoraFin").value = formatDateTimeLocal(finDate);
-            
-            // Añadir validación en cambio de fechas
+
             document.getElementById("fechaHoraInicio").addEventListener("change", validarFechas);
             document.getElementById("fechaHoraFin").addEventListener("change", validarFechas);
         }
-        
+
         function validarFechas() {
-            const fechaHoraInicio = document.getElementById("fechaHoraInicio").value;
-            const fechaHoraFin = document.getElementById("fechaHoraFin").value;
-            const errorMessage = document.getElementById("errorMessage");
+            const inicio = document.getElementById("fechaHoraInicio").value;
+            const fin = document.getElementById("fechaHoraFin").value;
             const errorText = document.getElementById("errorText");
-            
-            if (fechaHoraInicio && fechaHoraFin) {
-                const inicioDate = new Date(fechaHoraInicio);
-                const finDate = new Date(fechaHoraFin);
-                
-                if (inicioDate >= finDate) {
-                    errorText.textContent = "La fecha y hora de inicio deben ser anteriores a las de fin.";
-                    errorMessage.style.display = "block";
-                    document.getElementById("fechaHoraFin").value = "";
-                    return false;
-                } else {
-                    errorMessage.style.display = "none";
-                    return true;
-                }
+            const errorMessage = document.getElementById("errorMessage");
+
+            if (inicio && fin && new Date(inicio) >= new Date(fin)) {
+                errorText.textContent = "La fecha y hora de inicio deben ser anteriores a las de fin.";
+                errorMessage.style.display = "block";
+                document.getElementById("fechaHoraFin").value = "";
+                return false;
             }
+
+            errorMessage.style.display = "none";
             return true;
         }
 
         function consultarHistorico() {
-            let fechaHoraInicio = document.getElementById("fechaHoraInicio").value;
-            let fechaHoraFin = document.getElementById("fechaHoraFin").value;
-            const errorMessage = document.getElementById("errorMessage");
+            const vehiculo = document.getElementById("vehiculoSeleccionado").value;
+            const inicioRaw = document.getElementById("fechaHoraInicio").value;
+            const finRaw = document.getElementById("fechaHoraFin").value;
             const errorText = document.getElementById("errorText");
+            const errorMessage = document.getElementById("errorMessage");
 
-            if (!fechaHoraInicio || !fechaHoraFin) {
+            if (!inicioRaw || !finRaw || !validarFechas()) {
                 errorText.textContent = "Seleccione fecha y hora correctamente.";
                 errorMessage.style.display = "block";
                 return;
             }
 
-            if (!validarFechas()) {
-                return;
-            }
+            const formatForBackend = (date) => {
+                const d = new Date(date);
+                return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:00`;
+            };
 
-            // Mostrar loader
+            const inicio = formatForBackend(inicioRaw);
+            const fin = formatForBackend(finRaw);
+
             Swal.fire({
                 title: 'Consultando datos',
                 text: 'Espere un momento...',
                 allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
+                didOpen: () => { Swal.showLoading(); }
             });
 
-            // Formatear para backend
-            const inicioDate = new Date(fechaHoraInicio);
-            const finDate = new Date(fechaHoraFin);
-            
-            const formatForBackend = (date) => {
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                return `${year}-${month}-${day} ${hours}:${minutes}:00`;
-            };
-            
-            const inicio = formatForBackend(inicioDate);
-            const fin = formatForBackend(finDate);
-
-            fetch(`historico.php?inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}`)
-            .then(response => response.json())
+            fetch(`historico.php?inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}&vehiculo=${vehiculo}`)
+            .then(res => res.json())
             .then(data => {
-                // Cerrar loader
                 Swal.close();
-                
+
                 if (!Array.isArray(data) || data.length === 0) {
                     errorText.textContent = "No hay datos en ese rango de tiempo.";
                     errorMessage.style.display = "block";
@@ -478,98 +454,48 @@
                 markers.forEach(m => map.removeLayer(m));
                 markers = [];
 
-                let coordenadas = data.map(p => [parseFloat(p.lat), parseFloat(p.lon)]);
-                polyline.setLatLngs(coordenadas);
+                const coords = data.map(p => [parseFloat(p.lat), parseFloat(p.lon)]);
+                polyline.setLatLngs(coords);
                 map.fitBounds(polyline.getBounds());
 
                 if (data.length > 0) {
-                    // Primer y último punto con marcadores diferentes
-                    let inicio = data[0];
-                    let fin = data[data.length - 1];
+                    let inicioP = data[0], finP = data[data.length - 1];
 
-                    let inicioMarker = L.circleMarker([parseFloat(inicio.lat), parseFloat(inicio.lon)], {
-                        color: "#2ecc71",
-                        fillColor: "#2ecc71",
-                        fillOpacity: 0.7,
-                        radius: 8,
-                        weight: 2
+                    let inicioMarker = L.circleMarker([parseFloat(inicioP.lat), parseFloat(inicioP.lon)], {
+                        color: "#2ecc71", fillColor: "#2ecc71", fillOpacity: 0.7, radius: 8, weight: 2
                     }).addTo(map);
-                    
-                    inicioMarker.bindPopup(createPopupContent("Punto de Inicio", {
-                        "Fecha": inicio.fecha,
-                        "Hora": inicio.hora,
-                        "Latitud": inicio.lat,
-                        "Longitud": inicio.lon
-                    }));
-                    
-                    let finMarker = L.circleMarker([parseFloat(fin.lat), parseFloat(fin.lon)], {
-                        color: "#e74c3c",
-                        fillColor: "#e74c3c",
-                        fillOpacity: 0.7,
-                        radius: 8,
-                        weight: 2
-                    }).addTo(map);
-                    
-                    finMarker.bindPopup(createPopupContent("Punto Final", {
-                        "Fecha": fin.fecha,
-                        "Hora": fin.hora,
-                        "Latitud": fin.lat,
-                        "Longitud": fin.lon
-                    }));
+                    inicioMarker.bindPopup(createPopupContent("Punto de Inicio", inicioP));
 
-                    markers.push(inicioMarker, finMarker);
-                    
-                    // Añadir una animación al punto final
-                    const finLatLng = L.latLng(parseFloat(fin.lat), parseFloat(fin.lon));
-                    const pulseCircle = L.circleMarker(finLatLng, {
-                        radius: 10,
-                        color: "#e74c3c",
-                        fillColor: "#e74c3c",
-                        fillOpacity: 0.3,
-                        weight: 0,
-                        className: 'pulse'
+                    let finMarker = L.circleMarker([parseFloat(finP.lat), parseFloat(finP.lon)], {
+                        color: "#e74c3c", fillColor: "#e74c3c", fillOpacity: 0.7, radius: 8, weight: 2
                     }).addTo(map);
-                    
-                    markers.push(pulseCircle);
+                    finMarker.bindPopup(createPopupContent("Punto Final", finP));
+
+                    const pulseCircle = L.circleMarker([parseFloat(finP.lat), parseFloat(finP.lon)], {
+                        radius: 10, color: "#e74c3c", fillColor: "#e74c3c", fillOpacity: 0.3, weight: 0, className: 'pulse'
+                    }).addTo(map);
+
+                    markers.push(inicioMarker, finMarker, pulseCircle);
                 }
 
-                // Puntos intermedios visibles solo en zoom alto
                 data.slice(1, -1).forEach(p => {
                     let marker = L.circleMarker([parseFloat(p.lat), parseFloat(p.lon)], {
-                        color: "#3498db",
-                        fillColor: "#3498db",
-                        fillOpacity: 0.6,
-                        radius: 5,
-                        weight: 1
-                    });
-
-                    marker.bindPopup(createPopupContent("Punto Intermedio", {
-                        "Fecha": p.fecha,
-                        "Hora": p.hora,
-                        "Latitud": p.lat,
-                        "Longitud": p.lon
-                    }));
-                    
+                        color: "#3498db", fillColor: "#3498db", fillOpacity: 0.6, radius: 5, weight: 1
+                    }).bindPopup(createPopupContent("Punto Intermedio", p));
                     markers.push(marker);
                 });
 
-                // Solo mostrar puntos intermedios al hacer zoom
                 showMarkersBasedOnZoom();
-                
-                // Mostrar mensaje de éxito
+
                 Swal.fire({
                     title: 'Datos cargados',
-                    text: `Se encontraron ${data.length} registros en el rango seleccionado`,
-                    icon: 'success',
-                    timer: 2000,
-                    showConfirmButton: false
+                    text: `Se encontraron ${data.length} registros.`,
+                    icon: 'success', timer: 2000, showConfirmButton: false
                 });
             })
-            .catch(error => {
-                // Cerrar loader
+            .catch(err => {
                 Swal.close();
-                
-                console.error("Error al obtener el historial:", error);
+                console.error("Error:", err);
                 errorText.textContent = "Ocurrió un error al consultar los datos.";
                 errorMessage.style.display = "block";
             });
@@ -577,53 +503,33 @@
 
         function createPopupContent(title, data) {
             let content = `<div class="popup-title">${title}</div><div class="popup-content">`;
-            
-            for (const [key, value] of Object.entries(data)) {
-                content += `<div class="popup-label">${key}:</div><div>${value}</div>`;
+            for (const [key, val] of Object.entries(data)) {
+                content += `<div class="popup-label">${key.toUpperCase()}:</div><div>${val ?? "—"}</div>`;
             }
-            
             content += `</div>`;
             return content;
         }
-        
+
         function showMarkersBasedOnZoom() {
-            let zoom = map.getZoom();
-            
-            // Primeros dos marcadores son inicio/fin y siempre se muestran
-            // El tercero es la animación de pulso
             if (markers.length > 3) {
+                const zoom = map.getZoom();
                 markers.slice(3).forEach(m => {
-                    if (zoom >= 13) {
-                        m.addTo(map);
-                    } else {
-                        map.removeLayer(m);
-                    }
+                    if (zoom >= 13) m.addTo(map);
+                    else map.removeLayer(m);
                 });
             }
         }
 
-        function abrirTiempoReal() {
-            window.location.href = "/index.html";
-        }
+        function abrirTiempoReal() { window.location.href = "/index.html"; }
+        function abrirLocalizador() { window.location.href = "/localizador.html"; }
+        function zoomIn() { map.zoomIn(); }
+        function zoomOut() { map.zoomOut(); }
 
-        function abrirLocalizador() {
-            window.location.href = "/localizador.html";
-        }
-        
-        function zoomIn() {
-            map.zoomIn();
-        }
-        
-        function zoomOut() {
-            map.zoomOut();
-        }
-
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", () => {
             initializeDatetimes();
-            
-            // Manejar el cambio de zoom para los marcadores
             map.on("zoomend", showMarkersBasedOnZoom);
         });
     </script>
 </body>
+
 </html>
