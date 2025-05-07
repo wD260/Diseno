@@ -31,7 +31,7 @@ if ($vehiculo === 2) {
 
 $result = $conn->query($sql);
 if (!$result) {
-    die("❌ Error en la consulta SQL: " . $conn->error);
+    die("❌ Error en la consulta SQL E: " . $conn->error);
 }
 
 // Preparar respuesta
