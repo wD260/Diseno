@@ -244,6 +244,10 @@
                     }
 
                     if (vehiculo === 2 && data.rpm !== undefined) {
+                        document.getElementById("lat").innerText = data.lat;
+                        document.getElementById("lon").innerText = data.lon;
+                        document.getElementById("fecha").innerText = data.fecha;
+                        document.getElementById("hora").innerText = data.hora;
                         document.getElementById("rpm").innerText = data.rpm;
                         document.getElementById("rpmInfo").style.display = "inline-block";
                     }
