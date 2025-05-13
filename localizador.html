@@ -546,18 +546,6 @@
              <h2 class="app-title animate__animated animate__fadeInDown">LOCALIZADOR POR ÁREA</h2>
 
              <div class="form-group">
-                 <label class="form-label" for="searchInput">Buscar Ubicación:</label>
-                 <div class="search-container">
-                     <input type="text" id="searchInput" class="form-control" placeholder="Ej: Calle 72 con 54, Barranquilla">
-                     <button id="searchButton" class="btn-primary"><i class="fa-solid fa-search"></i></button>
-                     <div id="searchResults"></div>
-                 </div>
-                  <button id="searchAgainButton" class="btn btn-info btn-sm w-100">
-                     <i class="fa-solid fa-search"></i> Buscar otra ubicación
-                  </button>
-             </div>
-
-             <div class="form-group">
                   <label class="form-label">Fecha de Inicio:</label>
                   <div class="datetime-container">
                        <input type="date" id="fechaInicio" class="form-control">
@@ -600,6 +588,11 @@
                          </button>
                     </div>
                </div>
+               <div class="form-group">
+     <button id="searchButton" class="btn btn-primary w-100">
+          <i class="fa-solid fa-search"></i> Buscar en esta área
+     </button>
+</div>
    
                 <div id="errorMessage"></div>
    
@@ -640,24 +633,21 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
 
     <script>
-        let map;
-        let searchCircle;
-        let clickMarker;
-        let clickPosition = null; // Inicializar como null
-        let exactMarkers = [];
-        const errorMessage = document.getElementById("errorMessage");
-        const resultContainer = document.getElementById("resultContainer");
-        const resultList = document.getElementById("resultList");
-        const searchResultsContainer = document.getElementById("searchResults");
-        const searchInput = document.getElementById("searchInput");
-        const searchButton = document.getElementById("searchButton");
-        const searchAgainButton = document.getElementById("searchAgainButton");
-        const radioValue = document.getElementById("radioValue");
-        const fechaInicioInput = document.getElementById("fechaInicio");
-        const horaInicioInput = document.getElementById("horaInicio");
-        const fechaFinInput = document.getElementById("fechaFin");
-        const horaFinInput = document.getElementById("horaFin");
-        let selectedVehicle = 1; // Vehículo seleccionado por defecto
+let map;
+let searchCircle;
+let clickMarker;
+let clickPosition = null; // Inicializar como null
+let exactMarkers = [];
+const errorMessage = document.getElementById("errorMessage");
+const resultContainer = document.getElementById("resultContainer");
+const resultList = document.getElementById("resultList");
+const searchButton = document.getElementById("searchButton");
+const radioValue = document.getElementById("radioValue");
+const fechaInicioInput = document.getElementById("fechaInicio");
+const horaInicioInput = document.getElementById("horaInicio");
+const fechaFinInput = document.getElementById("fechaFin");
+const horaFinInput = document.getElementById("horaFin");
+let selectedVehicle = 1; // Vehículo seleccionado por defecto
 // AGREGAR - Después de otras variables globales
 let routePolyline = null;
 let routePoints = [];
@@ -894,11 +884,7 @@ document.querySelectorAll(".vehicle-btn").forEach(btn => {
         document.querySelectorAll(".vehicle-btn").forEach(b => b.classList.remove("active"));
         this.classList.add("active");
         selectedVehicle = parseInt(this.dataset.vehicle);
-        
-        // Actualizar visualización si corresponde
-        if (clickPosition) {
-            attemptAutoRefresh(); // Refrescar datos con el nuevo vehículo seleccionado
-        }
+        // Ya no hacemos refresh automático
     });
 });
 }
@@ -1075,8 +1061,6 @@ radioSlider.addEventListener("input", function() {
         }).addTo(map);
         map.fitBounds(searchCircle.getBounds(), { padding: [30, 30], maxZoom: 17 });
     }
-    
-    attemptAutoRefresh(); // Llama a la actualización si hay ubicación
 });
 // Botones de Radio
 document.querySelectorAll(".radio-option").forEach(option => {
@@ -1095,88 +1079,35 @@ document.querySelectorAll(".radio-option").forEach(option => {
             }).addTo(map);
             map.fitBounds(searchCircle.getBounds(), { padding: [30, 30], maxZoom: 17 });
         }
-        
-        attemptAutoRefresh(); // Llama a la actualización si hay ubicación
     });
 });
-
-            // Inputs de Fecha y Hora (evento 'change' para que se active al perder foco o seleccionar)
-// DESPUÉS
 // Inputs de Fecha y Hora con cierre automático
 [fechaInicioInput, fechaFinInput].forEach(input => {
     input.addEventListener("change", function(event) {
         // Cerrar el calendario automáticamente al seleccionar fecha
         input.blur();
-        attemptAutoRefresh();
     });
 });
 
-[horaInicioInput, horaFinInput].forEach(input => {
-    input.addEventListener("change", attemptAutoRefresh);
+// Ya no hacemos refresh automático en cambio de hora
+// Botón de búsqueda explícita
+document.getElementById("searchButton").addEventListener("click", function() {
+    if (clickPosition) {
+        const radio = parseInt(radioSlider.value);
+        consultarPasosPorUbicacion(clickPosition, radio);
+    } else {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Área no seleccionada',
+            text: 'Primero haz clic en el mapa para seleccionar un punto de búsqueda.',
+            timer: 3000
+        });
+    }
 });
-
 
             // Botón de Reset
             document.getElementById("resetButton").addEventListener("click", resetMap);
 
-// Evento para búsqueda con botón
-searchButton.addEventListener("click", function() {
-    if (searchInput.value.trim().length > 0) {
-        performSearch();
-    }
-});
-
-// Evento para búsqueda con Enter
-searchInput.addEventListener("keypress", function(e) {
-    if (e.key === "Enter") {
-        e.preventDefault();
-        if (this.value.trim().length > 0) {
-            performSearch();
-        }
-    }
-});
-
-// Suspender búsqueda automática mientras se escribe (era problemática)
-// Implementar un debounce para manejar la entrada del usuario
-let searchTimeout = null;
-searchInput.addEventListener("input", function() {
-    // Limpiar timeout anterior
-    if (searchTimeout) clearTimeout(searchTimeout);
-    
-    const query = this.value.trim();
-    if (query.length < 3) {
-        searchResultsContainer.style.display = "none";
-        return;
-    }
-    
-    // Configurar un nuevo timeout de 500ms
-    searchTimeout = setTimeout(() => {
-        performSearch();
-    }, 500); // Esperar 500ms después de que el usuario deja de escribir
-});
-
-searchAgainButton.addEventListener("click", function() {
-    searchInput.value = "";
-    searchInput.disabled = false; // Habilitar input
-    searchResultsContainer.style.display = "none";
-    searchAgainButton.style.display = "none";
-    if (clickMarker) map.removeLayer(clickMarker);
-    if (searchCircle) map.removeLayer(searchCircle);
-    clearExactMarkers();
-    resultContainer.style.display = "none";
-    errorMessage.style.display = "none";
-    clickPosition = null; // Olvidar la posición anterior
-    clickMarker = null;
-    searchCircle = null;
-    searchInput.focus();
-});
-
-            // Cerrar resultados de búsqueda al hacer clic fuera
-             document.addEventListener('click', function(event) {
-                 if (!searchInput.contains(event.target) && !searchButton.contains(event.target) && !searchResultsContainer.contains(event.target)) {
-                     searchResultsContainer.style.display = 'none';
-                 }
-             });
 
              // Inicializar el mapa al final
              initializeMap();
@@ -1204,10 +1135,10 @@ setTimeout(() => {
         html: `
             <p><b>¿Cómo usar esta herramienta?</b></p>
             <ol class="text-left">
-                <li>Busca una ubicación escribiendo en la barra de búsqueda</li>
-                <li>O haz clic directamente sobre el mapa para seleccionar un punto</li>
+                <li>Haz clic directamente sobre el mapa para seleccionar un punto</li>
                 <li>Selecciona el vehículo que deseas consultar</li>
                 <li>Ajusta el rango de fechas/horas y el radio de búsqueda</li>
+                <li>Haz clic en "Buscar en esta área" para iniciar la consulta</li>
                 <li>Explora los momentos detectados en la lista de resultados</li>
                 <li>Si se detecta una ruta, usa el slider para navegar por ella</li>
             </ol>
@@ -1218,69 +1149,53 @@ setTimeout(() => {
 }, 1000);
         }
 
-        function onMapClick(e) {
-            // Si ya se buscó una dirección, no permitir clic hasta limpiar
-            if (searchInput.disabled) {
-                 Swal.fire({
-                     icon: 'info',
-                     title: 'Ubicación Fijada',
-                     text: 'Ya has seleccionado una ubicación mediante la búsqueda. Usa "Buscar otra ubicación" o "Limpiar Mapa" para seleccionar un punto diferente.',
-                     timer: 4000,
-                     showConfirmButton: true // O false si prefieres que desaparezca sola
-                 });
-                 return;
-             }
-            clickPosition = e.latlng;
-            createMarkerAndCircle(clickPosition);
-            // Opcional: Rellenar input con coordenadas o mensaje
-            // searchInput.value = `Lat: ${clickPosition.lat.toFixed(5)}, Lng: ${clickPosition.lng.toFixed(5)}`;
-            // searchAgainButton.style.display = "block"; // Mostrar botón para limpiar/cambiar
-        }
-
-        // Nueva función para intentar refrescar automáticamente
-        function attemptAutoRefresh() {
-            if (clickPosition) { // Solo si hay una ubicación seleccionada
-                const radio = parseInt(radioSlider.value);
-                // No es necesario limpiar marcadores aquí, consultarPasos lo hará
-                consultarPasosPorUbicacion(clickPosition, radio);
-            }
-        }
+function onMapClick(e) {
+    clickPosition = e.latlng;
+    createMarkerAndCircle(clickPosition);
+    // Mostrar notificación para que el usuario sepa que debe dar clic en buscar
+    Swal.fire({
+        icon: 'info',
+        title: 'Punto seleccionado',
+        text: 'Ahora haz clic en "Buscar en esta área" para consultar.',
+        timer: 2000,
+        showConfirmButton: false
+    });
+}
 
 
-        function createMarkerAndCircle(position) {
-            if (!map) return;
 
-            // Eliminar marcador y círculo anteriores si existen
-            if (clickMarker) map.removeLayer(clickMarker);
-            if (searchCircle) map.removeLayer(searchCircle);
-            clearExactMarkers(); // Limpiar resultados anteriores
+ function createMarkerAndCircle(position) {
+    if (!map) return;
 
-            // Crear nuevo marcador de clic (azul estandar)
-             const clickIcon = L.icon({
-                 iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-                 iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-                 shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-                 iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-             });
-            clickMarker = L.marker(position, {icon: clickIcon}).addTo(map);
+    // Eliminar marcador y círculo anteriores si existen
+    if (clickMarker) map.removeLayer(clickMarker);
+    if (searchCircle) map.removeLayer(searchCircle);
+    clearExactMarkers(); // Limpiar resultados anteriores
 
-            // Crear círculo de búsqueda
-            const radio = parseInt(radioSlider.value);
-            searchCircle = L.circle(position, {
-                color: 'blue', fillColor: '#30f', fillOpacity: 0.15, radius: radio, weight: 2
-            }).addTo(map);
+    // Crear nuevo marcador de clic (azul estandar)
+     const clickIcon = L.icon({
+         iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+         iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+         shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+         iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+     });
+    clickMarker = L.marker(position, {icon: clickIcon}).addTo(map);
 
-            errorMessage.style.display = "none";
-            resultContainer.style.display = "none"; // Ocultar resultados mientras carga
-            consultarPasosPorUbicacion(position, radio); // Iniciar consulta
+    // Crear círculo de búsqueda
+    const radio = parseInt(radioSlider.value);
+    searchCircle = L.circle(position, {
+        color: 'blue', fillColor: '#30f', fillOpacity: 0.15, radius: radio, weight: 2
+    }).addTo(map);
 
-             // Ajustar vista
-             map.fitBounds(searchCircle.getBounds(), { padding: [30, 30], maxZoom: 17 });
+    errorMessage.style.display = "none";
+    resultContainer.style.display = "none"; // Ocultar resultados mientras carga
+    
+    // Ya no consultamos automáticamente
+    // consultarPasosPorUbicacion(position, radio);
 
-            // Mostrar botón "Buscar otra ubicación" solo si viene de una búsqueda de texto
-            // searchAgainButton.style.display = searchInput.disabled ? "block" : "none";
-             // ^^^ Se maneja mejor en performSearch y resetMap/searchAgain click
-        }
+     // Ajustar vista
+     map.fitBounds(searchCircle.getBounds(), { padding: [30, 30], maxZoom: 17 });
+}
 
         // Ya no se necesita updateSearchCircle separado, attemptAutoRefresh hace el trabajo
         /* function updateSearchCircle() { ... } */
@@ -1291,33 +1206,24 @@ setTimeout(() => {
             exactMarkers = [];
         }
 
-        function resetMap() {
-             if (!map) return;
-            if (clickMarker) map.removeLayer(clickMarker);
-            if (searchCircle) map.removeLayer(searchCircle);
-            clearExactMarkers();
+ function resetMap() {
+    if (!map) return;
+    if (clickMarker) map.removeLayer(clickMarker);
+    if (searchCircle) map.removeLayer(searchCircle);
+    clearExactMarkers();
 
-            errorMessage.style.display = "none";
-            resultContainer.style.display = "none";
-            clickPosition = null;
-            clickMarker = null;
-            searchCircle = null;
+    errorMessage.style.display = "none";
+    resultContainer.style.display = "none";
+    clickPosition = null;
+    clickMarker = null;
+    searchCircle = null;
 
-            searchInput.value = "";
-            searchInput.disabled = false; // Habilitar input
-            searchResultsContainer.style.display = "none";
-            searchResultsContainer.innerHTML = ""; // Limpiar resultados
-            searchAgainButton.style.display = "none";
+    // Limpiar todas las rutas y controles relacionados
+    clearAllRoutes();
 
-            // Recenter mapa a la vista inicial (Barranquilla)
-// Limpiar todas las rutas y controles relacionados
-clearAllRoutes();
-
-// Recenter mapa a la vista inicial (Barranquilla)
-map.setView([10.9639, -74.7964], 13);
-            // Opcional: recentrar a la última ubicación conocida si prefieres
-            // fetch('ultima_ubicacion.php')...
-        }
+    // Recenter mapa a la vista inicial (Barranquilla)
+    map.setView([10.9639, -74.7964], 13);
+}
 
         function consultarPasosPorUbicacion(position, radio) {
             if (!position) {
@@ -1450,57 +1356,6 @@ if (data.length >= 2) {
                     errorMessage.style.display = "block";
                     resultContainer.style.display = "block"; // Mantener visible para mostrar error
                     resultList.innerHTML = '<div class="text-center text-danger p-2"><i>Fallo la consulta.</i></div>'; // Mensaje dentro de la lista
-                });
-        }
-
-        function performSearch() {
-            const query = searchInput.value.trim();
-            if (!query) {
-                 searchResultsContainer.style.display = "none";
-                 return;
-                 }
-
-            searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i>Buscando...</i></div>';
-            searchResultsContainer.style.display = "block";
-
-            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=co&addressdetails=1`; // Limitar a Colombia, pedir detalles
-
-            fetch(url)
-                .then(response => response.ok ? response.json() : Promise.reject('Error en Nominatim'))
-                .then(data => {
-                    searchResultsContainer.innerHTML = "";
-
-                    if (data.length === 0) {
-                        searchResultsContainer.innerHTML = '<div class="search-result-item text-muted"><i>No se encontraron resultados</i></div>';
-                        return;
-                    }
-
-                    data.forEach(result => {
-                        const resultItem = document.createElement("div");
-                        resultItem.className = "search-result-item";
-                        resultItem.textContent = result.display_name;
-                        resultItem.title = result.display_name; // Tooltip por si es largo
-                        resultItem.addEventListener("click", function() {
-                            const lat = parseFloat(result.lat);
-                            const lon = parseFloat(result.lon);
-                             if (!isNaN(lat) && !isNaN(lon)) {
-                                clickPosition = L.latLng(lat, lon);
-                                searchInput.value = result.display_name; // Poner nombre en input
-                                searchInput.disabled = true; // Deshabilitar input tras seleccionar
-                                searchResultsContainer.style.display = "none"; // Ocultar resultados
-                                searchAgainButton.style.display = "block"; // Mostrar botón "buscar otra"
-                                createMarkerAndCircle(clickPosition); // Crear marcador/círculo y consultar
-                            } else {
-                                console.error("Resultado de Nominatim sin coordenadas válidas:", result);
-                                Swal.fire('Error', 'No se pudieron obtener coordenadas para esta ubicación.', 'error');
-                            }
-                        });
-                        searchResultsContainer.appendChild(resultItem);
-                    });
-                })
-                .catch(error => {
-                    console.error("Error en la búsqueda de Nominatim:", error);
-                    searchResultsContainer.innerHTML = `<div class="search-result-item text-danger"><i>Error en la búsqueda (${error.message})</i></div>`;
                 });
         }
 
