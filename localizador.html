@@ -638,6 +638,7 @@ let searchCircle;
 let clickMarker;
 let clickPosition = null; // Inicializar como null
 let exactMarkers = [];
+let primeraSeleccion = true; // Para recordar si es la primera vez que se selecciona un punto
 const errorMessage = document.getElementById("errorMessage");
 const resultContainer = document.getElementById("resultContainer");
 const resultList = document.getElementById("resultList");
@@ -648,7 +649,6 @@ const horaInicioInput = document.getElementById("horaInicio");
 const fechaFinInput = document.getElementById("fechaFin");
 const horaFinInput = document.getElementById("horaFin");
 let selectedVehicle = 1; // Vehículo seleccionado por defecto
-// AGREGAR - Después de otras variables globales
 let routePolyline = null;
 let routePoints = [];
 let routeTimestamps = [];
@@ -1152,14 +1152,18 @@ setTimeout(() => {
 function onMapClick(e) {
     clickPosition = e.latlng;
     createMarkerAndCircle(clickPosition);
-    // Mostrar notificación para que el usuario sepa que debe dar clic en buscar
-    Swal.fire({
-        icon: 'info',
-        title: 'Punto seleccionado',
-        text: 'Ahora haz clic en "Buscar en esta área" para consultar.',
-        timer: 2000,
-        showConfirmButton: false
-    });
+    
+    // Mostrar notificación SOLO la primera vez
+    if (primeraSeleccion) {
+        Swal.fire({
+            icon: 'info',
+            title: 'Punto seleccionado',
+            text: 'Ahora haz clic en "Buscar en esta área" para consultar.',
+            timer: 2000,
+            showConfirmButton: false
+        });
+        primeraSeleccion = false; // Ya no es la primera vez
+    }
 }
 
 
