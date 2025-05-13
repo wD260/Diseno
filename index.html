@@ -165,26 +165,16 @@
     <div class="container-fluid">
         <div class="content-wrapper">
             <h2 class="fw-bold text-uppercase text-center animate__animated animate__fadeInDown">SEGUIMIENTO GPS EN TIEMPO REAL</h2>
+            
+            <!-- Vehículo 1 -->
             <div class="header-container animate__animated animate__fadeIn">
-                <!-- Información del Vehículo 1 -->
                 <div class="info-container">
-                    <h4>Vehículo 1</h4>
+                    <p><strong>Vehículo 1:</strong></p>
                     <p><strong>Latitud :</strong> <span id="lat1">---</span></p>
                     <p><strong>Longitud:</strong> <span id="lon1">---</span></p>
                     <p><strong>Fecha:</strong> <span id="fecha1">---</span></p>
                     <p><strong>Hora:</strong> <span id="hora1">---</span></p>
                 </div>
-                
-                <!-- Información del Vehículo 2 -->
-                <div class="info-container">
-                    <h4>Vehículo 2</h4>
-                    <p><strong>Latitud :</strong> <span id="lat2">---</span></p>
-                    <p><strong>Longitud:</strong> <span id="lon2">---</span></p>
-                    <p><strong>Fecha:</strong> <span id="fecha2">---</span></p>
-                    <p><strong>Hora:</strong> <span id="hora2">---</span></p>
-                    <p id="rpmInfo"><strong>RPM:</strong> <span id="rpm">---</span></p>
-                </div>
-                
                 <div class="button-group">
                     <button class="btn historico-btn" onclick="abrirHistorico()">
                         <i class="fa-solid fa-clock-rotate-left"></i> Consulta Histórica
@@ -194,7 +184,20 @@
                     </button>
                 </div>
             </div>
+            
+            <!-- Vehículo 2 -->
+            <div class="header-container vehicle2-container animate__animated animate__fadeIn">
+                <div class="info-container">
+                    <p><strong>Vehículo 2:</strong></p>
+                    <p><strong>Latitud :</strong> <span id="lat2">---</span></p>
+                    <p><strong>Longitud:</strong> <span id="lon2">---</span></p>
+                    <p><strong>Fecha:</strong> <span id="fecha2">---</span></p>
+                    <p><strong>Hora:</strong> <span id="hora2">---</span></p>
+                    <p id="rpmInfo"><strong>RPM:</strong> <span id="rpm">---</span></p>
+                </div>
+            </div>
         </div>
+        
         <div class="map-container">
             <div id="map"></div>
         </div>
@@ -248,7 +251,6 @@
 
                     ref.lastPos = nuevaLatLng;
 
-                    // Actualizar información en las casillas según el vehículo
                     if (vehiculo === 1) {
                         document.getElementById("lat1").innerText = data.lat;
                         document.getElementById("lon1").innerText = data.lon;
@@ -287,5 +289,24 @@
 
         setInterval(actualizarAmbos, 2000);
     </script>
+    
+    <style>
+        /* Estilo para el contenedor del vehículo 2 */
+        .vehicle2-container {
+            margin-top: 10px;
+        }
+        
+        /* Si necesitas hacer el texto más pequeño para ambos vehículos */
+        .header-container .info-container {
+            font-size: 0.95em;
+        }
+        
+        /* Aumentar el tamaño del mapa */
+        .map-container {
+            height: 500px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+    </style>
 </body>
 </html>
