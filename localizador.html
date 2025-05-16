@@ -1297,26 +1297,28 @@ exactMarkers.push(loadingMarker); // Para que se elimine con clearExactMarkers()
                     }
                     return response.json();
                 })
-                .then(data => {
-                    console.log("Respuesta recibida:", data); // Para depuración
-                    resultList.innerHTML = ""; // Limpiar loader
+.then(data => {
+    console.log("Respuesta recibida:", data); // Para depuración
+    resultList.innerHTML = ""; // Limpiar loader
+    
+    // Eliminar el indicador de carga
+    clearExactMarkers();
 
-                    if (!Array.isArray(data)) {
-                         throw new Error("La respuesta del servidor no es un array.");
-                    }
+    if (!Array.isArray(data)) {
+         throw new Error("La respuesta del servidor no es un array.");
+    }
 
-if (data.length === 0) {
-    // Mostrar mensaje de "no encontrado" en el mapa
-    Swal.fire({
-        icon: 'info',
-        title: 'Sin resultados',
-        text: 'No se encontraron pasos en el área y período seleccionados.',
-        timer: 3000
-    });
-    errorMessage.style.display = "none"; // Asegurar que no haya error viejo
-    return;
-}
-
+    if (data.length === 0) {
+        // Mostrar mensaje de "no encontrado" en el mapa
+        Swal.fire({
+            icon: 'info',
+            title: 'Sin resultados',
+            text: 'No se encontraron pasos en el área y período seleccionados.',
+            timer: 3000
+        });
+        errorMessage.style.display = "none"; // Asegurar que no haya error viejo
+        return;
+    }
                     errorMessage.style.display = "none"; // Ocultar si hubo éxito
 
                     data.forEach(item => {
@@ -1374,13 +1376,23 @@ if (data.length >= 2) {
                     // resultList.firstChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
                 })
-                .catch(error => {
-                    console.error("Error detallado al consultar los datos:", error);
-                    errorMessage.textContent = `Error al consultar: ${error.message}. Verifique la conexión o inténtelo más tarde.`;
-                    errorMessage.style.display = "block";
-                    resultContainer.style.display = "block"; // Mantener visible para mostrar error
-                    resultList.innerHTML = '<div class="text-center text-danger p-2"><i>Fallo la consulta.</i></div>'; // Mensaje dentro de la lista
-                });
+.catch(error => {
+    console.error("Error detallado al consultar los datos:", error);
+    // Eliminar el indicador de carga
+    clearExactMarkers();
+    
+    errorMessage.textContent = `Error al consultar: ${error.message}. Verifique la conexión o inténtelo más tarde.`;
+    errorMessage.style.display = "block";
+    resultList.innerHTML = '<div class="text-center text-danger p-2"><i>Fallo la consulta.</i></div>'; // Mensaje dentro de la lista
+    
+    // Mostrar mensaje de error también en el mapa
+    Swal.fire({
+        icon: 'error',
+        title: 'Error en la consulta',
+        text: 'No se pudieron obtener los datos. Intente nuevamente.',
+        timer: 3000
+    });
+});
         }
 
         // Inicializar todo cuando se carga la página
