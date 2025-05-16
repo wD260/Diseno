@@ -79,7 +79,11 @@
             margin-bottom: 8px;
             font-size: 14px;
         }
-
+.route-rpm-indicator {
+    margin-left: 5px;
+    color: #f30;
+    font-size: 0.8em;
+}
         .form-control, .datetime-container input, .search-container input {
             padding: 10px;
             border-radius: 8px;
@@ -391,7 +395,13 @@
     max-height: 200px;
     overflow-y: auto;
 }
-
+.map-loading-indicator .spinner {
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 10px 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    font-weight: 500;
+}
 .route-selector-button {
     border: none;
     border-radius: 4px;
@@ -596,10 +606,6 @@
    
                 <div id="errorMessage"></div>
    
-                <div id="resultContainer">
-                  <h3>Momentos en el área:</h3>
-                  <div id="resultList"></div>
-             </div>
 
              <button id="resetButton" class="btn btn-danger w-100">
                   <i class="fa-solid fa-broom"></i> Limpiar Mapa y Selección
@@ -640,8 +646,9 @@ let clickPosition = null; // Inicializar como null
 let exactMarkers = [];
 let primeraSeleccion = true; // Para recordar si es la primera vez que se selecciona un punto
 const errorMessage = document.getElementById("errorMessage");
-const resultContainer = document.getElementById("resultContainer");
-const resultList = document.getElementById("resultList");
+// Ya no necesitamos la referencia a resultContainer
+const resultList = document.createElement("div"); // Creamos un div temporal para manejar los resultados
+resultList.id = "resultList";
 const searchButton = document.getElementById("searchButton");
 const radioValue = document.getElementById("radioValue");
 const fechaInicioInput = document.getElementById("fechaInicio");
@@ -705,15 +712,16 @@ function createRoutePolyline(data) {
             };
         }
         
-        // Agregar punto a la ruta actual
-        currentRoute.points.push(currentPoint);
-        currentRoute.timestamps.push({
-            time: currentTime,
-            fecha: data[i].fecha,
-            hora: data[i].hora,
-            lat: currentPoint[0], 
-            lon: currentPoint[1]
-        });
+// Agregar punto a la ruta actual
+currentRoute.points.push(currentPoint);
+currentRoute.timestamps.push({
+    time: currentTime,
+    fecha: data[i].fecha,
+    hora: data[i].hora,
+    lat: currentPoint[0], 
+    lon: currentPoint[1],
+    rpm: data[i].rpm || null // Guardar RPM si existe
+});
         
         lastTime = currentTime;
     }
@@ -821,15 +829,17 @@ function createRouteSelector(routes) {
         const startTime = route.timestamps[0];
         const endTime = route.timestamps[route.timestamps.length - 1];
         
-        button.innerHTML = `
-            <div class="route-button-content">
-                <div class="route-button-number">${index + 1}</div>
-                <div class="route-button-info">
-                    <div>${startTime.fecha}</div>
-                    <div>${startTime.hora} - ${endTime.hora}</div>
-                </div>
-            </div>
-        `;
+// Añadir indicador de RPM para vehículo 2 si corresponde
+const rpmIndicator = selectedVehicle === 2 ? '<span class="route-rpm-indicator"><i class="fa-solid fa-gauge-high"></i></span>' : '';
+button.innerHTML = `
+    <div class="route-button-content">
+        <div class="route-button-number">${index + 1}</div>
+        <div class="route-button-info">
+            <div>${startTime.fecha}</div>
+            <div>${startTime.hora} - ${endTime.hora} ${rpmIndicator}</div>
+        </div>
+    </div>
+`;
         
         button.addEventListener('click', () => selectRoute(index));
         buttonsContainer.appendChild(button);
@@ -956,24 +966,26 @@ function createRouteSlider(routeColor = '#1E88E5') {
         // Centrar mapa en el punto
         map.setView(point, Math.max(map.getZoom(), 16));
         
-        // Crear marcador en la posición actual
-        const exactMarker = L.circleMarker(point, {
-            color: routeColor,
-            fillColor: routeColor,
-            fillOpacity: 0.7,
-            radius: 8,
-            weight: 2
-        }).addTo(map);
-        
-        exactMarkers.push(exactMarker);
-        
-        // Mostrar popup con información
-        exactMarker.bindPopup(`
-            <div style="text-align: center; font-weight: bold;">Punto ${index + 1} de ${routePoints.length}</div>
-            <div><b>Fecha:</b> ${timestamp.fecha}</div>
-            <div><b>Hora:</b> ${timestamp.hora}</div>
-            <div><small>Lat: ${timestamp.lat.toFixed(5)}, Lon: ${timestamp.lon.toFixed(5)}</small></div>
-        `).openPopup();
+// Crear marcador en la posición actual
+const exactMarker = L.circleMarker(point, {
+    color: routeColor,
+    fillColor: routeColor,
+    fillOpacity: 0.7,
+    radius: 8,
+    weight: 2
+}).addTo(map);
+
+exactMarkers.push(exactMarker);
+
+// Mostrar popup con información, incluyendo RPM si existe y estamos en vehículo 2
+const rpmInfo = timestamp.rpm && selectedVehicle === 2 ? `<div><b>RPM:</b> ${timestamp.rpm}</div>` : '';
+exactMarker.bindPopup(`
+    <div style="text-align: center; font-weight: bold;">Punto ${index + 1} de ${routePoints.length}</div>
+    <div><b>Fecha:</b> ${timestamp.fecha}</div>
+    <div><b>Hora:</b> ${timestamp.hora}</div>
+    ${rpmInfo}
+    <div><small>Lat: ${timestamp.lat.toFixed(5)}, Lon: ${timestamp.lon.toFixed(5)}</small></div>
+`).openPopup();
         
         // Actualizar displays
         timeDisplay.textContent = `${timestamp.fecha} ${timestamp.hora}`;
@@ -1192,7 +1204,7 @@ function onMapClick(e) {
     }).addTo(map);
 
     errorMessage.style.display = "none";
-    resultContainer.style.display = "none"; // Ocultar resultados mientras carga
+
     
     // Ya no consultamos automáticamente
     // consultarPasosPorUbicacion(position, radio);
@@ -1217,7 +1229,7 @@ function onMapClick(e) {
     clearExactMarkers();
 
     errorMessage.style.display = "none";
-    resultContainer.style.display = "none";
+
     clickPosition = null;
     clickMarker = null;
     searchCircle = null;
@@ -1244,7 +1256,7 @@ function onMapClick(e) {
              if (!fechaInicio || !horaInicio || !fechaFin || !horaFin) {
                  errorMessage.textContent = "Por favor, complete las fechas y horas.";
                  errorMessage.style.display = "block";
-                 resultContainer.style.display = "none"; // Ocultar resultados si hay error
+
                  return;
              }
              const inicioDT = new Date(`${fechaInicio}T${horaInicio}`);
@@ -1252,24 +1264,26 @@ function onMapClick(e) {
              if (isNaN(inicioDT.getTime()) || isNaN(finDT.getTime())) {
                 errorMessage.textContent = "Formato de fecha u hora inválido.";
                 errorMessage.style.display = "block";
-                resultContainer.style.display = "none";
+
                 return;
              }
              if (inicioDT >= finDT) {
                  errorMessage.textContent = "La fecha/hora de inicio debe ser anterior a la de fin.";
                  errorMessage.style.display = "block";
-                 resultContainer.style.display = "none";
+
                  return;
              }
              errorMessage.style.display = "none"; // Ocultar si pasa validación
 
             const inicio = `${fechaInicio} ${horaInicio}:00`;
             const fin = `${fechaFin} ${horaFin}:00`;
+// Mostrar loader solo en mapa
+clearExactMarkers(); // Limpia marcadores rojos del mapa
+// Mostrar un indicador de carga directamente en el mapa
+const loadingIndicator = L.divIcon({className: 'map-loading-indicator', html: '<div class="spinner"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>'});
+const loadingMarker = L.marker(position, {icon: loadingIndicator}).addTo(map);
+exactMarkers.push(loadingMarker); // Para que se elimine con clearExactMarkers()
 
-            // Mostrar loader y limpiar resultados anteriores
-            clearExactMarkers(); // Limpia marcadores rojos del mapa
-            resultList.innerHTML = '<div class="text-center p-2"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
-            resultContainer.style.display = "block";
 
 
             // --- Llamada AJAX (Asegúrate que la URL y parámetros sean correctos) ---
@@ -1291,11 +1305,17 @@ function onMapClick(e) {
                          throw new Error("La respuesta del servidor no es un array.");
                     }
 
-                    if (data.length === 0) {
-                        resultList.innerHTML = '<div class="text-center text-muted p-2"><i>No se encontraron pasos en el área y período seleccionados.</i></div>';
-                        errorMessage.style.display = "none"; // Asegurar que no haya error viejo
-                        return;
-                    }
+if (data.length === 0) {
+    // Mostrar mensaje de "no encontrado" en el mapa
+    Swal.fire({
+        icon: 'info',
+        title: 'Sin resultados',
+        text: 'No se encontraron pasos en el área y período seleccionados.',
+        timer: 3000
+    });
+    errorMessage.style.display = "none"; // Asegurar que no haya error viejo
+    return;
+}
 
                     errorMessage.style.display = "none"; // Ocultar si hubo éxito
 
