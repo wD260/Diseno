@@ -511,6 +511,7 @@
     <div class="main-layout">
         <div class="sidebar">
              <style>
+                  /* Estilos para los botones de vehículo */
                   .vehicle-selector {
                        display: flex;
                        gap: 10px;
@@ -543,6 +544,7 @@
                   }
              </style>
              <h2 class="app-title animate__animated animate__fadeInDown">LOCALIZADOR POR ÁREA</h2>
+
              <div class="form-group">
                   <label class="form-label">Fecha de Inicio:</label>
                   <div class="datetime-container">
@@ -550,6 +552,7 @@
                        <input type="time" id="horaInicio" class="form-control">
                   </div>
              </div>
+
              <div class="form-group">
                   <label class="form-label">Fecha de Fin:</label>
                   <div class="datetime-container">
@@ -557,6 +560,7 @@
                        <input type="time" id="horaFin" class="form-control">
                   </div>
              </div>
+
              <div class="form-group">
                   <label class="form-label">Radio de búsqueda: <span id="radioValue">100 m</span></label>
                   <div class="range-container">
@@ -572,6 +576,7 @@
                        <div class="radio-option" data-value="500">500m</div>
                    </div>
                 </div>
+   
                 <div class="form-group">
                     <label class="form-label">Seleccionar Vehículo:</label>
                     <div class="vehicle-selector">
@@ -588,13 +593,16 @@
           <i class="fa-solid fa-search"></i> Buscar en esta área
      </button>
 </div>
+   
                 <div id="errorMessage"></div>
    
+
 
              <button id="resetButton" class="btn btn-danger w-100">
                   <i class="fa-solid fa-broom"></i> Limpiar Mapa y Selección
              </button>
         </div>
+
         <div class="map-container">
              <div class="top-buttons">
                   <button class="btn btn-info" onclick="abrirTiempoReal()">
@@ -603,19 +611,24 @@
                   <button class="btn btn-warning" onclick="abrirHistorial()"> <i class="fas fa-history"></i> Consulta Histórica
                   </button>
                   </div>
+
              <div class="zoom-controls">
                   <div class="zoom-btn" onclick="zoomIn()"><i class="fas fa-plus"></i></div>
                   <div class="zoom-btn" onclick="zoomOut()"><i class="fas fa-minus"></i></div>
              </div>
+
              <div id="map"></div>
+
               <div class="map-attribution">
                    © Leaflet | © OpenStreetMap contributors
               </div>
         </div>
     </div>
+
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+
     <script>
 let map;
 let searchCircle;
@@ -639,29 +652,46 @@ let routeTimestamps = [];
 let routeSlider = null;
 let currentRouteIndex = 0;
 const MAX_TIME_GAP = 30; // Segundos máximos entre puntos para considerarlos de la misma ruta                
+
+
+        // Funciones de Navegación y Zoom
          function abrirTiempoReal() { window.location.href = "/index.html"; }
          function abrirHistorial() { window.location.href = "/historico.html"; }
          function zoomIn() { if(map) map.zoomIn(); }
          function zoomOut() { if(map) map.zoomOut(); }
 
+// DESPUÉS
 function createRoutePolyline(data) {
+    // Limpiar rutas anteriores
     clearAllRoutes();
+    
     if (!data || data.length < 2) return;
+    
+    // Ordenar por fecha y hora
     data.sort((a, b) => {
         const timeA = new Date(`${a.fecha} ${a.hora}`);
         const timeB = new Date(`${b.fecha} ${b.hora}`);
         return timeA - timeB;
     });
+    
+    // Definir un gap máximo para considerar rutas separadas (en minutos)
     const MAX_ROUTE_GAP_MINUTES = 30;
+    
+    // Arrays para almacenar múltiples rutas
     let routes = [];
     let currentRoute = {
         points: [],
         timestamps: []
     };
+    
     let lastTime = null;
+    
+    // Recorrer todos los puntos y separarlos en rutas distintas
     for (let i = 0; i < data.length; i++) {
         const currentPoint = [parseFloat(data[i].lat), parseFloat(data[i].lon)];
         const currentTime = new Date(`${data[i].fecha} ${data[i].hora}`);
+        
+        // Si hay un gap temporal significativo, comenzar una nueva ruta
         if (lastTime !== null && ((currentTime - lastTime) / (1000 * 60) > MAX_ROUTE_GAP_MINUTES)) {
             if (currentRoute.points.length >= 2) {
                 routes.push(currentRoute);
@@ -671,7 +701,8 @@ function createRoutePolyline(data) {
                 timestamps: []
             };
         }
-        currentRoute.points.push(currentPoint);
+        
+        // Agregar punto a la ruta actual
 currentRoute.timestamps.push({
     time: currentTime,
     fecha: data[i].fecha,
@@ -683,68 +714,110 @@ currentRoute.timestamps.push({
         
         lastTime = currentTime;
     }
+    
+    // Agregar la última ruta si tiene suficientes puntos
     if (currentRoute.points.length >= 2) {
         routes.push(currentRoute);
     }
+    
+    // Si no hay rutas válidas, salir
     if (routes.length === 0) return;
+    
+    // Colores para las diferentes rutas
     const routeColors = ['#1E88E5', '#D81B60', '#8E24AA', '#43A047', '#FB8C00', '#E53935'];
+    
+    // Crear las polilíneas para cada ruta
     let allRouteBounds = [];
     routes.forEach((route, index) => {
         const color = routeColors[index % routeColors.length];
+        
         const polyline = L.polyline(route.points, {
             color: color,
             weight: 3,
             opacity: 0.7
         }).addTo(map);
+        
+        // Guardar la ruta
         route.polyline = polyline;
         route.color = color;
         route.index = index;
+        
+        // Acumular bounds para ajustar la vista
         allRouteBounds.push(polyline.getBounds());
     });
+    
+    // Almacenar todas las rutas
     window.detectedRoutes = routes;
+    
+    // Ajustar vista para ver todas las rutas
     if (allRouteBounds.length > 0) {
         const bounds = L.latLngBounds(allRouteBounds);
         map.fitBounds(bounds, { padding: [30, 30] });
     }
+    
+    // Crear selector de rutas
     createRouteSelector(routes);
+    
+    // Seleccionar la primera ruta por defecto
     if (routes.length > 0) {
         selectRoute(0);
     }
 }
+
+// Nueva función para limpiar todas las rutas
 function clearAllRoutes() {
     if (routePolyline) map.removeLayer(routePolyline);
     routePolyline = null;
+    
+    // Limpiar múltiples rutas si existen
     if (window.detectedRoutes) {
         window.detectedRoutes.forEach(route => {
             if (route.polyline) map.removeLayer(route.polyline);
         });
     }
+    
     window.detectedRoutes = [];
     routePoints = [];
     routeTimestamps = [];
+    
+    // Eliminar selector de rutas y slider si existen
     const existingSelector = document.querySelector('.route-selector-container');
     if (existingSelector) existingSelector.remove();
+    
     const existingSlider = document.querySelector('.route-slider-container');
     if (existingSlider) existingSlider.remove();
 }
+
+// Nueva función para crear selector de rutas
 function createRouteSelector(routes) {
+    // Eliminar selector anterior si existe
     const existingSelector = document.querySelector('.route-selector-container');
     if (existingSelector) existingSelector.remove();
+    
+    // Crear contenedor para el selector
     const selectorContainer = document.createElement('div');
     selectorContainer.className = 'route-selector-container';
+    
+    // Crear título
     const title = document.createElement('div');
     title.className = 'route-selector-title';
     title.textContent = `${routes.length} ${routes.length === 1 ? 'ruta detectada' : 'rutas detectadas'}`;
     selectorContainer.appendChild(title);
+    
+    // Crear botones para cada ruta
     const buttonsContainer = document.createElement('div');
     buttonsContainer.className = 'route-selector-buttons';
+    
     routes.forEach((route, index) => {
         const button = document.createElement('button');
         button.className = 'route-selector-button';
         button.style.backgroundColor = route.color;
         button.dataset.routeIndex = index;
+        
+        // Calcular fecha de inicio y fin de la ruta
         const startTime = route.timestamps[0];
         const endTime = route.timestamps[route.timestamps.length - 1];
+        
         button.innerHTML = `
             <div class="route-button-content">
                 <div class="route-button-number">${index + 1}</div>
@@ -754,15 +827,22 @@ function createRouteSelector(routes) {
                 </div>
             </div>
         `;
+        
         button.addEventListener('click', () => selectRoute(index));
         buttonsContainer.appendChild(button);
     });
+    
     selectorContainer.appendChild(buttonsContainer);
     document.querySelector('.map-container').appendChild(selectorContainer);
 }
+
+// Nueva función para seleccionar una ruta
 function selectRoute(index) {
     if (!window.detectedRoutes || index >= window.detectedRoutes.length) return;
+    
     const selectedRoute = window.detectedRoutes[index];
+    
+    // Resaltar la ruta seleccionada y atenuar las demás
     window.detectedRoutes.forEach((route, i) => {
         if (i === index) {
             route.polyline.setStyle({
@@ -776,27 +856,56 @@ function selectRoute(index) {
             });
         }
     });
+    
+    // Asignar la ruta seleccionada a las variables globales para el slider
     routePoints = selectedRoute.points;
     routeTimestamps = selectedRoute.timestamps;
     routePolyline = selectedRoute.polyline;
+    
+    // Crear slider para esta ruta
     createRouteSlider(selectedRoute.color);
+    
+    // Seleccionar visualmente el botón
+
+// Botones de Radio
 document.querySelectorAll(".radio-option").forEach(option => {
     option.addEventListener("click", function() {
+        // ... código existente ...
         attemptAutoRefresh(); // Llama a la actualización si hay ubicación
     });
 });
+
+// Selector de vehículo
 document.querySelectorAll(".vehicle-btn").forEach(btn => {
     btn.addEventListener("click", function() {
         document.querySelectorAll(".vehicle-btn").forEach(b => b.classList.remove("active"));
         this.classList.add("active");
         selectedVehicle = parseInt(this.dataset.vehicle);
+        // Ya no hacemos refresh automático
     });
 });
 }
+
+
+
+
+
+
+
+
+
+
+
+// DESPUÉS
 function createRouteSlider(routeColor = '#1E88E5') {
+    // Eliminar slider anterior si existe
     const existingSlider = document.querySelector('.route-slider-container');
     if (existingSlider) existingSlider.remove();
+    
+    // Si no hay puntos, no crear slider
     if (!routePoints || routePoints.length < 2) return;
+    
+    // Crear contenedor para el slider
     const sliderContainer = document.createElement('div');
     sliderContainer.className = 'route-slider-container';
     sliderContainer.innerHTML = `
@@ -817,20 +926,34 @@ function createRouteSlider(routeColor = '#1E88E5') {
             <span id="pointCounter">Punto 1/${routePoints.length}</span>
         </div>
     `;
+    
+    // Agregar al DOM
     document.querySelector('.map-container').appendChild(sliderContainer);
+    
+    // Obtener referencias
     routeSlider = document.getElementById('routeSlider');
     const prevBtn = document.getElementById('prevPointBtn');
     const nextBtn = document.getElementById('nextPointBtn');
     const timeDisplay = document.getElementById('currentTimeDisplay');
     const pointCounter = document.getElementById('pointCounter');
+    
+    // Variable para rastrear el índice actual
     currentRouteIndex = 0;
+    
+    // Función para actualizar la vista según la posición en la ruta
     function updateRoutePosition(index) {
         clearExactMarkers();
+        
         if (index < 0 || index >= routePoints.length) return;
+        
         currentRouteIndex = index;
         const point = routePoints[index];
         const timestamp = routeTimestamps[index];
+        
+        // Centrar mapa en el punto
         map.setView(point, Math.max(map.getZoom(), 16));
+        
+        // Crear marcador en la posición actual
         const exactMarker = L.circleMarker(point, {
             color: routeColor,
             fillColor: routeColor,
@@ -838,7 +961,10 @@ function createRouteSlider(routeColor = '#1E88E5') {
             radius: 8,
             weight: 2
         }).addTo(map);
+        
         exactMarkers.push(exactMarker);
+        
+        // Mostrar popup con información
 let rpmInfo = '';
 if (selectedVehicle === 2 && timestamp.rpm) {
     rpmInfo = `<div><b>RPM:</b> ${timestamp.rpm}</div>`;
@@ -850,9 +976,14 @@ exactMarker.bindPopup(`
     ${rpmInfo}
     <div><small>Lat: ${timestamp.lat.toFixed(5)}, Lon: ${timestamp.lon.toFixed(5)}</small></div>
 `).openPopup();
+        
+        // Actualizar displays
         timeDisplay.textContent = `${timestamp.fecha} ${timestamp.hora}`;
         pointCounter.textContent = `Punto ${index + 1}/${routePoints.length}`;
+        
+        // Si la ruta original aún existe en el mapa, mantenerla y solo resaltar el segmento
         if (routePolyline) {
+            // Resaltar el segmento actual si hay un siguiente punto
             if (index < routePoints.length - 1) {
                 const highlightSegment = L.polyline([routePoints[index], routePoints[index + 1]], {
                     color: '#FF3D00',
@@ -861,6 +992,8 @@ exactMarker.bindPopup(`
                 }).addTo(map);
                 exactMarkers.push(highlightSegment);
             }
+            
+            // Opcional: mostrar un segmento previo en un color diferente
             if (index > 0) {
                 const prevSegment = L.polyline([routePoints[index-1], routePoints[index]], {
                     color: '#FFAB00',
@@ -871,9 +1004,13 @@ exactMarker.bindPopup(`
             }
         }
     }
+    
+    // Eventos del slider y botones
     routeSlider.addEventListener('input', function() {
         updateRoutePosition(parseInt(this.value));
     });
+    
+    // Corregir los eventos de los botones
     prevBtn.addEventListener('click', function() {
         if (currentRouteIndex > 0) {
             currentRouteIndex--;
@@ -881,6 +1018,7 @@ exactMarker.bindPopup(`
             updateRoutePosition(currentRouteIndex);
         }
     });
+    
     nextBtn.addEventListener('click', function() {
         if (currentRouteIndex < routePoints.length - 1) {
             currentRouteIndex++;
@@ -888,25 +1026,37 @@ exactMarker.bindPopup(`
             updateRoutePosition(currentRouteIndex);
         }
     });
+    
+    // Inicializar en el primer punto
     updateRoutePosition(0);
 }
+
         function initializeDatetimes() {
+            // Configurar fechas y horas por defecto
             const now = new Date();
             const yesterday = new Date(now);
             yesterday.setDate(now.getDate() - 1);
             const formatDate = (date) => date.toISOString().split('T')[0];
             const formatTime = (date) => date.toTimeString().split(' ')[0].substring(0,5); // HH:MM
+
             fechaInicioInput.value = formatDate(yesterday);
             horaInicioInput.value = "00:00";
             fechaFinInput.value = formatDate(now);
-            horaFinInput.value = "23:59"; 
+            horaFinInput.value = "23:59"; // O usar formatTime(now) para la hora actual
+
+            // --- Event Listeners ---
+
+// Slider de Radio
 radioSlider.addEventListener("input", function() {
     const value = this.value;
     radioValue.textContent = value >= 1000 ? (value / 1000).toFixed(1) + " km" : value + " m";
+    // Actualizar botones de radio visualmente si coincide el valor (opcional)
     document.querySelectorAll(".radio-option").forEach(opt => {
          opt.classList.toggle("active", opt.dataset.value === value);
     });
-if (clickPosition && searchCircle) {
+    
+    // Actualizar círculo inmediatamente si existe
+    if (clickPosition && searchCircle) {
         map.removeLayer(searchCircle);
         searchCircle = L.circle(clickPosition, {
             color: 'blue', fillColor: '#30f', fillOpacity: 0.15, radius: parseInt(value), weight: 2
@@ -914,14 +1064,17 @@ if (clickPosition && searchCircle) {
         map.fitBounds(searchCircle.getBounds(), { padding: [30, 30], maxZoom: 17 });
     }
 });
+// Botones de Radio
 document.querySelectorAll(".radio-option").forEach(option => {
     option.addEventListener("click", function() {
         document.querySelectorAll(".radio-option").forEach(opt => opt.classList.remove("active"));
         this.classList.add("active");
         const value = this.dataset.value;
-        radioSlider.value = value; 
+        radioSlider.value = value; // Sincronizar slider
         radioValue.textContent = value >= 1000 ? (value / 1000).toFixed(1) + " km" : value + " m";
-if (clickPosition && searchCircle) {
+        
+        // Actualizar círculo inmediatamente si existe
+        if (clickPosition && searchCircle) {
             map.removeLayer(searchCircle);
             searchCircle = L.circle(clickPosition, {
                 color: 'blue', fillColor: '#30f', fillOpacity: 0.15, radius: parseInt(value), weight: 2
@@ -930,12 +1083,16 @@ if (clickPosition && searchCircle) {
         }
     });
 });
+// Inputs de Fecha y Hora con cierre automático
 [fechaInicioInput, fechaFinInput].forEach(input => {
     input.addEventListener("change", function(event) {
-
+        // Cerrar el calendario automáticamente al seleccionar fecha
         input.blur();
     });
 });
+
+// Ya no hacemos refresh automático en cambio de hora
+// Botón de búsqueda explícita
 document.getElementById("searchButton").addEventListener("click", function() {
     if (clickPosition) {
         const radio = parseInt(radioSlider.value);
@@ -949,16 +1106,31 @@ document.getElementById("searchButton").addEventListener("click", function() {
         });
     }
 });
-document.getElementById("resetButton").addEventListener("click", resetMap);
+
+            // Botón de Reset
+            document.getElementById("resetButton").addEventListener("click", resetMap);
+
+
+             // Inicializar el mapa al final
              initializeMap();
         }
+
         function initializeMap() {
-            map = L.map('map', { zoomControl: false }).setView([10.9639, -74.7964], 13); 
+            map = L.map('map', { zoomControl: false }).setView([10.9639, -74.7964], 13); // Centro inicial Barranquilla
+
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
+
+            // No centrar en última ubicación aquí, esperar interacción del usuario
+            // fetch('ultima_ubicacion.php')... (eliminado para empezar limpio)
+
             map.on('click', onMapClick);
+            // Forzar recalculo de tamaño por si acaso
             setTimeout(() => { map.invalidateSize() }, 100);
+            // AGREGAR al final de initializeMap()
+// Mostrar instrucciones al cargar
+// Mostrar instrucciones al cargar
 setTimeout(() => {
     Swal.fire({
         title: 'Bienvenido al Localizador por Área',
@@ -978,9 +1150,12 @@ setTimeout(() => {
     });
 }, 1000);
         }
+
 function onMapClick(e) {
     clickPosition = e.latlng;
     createMarkerAndCircle(clickPosition);
+    
+    // Mostrar notificación SOLO la primera vez
     if (primeraSeleccion) {
         Swal.fire({
             icon: 'info',
@@ -992,11 +1167,18 @@ function onMapClick(e) {
         primeraSeleccion = false; // Ya no es la primera vez
     }
 }
-function createMarkerAndCircle(position) {
+
+
+
+ function createMarkerAndCircle(position) {
     if (!map) return;
+
+    // Eliminar marcador y círculo anteriores si existen
     if (clickMarker) map.removeLayer(clickMarker);
     if (searchCircle) map.removeLayer(searchCircle);
     clearExactMarkers(); // Limpiar resultados anteriores
+
+    // Crear nuevo marcador de clic (azul estandar)
      const clickIcon = L.icon({
          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
          iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -1004,14 +1186,26 @@ function createMarkerAndCircle(position) {
          iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
      });
     clickMarker = L.marker(position, {icon: clickIcon}).addTo(map);
+
+    // Crear círculo de búsqueda
     const radio = parseInt(radioSlider.value);
     searchCircle = L.circle(position, {
         color: 'blue', fillColor: '#30f', fillOpacity: 0.15, radius: radio, weight: 2
     }).addTo(map);
+
     errorMessage.style.display = "none";
     resultContainer.style.display = "none"; // Ocultar resultados mientras carga
-    map.fitBounds(searchCircle.getBounds(), { padding: [30, 30], maxZoom: 17 });
+    
+    // Ya no consultamos automáticamente
+    // consultarPasosPorUbicacion(position, radio);
+
+     // Ajustar vista
+     map.fitBounds(searchCircle.getBounds(), { padding: [30, 30], maxZoom: 17 });
 }
+
+        // Ya no se necesita updateSearchCircle separado, attemptAutoRefresh hace el trabajo
+        /* function updateSearchCircle() { ... } */
+
         function clearExactMarkers() {
              if (!map) return;
             exactMarkers.forEach(marker => map.removeLayer(marker));
@@ -1029,18 +1223,26 @@ function createMarkerAndCircle(position) {
     clickPosition = null;
     clickMarker = null;
     searchCircle = null;
+
+    // Limpiar todas las rutas y controles relacionados
     clearAllRoutes();
+
+    // Recenter mapa a la vista inicial (Barranquilla)
     map.setView([10.9639, -74.7964], 13);
 }
+
         function consultarPasosPorUbicacion(position, radio) {
             if (!position) {
                 console.warn("Intento de consulta sin posición válida.");
                 return; // Salir si no hay posición
             }
+
             const fechaInicio = fechaInicioInput.value;
             const horaInicio = horaInicioInput.value;
             const fechaFin = fechaFinInput.value;
             const horaFin = horaFinInput.value;
+
+             // Validación de fechas/horas
              if (!fechaInicio || !horaInicio || !fechaFin || !horaFin) {
                  errorMessage.textContent = "Por favor, complete las fechas y horas.";
                  errorMessage.style.display = "block";
@@ -1065,11 +1267,17 @@ function createMarkerAndCircle(position) {
 
             const inicio = `${fechaInicio} ${horaInicio}:00`;
             const fin = `${fechaFin} ${horaFin}:00`;
+
+            // Mostrar loader y limpiar resultados anteriores
             clearExactMarkers(); // Limpia marcadores rojos del mapa
             resultList.innerHTML = '<div class="text-center p-2"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
             resultContainer.style.display = "block";
+
+
+            // --- Llamada AJAX (Asegúrate que la URL y parámetros sean correctos) ---
             const url = `cuando_paso.php?lat=${position.lat}&lon=${position.lng}&radio=${radio}&inicio=${encodeURIComponent(inicio)}&fin=${encodeURIComponent(fin)}&vehiculo=${selectedVehicle}`;
             console.log("Consultando:", url); // Para depuración
+
             fetch(url)
                 .then(response => {
                     if (!response.ok) {
@@ -1084,21 +1292,27 @@ function createMarkerAndCircle(position) {
                     if (!Array.isArray(data)) {
                          throw new Error("La respuesta del servidor no es un array.");
                     }
+
                     if (data.length === 0) {
                         resultList.innerHTML = '<div class="text-center text-muted p-2"><i>No se encontraron pasos en el área y período seleccionados.</i></div>';
                         errorMessage.style.display = "none"; // Asegurar que no haya error viejo
                         return;
                     }
+
                     errorMessage.style.display = "none"; // Ocultar si hubo éxito
+
                     data.forEach(item => {
+                         // Validación básica de datos recibidos
                          const lat = parseFloat(item.lat);
                          const lon = parseFloat(item.lon);
                          if (isNaN(lat) || isNaN(lon) || !item.fecha || !item.hora) {
                              console.warn("Registro inválido recibido:", item);
                              return; // Saltar este item
                          }
+
                         const resultItem = document.createElement("div");
                         resultItem.className = "result-item";
+// Formatear la visualización del resultado con o sin RPM
 resultItem.innerHTML = `
     <div class="result-date" title="${item.fecha} ${item.hora}">
         <strong>${item.fecha}</strong> ${item.hora}
@@ -1107,6 +1321,7 @@ resultItem.innerHTML = `
     <div class="result-action" data-lat="${lat}" data-lon="${lon}" data-fecha="${item.fecha}" data-hora="${item.hora}" data-rpm="${item.rpm || ''}">
         <i class="fa-solid fa-location-dot"></i> Ver
     </div>`;
+
                         resultItem.querySelector('.result-action').addEventListener("click", function() {
                             if(!map) return;
                             const itemLat = parseFloat(this.dataset.lat);
@@ -1114,21 +1329,32 @@ resultItem.innerHTML = `
                             const itemFecha = this.dataset.fecha;
                             const itemHora = this.dataset.hora;
                             const itemRpm = this.dataset.rpm;
+
                             clearExactMarkers(); // Limpiar otros marcadores rojos
+
                             const currentZoom = map.getZoom();
                             map.setView([itemLat, itemLon], Math.max(currentZoom, 16)); // Zoom más cercano
+
+                            // Marcador rojo para el punto exacto
                             const exactMarker = L.circleMarker([itemLat, itemLon], {
                                 color: 'red', fillColor: '#f03', fillOpacity: 0.7, radius: 8, weight: 2
                             }).addTo(map);
+
                             exactMarkers.push(exactMarker); // Guardar referencia
+
+                            // Incluir RPM en el popup si existe
                             const rpmInfo = itemRpm ? `<br>RPM: ${itemRpm}` : '';
                             exactMarker.bindPopup(`<b>Detectado</b><br>Fecha: ${itemFecha}<br>Hora: ${itemHora}${rpmInfo}<br><small>Lat: ${itemLat.toFixed(5)}, Lon: ${itemLon.toFixed(5)}</small>`).openPopup();
                         });
                         resultList.appendChild(resultItem);
                     });
+// Agregar llamada a función de creación de ruta después de procesar los datos
 if (data.length >= 2) {
     createRoutePolyline(data);
 }
+                    // Opcional: Scroll al primer resultado
+                    // resultList.firstChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
                 })
                 .catch(error => {
                     console.error("Error detallado al consultar los datos:", error);
@@ -1138,7 +1364,10 @@ if (data.length >= 2) {
                     resultList.innerHTML = '<div class="text-center text-danger p-2"><i>Fallo la consulta.</i></div>'; // Mensaje dentro de la lista
                 });
         }
+
+        // Inicializar todo cuando se carga la página
         document.addEventListener("DOMContentLoaded", initializeDatetimes);
+
     </script>
 </body>
 </html>
