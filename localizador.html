@@ -596,7 +596,10 @@
    
                 <div id="errorMessage"></div>
    
-
+                <div id="resultContainer">
+                  <h3>Momentos en el área:</h3>
+                  <div id="resultList"></div>
+             </div>
 
              <button id="resetButton" class="btn btn-danger w-100">
                   <i class="fa-solid fa-broom"></i> Limpiar Mapa y Selección
@@ -703,14 +706,14 @@ function createRoutePolyline(data) {
         }
         
         // Agregar punto a la ruta actual
-currentRoute.timestamps.push({
-    time: currentTime,
-    fecha: data[i].fecha,
-    hora: data[i].hora,
-    lat: currentPoint[0], 
-    lon: currentPoint[1],
-    rpm: data[i].rpm || null
-});
+        currentRoute.points.push(currentPoint);
+        currentRoute.timestamps.push({
+            time: currentTime,
+            fecha: data[i].fecha,
+            hora: data[i].hora,
+            lat: currentPoint[0], 
+            lon: currentPoint[1]
+        });
         
         lastTime = currentTime;
     }
@@ -965,17 +968,12 @@ function createRouteSlider(routeColor = '#1E88E5') {
         exactMarkers.push(exactMarker);
         
         // Mostrar popup con información
-let rpmInfo = '';
-if (selectedVehicle === 2 && timestamp.rpm) {
-    rpmInfo = `<div><b>RPM:</b> ${timestamp.rpm}</div>`;
-}
-exactMarker.bindPopup(`
-    <div style="text-align: center; font-weight: bold;">Punto ${index + 1} de ${routePoints.length}</div>
-    <div><b>Fecha:</b> ${timestamp.fecha}</div>
-    <div><b>Hora:</b> ${timestamp.hora}</div>
-    ${rpmInfo}
-    <div><small>Lat: ${timestamp.lat.toFixed(5)}, Lon: ${timestamp.lon.toFixed(5)}</small></div>
-`).openPopup();
+        exactMarker.bindPopup(`
+            <div style="text-align: center; font-weight: bold;">Punto ${index + 1} de ${routePoints.length}</div>
+            <div><b>Fecha:</b> ${timestamp.fecha}</div>
+            <div><b>Hora:</b> ${timestamp.hora}</div>
+            <div><small>Lat: ${timestamp.lat.toFixed(5)}, Lon: ${timestamp.lon.toFixed(5)}</small></div>
+        `).openPopup();
         
         // Actualizar displays
         timeDisplay.textContent = `${timestamp.fecha} ${timestamp.hora}`;
