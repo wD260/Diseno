@@ -590,10 +590,7 @@
 </div>
                 <div id="errorMessage"></div>
    
-                <div id="resultContainer">
-                  <h3>Momentos en el área:</h3>
-                  <div id="resultList"></div>
-             </div>
+
              <button id="resetButton" class="btn btn-danger w-100">
                   <i class="fa-solid fa-broom"></i> Limpiar Mapa y Selección
              </button>
@@ -675,13 +672,14 @@ function createRoutePolyline(data) {
             };
         }
         currentRoute.points.push(currentPoint);
-        currentRoute.timestamps.push({
-            time: currentTime,
-            fecha: data[i].fecha,
-            hora: data[i].hora,
-            lat: currentPoint[0], 
-            lon: currentPoint[1]
-        });
+currentRoute.timestamps.push({
+    time: currentTime,
+    fecha: data[i].fecha,
+    hora: data[i].hora,
+    lat: currentPoint[0], 
+    lon: currentPoint[1],
+    rpm: data[i].rpm || null
+});
         
         lastTime = currentTime;
     }
@@ -841,12 +839,17 @@ function createRouteSlider(routeColor = '#1E88E5') {
             weight: 2
         }).addTo(map);
         exactMarkers.push(exactMarker);
-        exactMarker.bindPopup(`
-            <div style="text-align: center; font-weight: bold;">Punto ${index + 1} de ${routePoints.length}</div>
-            <div><b>Fecha:</b> ${timestamp.fecha}</div>
-            <div><b>Hora:</b> ${timestamp.hora}</div>
-            <div><small>Lat: ${timestamp.lat.toFixed(5)}, Lon: ${timestamp.lon.toFixed(5)}</small></div>
-        `).openPopup();
+let rpmInfo = '';
+if (selectedVehicle === 2 && timestamp.rpm) {
+    rpmInfo = `<div><b>RPM:</b> ${timestamp.rpm}</div>`;
+}
+exactMarker.bindPopup(`
+    <div style="text-align: center; font-weight: bold;">Punto ${index + 1} de ${routePoints.length}</div>
+    <div><b>Fecha:</b> ${timestamp.fecha}</div>
+    <div><b>Hora:</b> ${timestamp.hora}</div>
+    ${rpmInfo}
+    <div><small>Lat: ${timestamp.lat.toFixed(5)}, Lon: ${timestamp.lon.toFixed(5)}</small></div>
+`).openPopup();
         timeDisplay.textContent = `${timestamp.fecha} ${timestamp.hora}`;
         pointCounter.textContent = `Punto ${index + 1}/${routePoints.length}`;
         if (routePolyline) {
