@@ -13,3 +13,6 @@ En una instancia EC2 en AWS se desplegaron tres páginas web que consultaban est
   3. Localizador por zonas: permitía seleccionar un punto en el mapa con un radio ajustable, mostrando todas las veces que un vehículo pasó por esa zona, dividiendo las rutas por franjas horarias.
 
 La idea principal era crear un sistema GPS accesible desde la web, para que un usuario pudiera visualizar la ubicación de su dispositivo (por defecto, su celular) y las rutas recorridas.
+
+
+https://www.youtube.com/watch?v=KGWZhKI7f9c
